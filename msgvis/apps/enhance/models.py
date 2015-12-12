@@ -147,8 +147,9 @@ class Dictionary(models.Model):
         print_freq = 10000
 
         for msg in queryset.iterator():
-            text = msg.text
-            bow = gdict.doc2bow(tokenizer.tokenize(text))
+            #text = msg.text
+            #bow = gdict.doc2bow(tokenizer.tokenize(text))
+            bow = gdict.doc2bow(tokenizer.tokenize(msg))
 
             for word_index, word_freq in bow:
                 word_id = self.get_word_id(word_index)

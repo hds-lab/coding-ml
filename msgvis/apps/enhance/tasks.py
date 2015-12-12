@@ -40,7 +40,8 @@ class DbTextIterator(object):
             if self.current_position % 10000 == 0:
                 logger.info("Iterating through database texts: item %d" % self.current_position)
 
-            yield msg.text
+            #yield msg.text
+            yield msg
 
 
 class DbWordVectorIterator(object):
@@ -169,6 +170,36 @@ class SimpleTokenizer(Tokenizer):
         # then split on non-words
         return [token for sent in sents for token in self._tokenize(sent)]
 
+class TweetParserTokenizer(Tokenizer):
+    def __init__(self, *args, **kwargs):
+        super(TweetParserTokenizer, self).__init__(*args, **kwargs)
+
+    def tokenize(self, message):
+
+        words = []
+
+        for word in message.tweet_words.all():
+            word = word.text
+
+            filter_out = False
+            for f in self.filters:
+                if word in f:
+                    filter_out = True
+                    break
+
+            if filter_out:
+                # skip this word
+                continue
+
+            if len(word) >= self.max_length:
+                word = word[:self.max_length - 1]
+
+            words.append(word)
+
+        return words
+
+    def split(self, message):
+        return self.tokenize(message)
 
 class TopicContext(object):
     def __init__(self, name, queryset, tokenizer, lemmatizer, filters, minimum_frequency=4):
@@ -259,7 +290,7 @@ def standard_topic_pipeline(context, dataset_id, num_topics, **kwargs):
 
 def default_topic_context(name, dataset_id):
     dataset = Dataset.objects.get(pk=dataset_id)
-    queryset = dataset.message_set.filter(language__code='en')
+    queryset = dataset.message_set.all()#filter(language__code='en')
 
     filters = [
         set(get_stoplist()),
@@ -268,8 +299,8 @@ def default_topic_context(name, dataset_id):
     ]
 
     return TopicContext(name=name, queryset=queryset,
-                        tokenizer=SimpleTokenizer,
-                        lemmatizer=WordNetLemmatizer(),
+                        tokenizer=TweetParserTokenizer,
+                        lemmatizer=None,#WordNetLemmatizer(),
                         filters=filters,
                         minimum_frequency=4)
 
