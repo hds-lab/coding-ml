@@ -2,8 +2,6 @@ import logging
 
 from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution
 from msgvis.apps.corpus.models import Dataset, Message
-from msgvis.apps.dimensions import registry
-from msgvis.apps.datatable import models as datatable_models
 import codecs
 import re
 from time import time
@@ -318,6 +316,7 @@ def import_from_tweet_parser_results(dataset_id, filename):
         # save the previous word list
         if len(word_list) > 0:
             current_msg.tweet_words.add(*word_list)
+            count += 1
             word_list = []
         print "Processed %d messages" % count
         print "Time: %.2fs" % (time() - start)
@@ -345,7 +344,7 @@ def precalc_categorical_dimension(dataset_id=1, dimension_key=None):
 def dump_tweets(dataset_id, save_path):
     dataset = Dataset.objects.get(id=dataset_id)
     total_count = dataset.message_set.count()
-    messages = dataset.message_set.all().exclude(time__isnull=True)
+    messages = dataset.message_set.all()#.exclude(time__isnull=True)
 
     start = 0
     limit = 10000
@@ -357,15 +356,15 @@ def dump_tweets(dataset_id, save_path):
 
                 try:
                     tweet_id = msg.id
-                    full_name = msg.sender.full_name.lower() if msg.sender.full_name is not None else ""
-                    username = msg.sender.username.lower() if msg.sender.username is not None else ""
+                    #full_name = msg.sender.full_name.lower() if msg.sender.full_name is not None else ""
+                    #username = msg.sender.username.lower() if msg.sender.username is not None else ""
                     text = msg.text.lower()
 
                     line = "TWEETID%dSTART\n" %(tweet_id)
                     f.write(line)
 
-                    line = "%s @%s" %(full_name, username)
-                    f.write(line)
+                    #line = "%s @%s" %(full_name, username)
+                    #f.write(line)
 
                     line = "%s\n" %(text)
                     f.write(line)
