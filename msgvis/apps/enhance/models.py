@@ -1,11 +1,17 @@
 from django.db import models
 from django.conf import settings
-import textblob
+import random
+import codecs
+
+import scipy.sparse
+import numpy
 
 from fields import PositiveBigIntegerField
 from msgvis.apps.corpus.models import Message, Dataset
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
+
+from msgvis.apps.enhance.utils import check_or_create_dir
 
 # Create your models here.
 
@@ -300,6 +306,127 @@ class Dictionary(models.Model):
         logger.info("Perplexity: %f" % model.perplexity)
         model.save()
 
+    def load_sparse_matrix(self, use_tfidf=True):
+
+        message_id_list = []
+        results = []
+
+        messages = self.dataset.message_set.all()
+
+        for msg in messages:
+            message_id_list.append(msg.id)
+            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.word_scores.all()))
+
+        return message_id_list, results
+
+    def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True):
+        messages = map(lambda x: x, self.dataset.message_set.all())
+        count = len(messages)
+        training_data_num = int(round(float(count) * training_portion))
+        testing_data_num = count - training_data_num
+        feature_num = self.words.count()
+
+        random.shuffle(messages)
+
+        training_data = messages[:training_data_num]
+        testing_data = messages[training_data_num:]
+
+        data = {
+            'training': {
+                'X': scipy.sparse.csr_matrix((training_data_num, feature_num), dtype=numpy.float64),
+                'y': []
+            },
+            'testing': {
+                'X': scipy.sparse.csr_matrix((testing_data_num, feature_num), dtype=numpy.float64),
+                'y': []
+            }
+        }
+        for idx, msg in enumerate(training_data):
+            code_id = msg.code.id if msg.code else 0
+            for word in msg.word_scores.all():
+                data['training']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            data['training']['y'].append(code_id)
+
+        for idx, msg in enumerate(testing_data):
+            code_id = msg.code.id if msg.code else 0
+            for word in msg.word_scores.all():
+                data['testing']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            data['testing']['y'].append(code_id)
+
+        return data
+
+
+    def dump_to_libsvm(self, output_path, training_portion=0.80, use_tfidf=True):
+
+        check_or_create_dir(output_path)
+
+        filenames = {
+            'training': {
+                'data': 'training.data',
+                'id': 'training.id',
+            },
+            'testing': {
+                'data': 'testing.data',
+                'id': 'testing.id',
+                'gt': 'testing.gt'
+            },
+            'meta': {
+                'features': 'features.list',
+                'codes': 'code.list'
+            }
+        }
+
+        # extend to full path
+        for type in filenames:
+            for key in filenames[type]:
+                filenames[type][key] = output_path + '/' + filenames[type][key]
+
+        messages = map(lambda x: x, self.dataset.message_set.all())
+        count = len(messages)
+        training_data_num = int(round(float(count) * training_portion))
+        testing_data_num = count - training_data_num
+
+        random.shuffle(messages)
+
+        training_data = messages[:training_data_num]
+        testing_data = messages[training_data_num:]
+
+        try:
+            with open(filenames['training']['data'], mode='w') as data_fp:
+                with codecs.open(filenames['training']['id'], encoding='utf-8', mode='w') as id_fp:
+                    for msg in training_data:
+                        code_id = msg.code.id if msg.code else 0
+                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.all())))
+                        print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
+
+            with open(filenames['testing']['data'], mode='w') as data_fp:
+                with codecs.open(filenames['testing']['id'], encoding='utf-8', mode='w') as id_fp:
+                    #with open(filenames['testing']['gt'], mode='w') as gt_fp:
+                    for msg in testing_data:
+                        code_id = msg.code.id if msg.code else 0
+                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.all())))
+                        print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
+                            #print >> gt_fp, "%d" % code_id
+
+            with open(filenames['meta']['codes'], mode='w') as code_fp:
+                codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
+                for code in codes:
+                    if code['code_id'] is None:
+                        code['code_id'] = 0
+                        code['code_text'] = "No code"
+                    print >> code_fp, "%d %s" %(code['code_id'], code['code__text'])
+
+            with codecs.open(filenames['meta']['features'], encoding='utf-8', mode='w') as feature_fp:
+                for word in self.words.all():
+                    print >> feature_fp, "%d %s" %(word.id, word.text)
+        except:
+            import traceback
+            traceback.print_exc()
+            return False
+
+        return True
+
+
 
 class Word(models.Model):
     dictionary = models.ForeignKey(Dictionary, related_name='words')
@@ -383,6 +510,15 @@ class MessageWord(models.Model):
     word_index = models.IntegerField()
     count = models.FloatField()
     tfidf = models.FloatField()
+
+    def to_tuple(self, use_tfidf=True):
+        return (self.word_index, self.tfidf) if use_tfidf else (self.dic_token_index, self.count)
+
+    def to_libsvm_tuple(self, use_tfidf=True):
+        if use_tfidf:
+            return"%d:%f" %(int(self.word_id), float(self.tfidf))
+        else:
+            return"%d:%f" %(int(self.word_id), float(self.count))
 
 
 class MessageTopic(models.Model):

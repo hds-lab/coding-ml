@@ -1,18 +1,5 @@
 from django.core.management.base import BaseCommand, make_option, CommandError
-from time import time
-import path
-from django.db import transaction
-import os
-
-def check_or_create_dir(dir_path):
-    if os.path.exists(dir_path):
-            if not os.path.isdir(dir_path):
-                raise CommandError("The given path is not a folder.")
-    else:
-        try:
-            os.mkdir(dir_path)
-        except OSError:
-            raise CommandError("Weird path error happens.")
+from msgvis.apps.enhance.utils import check_or_create_dir
 
 class Command(BaseCommand):
     help = "Run tweet parser on a dataset. Results will be saved into files."
