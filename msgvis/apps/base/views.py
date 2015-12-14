@@ -15,7 +15,7 @@ class LoginRequiredMixin(object):
         view = super(LoginRequiredMixin, cls).as_view(**initkwargs)
         return login_required(view)
 
-class HomeView(LoginRequiredMixin, generic.TemplateView):
+class HomeView(generic.TemplateView):
     """The homepage view for the website."""
 
     template_name = 'home.html'
