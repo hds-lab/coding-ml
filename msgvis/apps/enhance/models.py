@@ -2,9 +2,11 @@ from django.db import models
 from django.conf import settings
 import random
 import codecs
+import math
 
 import scipy.sparse
 import numpy
+from operator import itemgetter
 
 from fields import PositiveBigIntegerField
 from msgvis.apps.corpus.models import Message, Dataset
@@ -34,6 +36,10 @@ class Dictionary(models.Model):
     num_docs = PositiveBigIntegerField(default=0)
     num_pos = PositiveBigIntegerField(default=0)
     num_nnz = PositiveBigIntegerField(default=0)
+
+    @property
+    def word_count(self):
+        return self.words.count()
 
     @property
     def gensim_dictionary(self):
@@ -155,18 +161,19 @@ class Dictionary(models.Model):
         for msg in queryset.iterator():
             #text = msg.text
             #bow = gdict.doc2bow(tokenizer.tokenize(text))
-            bow = gdict.doc2bow(tokenizer.tokenize(msg))
+            tokens = tokenizer.tokenize(msg)
+            bow = gdict.doc2bow(tokens)
 
             for word_index, word_freq in bow:
                 word_id = self.get_word_id(word_index)
                 document_freq = gdict.dfs[word_index]
 
                 # Not sure why tf is calculated like the final version
-                # num_tokens = len(gdict)
-                # tf = float(word_freq) / float(num_tokens)
-                # idf = math.log(total_documents / document_freq)
-                # tfidf = tf * idf
-                tfidf = word_freq * math.log(total_documents / document_freq)
+                num_tokens = len(tokens)
+                tf = float(word_freq) / float(num_tokens)
+                idf = math.log(total_documents / document_freq)
+                tfidf = tf * idf
+                #tfidf = word_freq * math.log(total_documents / document_freq)
                 batch.append(MessageWord(dictionary=self,
                                          word_id=word_id,
                                          word_index=word_index,
@@ -315,16 +322,18 @@ class Dictionary(models.Model):
 
         for msg in messages:
             message_id_list.append(msg.id)
-            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.word_scores.all()))
+            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all()))
 
         return message_id_list, results
 
     def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True):
-        messages = map(lambda x: x, self.dataset.message_set.all())
+        messages = map(lambda x: x, self.dataset.message_set.all().order_by('id'))
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
         feature_num = self.words.count()
+        codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
+        code_num = codes.count()
 
         random.shuffle(messages)
 
@@ -333,25 +342,58 @@ class Dictionary(models.Model):
 
         data = {
             'training': {
-                'X': scipy.sparse.csr_matrix((training_data_num, feature_num), dtype=numpy.float64),
-                'y': []
+                'id': [],
+                'X': numpy.zeros((training_data_num, feature_num), dtype=numpy.float64),
+                'y': [],
+                'group_by_codes': map(lambda x: [], range(code_num)),
+                'mean': numpy.zeros((code_num, feature_num)),
+                'var': numpy.zeros((code_num, feature_num)),
             },
             'testing': {
-                'X': scipy.sparse.csr_matrix((testing_data_num, feature_num), dtype=numpy.float64),
-                'y': []
+                'id': [],
+                'X': numpy.zeros((testing_data_num, feature_num), dtype=numpy.float64),
+                'y': [],
+                'group_by_codes': map(lambda x: [], range(code_num)),
+                'mean': numpy.zeros((code_num, feature_num)),
+                'var': numpy.zeros((code_num, feature_num)),
+            },
+            'meta': {
+                'features': [],
+                'codes': []
             }
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.all():
+            for word in msg.word_scores.filter(dictionary=self).all():
                 data['training']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
+
             data['training']['y'].append(code_id)
+            data['training']['id'].append(msg.id)
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.all():
+            for word in msg.word_scores.filter(dictionary=self).all():
                 data['testing']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+
+            data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
             data['testing']['y'].append(code_id)
+            data['testing']['id'].append(msg.id)
+
+
+        for code in codes:
+            data['meta']['codes'].append({'index': code['code_id'] - 1,
+                                          'text': code['code__text']})
+            code_idx = code['code_id'] - 1
+            data['training']['mean'][code_idx] = numpy.mean(data['training']['group_by_codes'][code_idx], axis=0)
+            data['training']['var'][code_idx] = numpy.var(data['training']['group_by_codes'][code_idx], axis=0)
+            data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
+            data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
+
+        for word in self.words.all().order_by('index'):
+            data['meta']['features'].append({'index': word.index,
+                                          'text': word.text,
+                                          'count': word.document_frequency})
 
         return data
 
@@ -396,7 +438,7 @@ class Dictionary(models.Model):
                 with codecs.open(filenames['training']['id'], encoding='utf-8', mode='w') as id_fp:
                     for msg in training_data:
                         code_id = msg.code.id if msg.code else 0
-                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.all())))
+                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all())))
                         print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
 
             with open(filenames['testing']['data'], mode='w') as data_fp:
@@ -404,7 +446,7 @@ class Dictionary(models.Model):
                     #with open(filenames['testing']['gt'], mode='w') as gt_fp:
                     for msg in testing_data:
                         code_id = msg.code.id if msg.code else 0
-                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.all())))
+                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all())))
                         print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
                             #print >> gt_fp, "%d" % code_id
 
@@ -426,7 +468,66 @@ class Dictionary(models.Model):
 
         return True
 
+    def do_training(self):
+        data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False)
+        from sklearn import svm
+        lin_clf = svm.LinearSVC()
+        lin_clf.fit(data['training']['X'], data['training']['y'])
 
+        results = {
+            'codes': [],
+            'features': [],
+            'train_id': data['training']['id'],
+            'test_id': data['testing']['id'],
+            'accuracy': {
+                'training': lin_clf.score(data['training']['X'], data['training']['y']),
+                'testing': lin_clf.score(data['testing']['X'], data['testing']['y'])
+            }
+        }
+
+        for code in data['meta']['codes']:
+            results['codes'].append({
+                'index': code['index'],
+                'text': code['text'],
+                'train_count': len(data['training']['group_by_codes'][code['index']]),
+                'test_count': len(data['testing']['group_by_codes'][code['index']]),
+                'domain': [0, 0]
+            })
+
+
+        order = numpy.zeros(lin_clf.coef_.shape)
+        for code in data['meta']['codes']:
+            cl = sorted(map(lambda x: x, enumerate(lin_clf.coef_[code['index']])), key=itemgetter(1), reverse=True)
+            for idx, item in enumerate(cl):
+                order[code['index']][item[0]] = idx
+
+
+        for word in data['meta']['features']:
+            in_top_features = 0
+
+            row = {
+                'word_index': word['index'],
+                'word': word['text'],
+                'count': word['count'],
+                'codes': {}
+            }
+
+            for idx, code in enumerate(data['meta']['codes']):
+                row['codes'][code['text']] = {
+                    'weight': lin_clf.coef_[code['index']][word['index']],
+                    'mean': data['training']['mean'][code['index']][word['index']],
+                    'var': data['training']['var'][code['index']][word['index']],
+                    'order': order[code['index']][word['index']]
+                }
+                max_domain = data['training']['mean'][code['index']][word['index']] + 3 * math.sqrt(data['training']['var'][code['index']][word['index']])
+                if max_domain > results['codes'][idx]['domain'][1]:
+                   results['codes'][idx]['domain'][1] = max_domain
+                in_top_features += 1 if order[code['index']][word['index']] < 10 else 0
+            row['in_top_features'] = in_top_features
+
+            results['features'].append(row)
+
+        return results
 
 class Word(models.Model):
     dictionary = models.ForeignKey(Dictionary, related_name='words')

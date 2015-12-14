@@ -294,6 +294,7 @@ def default_topic_context(name, dataset_id):
 
     filters = [
         set(get_stoplist()),
+        ['ive', 'wasnt', 'didnt', 'dont'],
         LambdaWordFilter(lambda word: word == 'rt' or len(word) <= 2),
         LambdaWordFilter(lambda word: word.startswith('http') and len(word) > 4)
     ]

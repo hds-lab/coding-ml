@@ -57,6 +57,86 @@ class DatasetView(APIView):
 
         return Response("Please specify dataset id", status=status.HTTP_400_BAD_REQUEST)
 
+class DictionaryView(APIView):
+    """
+    Get details of a dataset
+
+    **Request:** ``GET /api/dictionary?id=1``
+    """
+
+
+    def get(self, request, format=None):
+        if request.query_params.get('id'):
+            dictionary_id = int(request.query_params.get('id'))
+            try:
+                dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
+                output = serializers.DictionarySerializer(dictionary)
+                return Response(output.data, status=status.HTTP_200_OK)
+            except:
+                return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class SVMResultView(APIView):
+    """
+    Get svm result of a dictionary
+
+    **Request:** ``GET /api/svm?id=1``
+    """
+
+
+    def get(self, request, format=None):
+        if request.query_params.get('dictionary_id'):
+            dictionary_id = int(request.query_params.get('dictionary_id'))
+            try:
+                dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
+                results = dictionary.do_training()
+                output = serializers.SVMResultSerializer({'results': results})
+                #import json
+                #output = json.dumps(results)
+                return Response(output.data, status=status.HTTP_200_OK)
+            except:
+                import traceback
+                traceback.print_exc()
+                import pdb
+                pdb.set_trace()
+
+                return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
+
+class FeatureVectorView(APIView):
+    """
+    Get svm result of a dictionary
+
+    **Request:** ``GET /api/vector?dictionary_id=1&message_id=1``
+    """
+
+
+    def get(self, request, format=None):
+        if request.query_params.get('dictionary_id') and request.query_params.get('message_id'):
+            dictionary_id = int(request.query_params.get('dictionary_id'))
+            message_id = int(request.query_params.get('message_id'))
+            try:
+                dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
+                message = corpus_models.Message.objects.get(id=message_id)
+                feature_vector = message.get_feature_vector(dictionary=dictionary)
+                output = serializers.FeatureVectorSerializer({'message': message, 'feature_vector': feature_vector})
+                #import json
+                #output = json.dumps(results)
+                return Response(output.data, status=status.HTTP_200_OK)
+            except:
+                import traceback
+                traceback.print_exc()
+                import pdb
+                pdb.set_trace()
+
+                return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
+
 
 class APIRoot(APIView):
     """

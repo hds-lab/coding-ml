@@ -6,10 +6,7 @@ from caching.base import CachingManager, CachingMixin
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
-import re
-
-import os
-from msgvis.settings.common import DEBUG
+import numpy
 
 
 class Dataset(models.Model):
@@ -70,6 +67,11 @@ class Message(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-
+    def get_feature_vector(self, dictionary):
+        words = self.word_scores.filter(dictionary=dictionary).all()
+        vector = numpy.zeros(dictionary.words.count())
+        for word in words:
+            vector[word.word_index] = word.count
+        return vector.tolist()
 
 
