@@ -522,7 +522,7 @@ class Dictionary(models.Model):
                 max_domain = data['training']['mean'][code['index']][word['index']] + 3 * math.sqrt(data['training']['var'][code['index']][word['index']])
                 if max_domain > results['codes'][idx]['domain'][1]:
                    results['codes'][idx]['domain'][1] = max_domain
-                in_top_features += 1 if order[code['index']][word['index']] < 10 else 0
+                in_top_features += 1 if order[code['index']][word['index']] < 20 else 0
             row['in_top_features'] = in_top_features
 
             results['features'].append(row)
