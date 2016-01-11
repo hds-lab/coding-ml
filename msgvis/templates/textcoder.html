@@ -139,7 +139,14 @@
 
                 <div class="box" ng-show="vector">
                     <h4>Current Tweet {$ vector.message.id $}</h4>
-                    <div class="tweet" >{$ vector.message.text $}</div>
+                    <div class="tweet-selectable"><span ng-repeat="char in vector.message.characters track by $index" class="ng-class:'char-'+$index;"
+                               ng-mouseenter="onCharMouseEnter($index)"
+                               ng-mouseleave="onCharMouseLeave($index)"
+                               ng-mousedown="onCharMouseDown($index)"
+                               ng-mouseup="onCharMouseUp($index)"
+                               ng-style="charStyle($index)">{$char$}</span></div>
+
+                    <button class="btn btn-default" ng-show="selectedTokens">Add Feature</button>
                 </div>
 
             </div>
