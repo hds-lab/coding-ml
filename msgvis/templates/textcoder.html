@@ -146,9 +146,16 @@
                                ng-mouseup="onCharMouseUp($index)"
                                ng-style="charStyle($index)">{$char$}</span></div>
 
-                    <button class="btn btn-default" ng-show="selectedTokens">Add Feature</button>
+                    <button class="btn btn-default" ng-show="selectedTokens" ng-click="addFeature(selectedTokens)">Add Feature</button>
                 </div>
 
+                <div class="box">
+                    <h4>User-defined Features</h4>
+                    <div ng-repeat="(key, tokens) in featureList track by key" class="user-feature">
+                        <span>{$ tokens.join(" ") $}</span>
+                        <button class="btn btn-default" ng-click="removeFeature(tokens)">Remove</button>
+                    </div>
+                </div>
             </div>
 
         </div>

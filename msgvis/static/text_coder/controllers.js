@@ -191,6 +191,8 @@
         $scope.clickStartTokenItem = undefined;
         $scope.selectedTokens = undefined;
 
+        $scope.featureList = {};
+
         $scope.onCharMouseEnter = function(charIndex){
             //console.log("onCharMouseEnter:" + charIndex);
 
@@ -291,6 +293,46 @@
 
             return style;
         };
+
+        $scope.addFeature = function(tokens){
+            if (tokens && tokens.length > 0){
+
+                var key = tokens.join(" ");
+                console.log("addFeature for: " + key);
+
+                // check if it already exists
+                var existingTokens = $scope.featureList[key];
+
+                if (!existingTokens) {
+                    $scope.featureList[key] = tokens;
+                }
+                else {
+                    console.log("feature already exists: " + key);
+                }
+
+                $scope.clickStartTokenItem = undefined;
+                $scope.selectedCharStart = -1;
+                $scope.selectedCharEnd = -1;
+                $scope.selectedTokens = null;
+            }
+        };
+
+        $scope.removeFeature = function(tokens){
+            if (tokens && tokens.length > 0){
+                var key = tokens.join(" ");
+                console.log("removeFeature for: " + key);
+
+                // check if it already exists
+                var existingTokens = $scope.featureList[key];
+
+                if (existingTokens) {
+                    delete $scope.featureList[key];
+                }
+                else {
+                    console.log("feature does not exist: " + key);
+                }
+            }
+        }
     };
 
     ViewController.$inject = [
