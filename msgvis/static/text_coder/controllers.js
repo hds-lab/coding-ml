@@ -31,7 +31,7 @@
     ];
     module.controller('TextCoder.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
+    var ViewController = function ($scope, Dictionary, SVMResult, FeatureVector, UserFeatures, usSpinnerService) {
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -152,7 +152,7 @@
 
                             var tokenItem = {
                                 text: token,
-                                index: i,
+                                index: i
                             };
 
                             currentIndex = foundIndex;
@@ -304,7 +304,18 @@
                 var existingTokens = $scope.featureList[key];
 
                 if (!existingTokens) {
-                    $scope.featureList[key] = tokens;
+                    var request = UserFeatures.add(tokens);
+                    if (request) {
+                        usSpinnerService.spin('vector-spinner');
+                        request.then(function() {
+                            usSpinnerService.stop('vector-spinner');
+                            var featureId = UserFeatures.data;
+                            $scope.featureList[key] = {
+                                id: featureId,
+                                tokens: tokens
+                            };
+                        });
+                    }
                 }
                 else {
                     console.log("feature already exists: " + key);
@@ -317,16 +328,24 @@
             }
         };
 
-        $scope.removeFeature = function(tokens){
-            if (tokens && tokens.length > 0){
-                var key = tokens.join(" ");
+        $scope.removeFeature = function(feature){
+            if (feature){
+                var key = feature.tokens.join(" ");
                 console.log("removeFeature for: " + key);
 
                 // check if it already exists
                 var existingTokens = $scope.featureList[key];
 
                 if (existingTokens) {
-                    delete $scope.featureList[key];
+
+                    var request = UserFeatures.remove(feature.id);
+                    if (request) {
+                        usSpinnerService.spin('vector-spinner');
+                        request.then(function() {
+                            usSpinnerService.stop('vector-spinner');
+                            delete $scope.featureList[key];
+                        });
+                    }
                 }
                 else {
                     console.log("feature does not exist: " + key);
@@ -340,6 +359,7 @@
         'TextCoder.services.Dictionary',
         'TextCoder.services.SVMResult',
         'TextCoder.services.FeatureVector',
+        'TextCoder.services.UserFeatures',
         'usSpinnerService'
     ];
     module.controller('TextCoder.controllers.ViewController', ViewController);

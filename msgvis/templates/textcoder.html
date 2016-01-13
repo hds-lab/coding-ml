@@ -151,9 +151,9 @@
 
                 <div class="box">
                     <h4>User-defined Features</h4>
-                    <div ng-repeat="(key, tokens) in featureList track by key" class="user-feature">
-                        <span>{$ tokens.join(" ") $}</span>
-                        <button class="btn btn-default" ng-click="removeFeature(tokens)">Remove</button>
+                    <div ng-repeat="(key, feature) in featureList track by key" class="user-feature">
+                        <span>{$ feature.tokens.join(" ") $}</span>
+                        <button class="btn btn-default" ng-click="removeFeature(feature)">Remove</button>
                     </div>
                 </div>
             </div>
