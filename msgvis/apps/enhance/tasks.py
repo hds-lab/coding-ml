@@ -9,6 +9,7 @@ import subprocess
 import os
 import glob
 from nltk.stem import WordNetLemmatizer
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -235,13 +236,24 @@ class TopicContext(object):
     def build_dictionary(self, dataset_id):
         texts = DbTextIterator(self.queryset)
 
-        tokenized_texts = self.tokenizer(texts, self.lemmatizer, *self.filters)
+        tokenized_texts = self.tokenizer(texts, self.lemmatizer, *self.filters)        
         dataset = Dataset.objects.get(pk=dataset_id)
         return Dictionary._create_from_texts(tokenized_texts=tokenized_texts,
                                              name=self.name,
                                              minimum_frequency=self.minimum_frequency,
                                              dataset=dataset,
                                              settings=self.get_dict_settings())
+
+    def build_features(self, dictionary):
+        texts = DbTextIterator(self.queryset)
+        tokenized_texts = self.tokenizer(texts, self.lemmatizer, *self.filters)
+        tokenizer = self.tokenizer(texts, self.lemmatizer, *self.filters)
+
+        dictionary._create_features_from_texts(dict_model=dictionary,
+                                             tokenized_texts=tokenized_texts,
+                                             name=self.name,
+                                             minimum_frequency=self.minimum_frequency,
+                                             queryset=self.queryset)
 
     def bows_exist(self, dictionary):
         return MessageWord.objects.filter(dictionary=dictionary).exists()
@@ -282,6 +294,8 @@ def standard_topic_pipeline(context, dataset_id, num_topics, **kwargs):
 
     if not context.bows_exist(dictionary):
         context.build_bows(dictionary)
+
+    context.build_features(dictionary)
 
     model, lda = context.build_lda(dictionary, num_topics=num_topics, **kwargs)
     context.apply_lda(dictionary, model, lda)
