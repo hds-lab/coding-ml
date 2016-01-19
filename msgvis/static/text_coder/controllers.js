@@ -206,9 +206,17 @@
                     $scope.selectedTokenIndices.set(i, i);
                 }
             }
+        };
 
-            // TODO: if the previous or next token is selected, also update the selection for the character (space) in between.
-            //console.log($scope.selectedTokenIndices.values());
+        var isTokenSelectedAtCharIndex = function (charIndex){
+            if ($scope.vector && $scope.vector.message) {
+                var tokenIndex = $scope.vector.message.charToToken[charIndex];
+                if (tokenIndex != undefined && $scope.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
+                    return true;
+                }
+            }
+
+            return false;
         };
 
         $scope.onCharMouseEnter = function(charIndex){
@@ -223,12 +231,15 @@
                     $scope.hoveredCharEnd = tokenItem.endIndex;
 
                     // If we're in the middle of selection, update selected char indices
-                    if ($scope.clickStartTokenItem != undefined){
-                        if (tokenIndex < $scope.clickStartTokenItem.index){
-                            updateSelection(tokenIndex, $scope.clickStartTokenItem.index, true, true);
+                    if ($scope.clickStartTokenItem != undefined) {
+
+                        var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                        if (tokenIndex < $scope.clickStartTokenItem.index) {
+                            updateSelection(tokenIndex, $scope.clickStartTokenItem.index, true, !ctrlClick);
                         }
-                        else if (tokenIndex > $scope.clickStartTokenItem.index){
-                            updateSelection($scope.clickStartTokenItem.index, tokenIndex, true, true);
+                        else if (tokenIndex > $scope.clickStartTokenItem.index) {
+                            updateSelection($scope.clickStartTokenItem.index, tokenIndex, true, !ctrlClick);
                         }
                     }
                 }
@@ -258,6 +269,7 @@
                     var tokenItem = $scope.vector.message.tokens[tokenIndex];
 
                     var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
                     // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
                     // clear the selection on this token index
                     if ($scope.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
@@ -308,18 +320,15 @@
             }
         };
 
-        $scope.charStyle = function(charIndex){
+        $scope.charStyle = function(charIndex) {
             var style = {};
-            if (charIndex >= $scope.hoveredCharStart && charIndex <= $scope.hoveredCharEnd){
+            if (charIndex >= $scope.hoveredCharStart && charIndex <= $scope.hoveredCharEnd) {
                 style["background"] = "#ffcc99";
             }
 
 
-            if ($scope.vector && $scope.vector.message) {
-                var tokenIndex = $scope.vector.message.charToToken[charIndex];
-                if (tokenIndex != undefined && $scope.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
-                    style["background"] = "#ff6600";
-                }
+            if (isTokenSelectedAtCharIndex(charIndex) || (isTokenSelectedAtCharIndex(charIndex - 1) && isTokenSelectedAtCharIndex(charIndex + 1))) {
+                style["background"] = "#ff6600";
             }
             return style;
         };
