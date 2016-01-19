@@ -142,8 +142,8 @@
                     <div class="tweet-selectable"><span ng-repeat="char in vector.message.characters track by $index" class="ng-class:'char-'+$index;"
                                ng-mouseenter="onCharMouseEnter($index)"
                                ng-mouseleave="onCharMouseLeave($index)"
-                               ng-mousedown="onCharMouseDown($index)"
-                               ng-mouseup="onCharMouseUp($index)"
+                               ng-mousedown="onCharMouseDown($index, $event)"
+                               ng-mouseup="onCharMouseUp($index, $event)"
                                ng-style="charStyle($index)">{$char$}</span></div>
 
                     <button class="btn btn-default" ng-show="selectedTokens" ng-click="addFeature(selectedTokens)">Add Feature</button>

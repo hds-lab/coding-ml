@@ -190,8 +190,28 @@
         $scope.hoveredCharEnd = -1;
         $scope.clickStartTokenItem = undefined;
         $scope.selectedTokens = undefined;
+        $scope.selectedTokenIndices = new Map();
 
         $scope.featureList = {};
+
+        var updateSelection = function(startIndex, endIndex, isSelected, shouldClear) {
+            if (shouldClear) {
+                $scope.selectedTokenIndices.clear();
+            }
+
+            for (var i = startIndex; i <= endIndex; i++) {
+                var existing = $scope.selectedTokenIndices.get(i);
+                if (existing == i && !isSelected) {
+                    $scope.selectedTokenIndices.delete(i);
+                }
+                else if (existing != i && isSelected) {
+                    $scope.selectedTokenIndices.set(i, i);
+                }
+            }
+
+            // TODO: if the previous or next token is selected, also update the selection for the character (space) in between.
+            //console.log($scope.selectedTokenIndices.values());
+        };
 
         $scope.onCharMouseEnter = function(charIndex){
             //console.log("onCharMouseEnter:" + charIndex);
@@ -207,12 +227,10 @@
                     // If we're in the middle of selection, update selected char indices
                     if ($scope.clickStartTokenItem != undefined){
                         if (tokenIndex < $scope.clickStartTokenItem.index){
-                            $scope.selectedCharStart = tokenItem.startIndex;
-                            $scope.selectedCharEnd = $scope.clickStartTokenItem.endIndex;
+                            updateSelection(tokenIndex, $scope.clickStartTokenItem.index, true, true);
                         }
                         else if (tokenIndex > $scope.clickStartTokenItem.index){
-                            $scope.selectedCharStart = $scope.clickStartTokenItem.startIndex;
-                            $scope.selectedCharEnd = tokenItem.endIndex;
+                            updateSelection($scope.clickStartTokenItem.index, tokenIndex, true, true);
                         }
                     }
                 }
@@ -230,7 +248,7 @@
             $scope.hoveredCharEnd = -1;
         };
 
-        $scope.onCharMouseDown = function(charIndex){
+        $scope.onCharMouseDown = function(charIndex, event){
             //console.log("onCharMouseDown:" + charIndex);
 
             if ($scope.vector && $scope.vector.message) {
@@ -241,22 +259,21 @@
 
                     var tokenItem = $scope.vector.message.tokens[tokenIndex];
 
-                    // if there was a selection at this tokenIndex, clear the selection
-                    if (tokenItem.startIndex >= $scope.selectedCharStart && tokenItem.endIndex <= $scope.selectedCharEnd) {
+                    var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+                    // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
+                    // clear the selection on this token index
+                    if ($scope.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
                         $scope.clickStartTokenItem = undefined;
-                        $scope.selectedCharStart = -1;
-                        $scope.selectedCharEnd = -1;
+                        updateSelection(tokenIndex, tokenIndex, false, false);
                     }
                     else {
                         $scope.clickStartTokenItem = tokenItem;
-                        $scope.selectedCharStart = tokenItem.startIndex;
-                        $scope.selectedCharEnd = tokenItem.endIndex;
+                        updateSelection(tokenIndex, tokenIndex, true, !ctrlClick);
                     }
                 }
                 else {
                     $scope.clickStartTokenItem = undefined;
-                    $scope.selectedCharStart = -1;
-                    $scope.selectedCharEnd = -1;
+                    $scope.selectedTokenIndices.clear();
                 }
             }
         };
@@ -265,15 +282,27 @@
             $scope.clickStartTokenItem = undefined;
             $scope.selectedTokens = undefined;
 
-            if ($scope.selectedCharStart >= 0 && $scope.selectedCharEnd >= 0 && $scope.selectedCharStart <= $scope.selectedCharEnd) {
+            if ($scope.selectedTokenIndices.size > 0) {
                 if ($scope.vector && $scope.vector.message) {
 
-                    var startTokenIndex = $scope.vector.message.charToToken[$scope.selectedCharStart];
-                    var endTokenIndex = $scope.vector.message.charToToken[$scope.selectedCharEnd];
+                    // Get sorted list of selected token indices
+                    var indices = [];
+                    $scope.selectedTokenIndices.forEach(function (val) {
+                        indices.push(val);
+                    });
+                    indices.sort(function (a, b) {
+                        return a - b;
+                    });
 
                     var tokens = [];
-                    for (var i = startTokenIndex; i <= endTokenIndex; i++) {
-                        tokens.push($scope.vector.message.tokens[i].text);
+                    var currentTokenIndex = -1;
+                    for (var i = 0; i < indices.length; i++) {
+                        var tokenIndex = indices[i];
+
+                        if (tokenIndex != currentTokenIndex) {
+                            tokens.push($scope.vector.message.tokens[tokenIndex].text);
+                            currentTokenIndex = tokenIndex;
+                        }
                     }
 
                     $scope.selectedTokens = tokens;
@@ -287,10 +316,13 @@
                 style["background"] = "#ffcc99";
             }
 
-            if (charIndex >= $scope.selectedCharStart && charIndex <= $scope.selectedCharEnd){
-                style["background"] = "#ff6600";
-            }
 
+            if ($scope.vector && $scope.vector.message) {
+                var tokenIndex = $scope.vector.message.charToToken[charIndex];
+                if (tokenIndex != undefined && $scope.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
+                    style["background"] = "#ff6600";
+                }
+            }
             return style;
         };
 
@@ -325,6 +357,7 @@
                 $scope.selectedCharStart = -1;
                 $scope.selectedCharEnd = -1;
                 $scope.selectedTokens = null;
+                $scope.selectedTokenIndices.clear();
             }
         };
 
