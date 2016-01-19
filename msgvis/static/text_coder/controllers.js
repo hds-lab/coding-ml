@@ -184,8 +184,6 @@
         };
 
         // Feature selection logic and states
-        $scope.selectedCharStart = -1;
-        $scope.selectedCharEnd = -1;
         $scope.hoveredCharStart = -1;
         $scope.hoveredCharEnd = -1;
         $scope.clickStartTokenItem = undefined;
@@ -354,8 +352,6 @@
                 }
 
                 $scope.clickStartTokenItem = undefined;
-                $scope.selectedCharStart = -1;
-                $scope.selectedCharEnd = -1;
                 $scope.selectedTokens = null;
                 $scope.selectedTokenIndices.clear();
             }
