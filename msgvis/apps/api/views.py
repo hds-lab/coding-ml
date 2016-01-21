@@ -83,7 +83,7 @@ class SVMResultView(APIView):
     """
     Get svm result of a dictionary
 
-    **Request:** ``GET /api/svm?id=1``
+    **Request:** ``GET /api/svm?dictionary_id=1``
     """
 
 
