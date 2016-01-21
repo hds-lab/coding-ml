@@ -10,3 +10,6 @@ admin.site.register(models.Topic)
 admin.site.register(models.TopicWord)
 admin.site.register(models.MessageWord)
 admin.site.register(models.MessageTopic)
+# Features
+admin.site.register(models.Feature)
+admin.site.register(models.MessageFeature)
