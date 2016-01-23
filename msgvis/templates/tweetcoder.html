@@ -83,7 +83,7 @@
                     <div class="box-header">new label</div>
                     <div class="tweet-main">@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please</div>
                     <div class="btn-group-code" data-toggle="buttons">
-                        <label class="btn btn-default" ng-repeat="code in svm_results.codes">
+                        <label class="btn btn-default" ng-repeat="code in codes">
                             <input type="radio" ng-attr-id="{$ 'code-' + code.index $}"
                                    ng-attr-name="{$ code.text $}" ng-attr-value="{$ code.index $}" /> {$ code.text $}
                         </label>
@@ -98,45 +98,25 @@
                     </div>
                 </div>
                 <div class="box">
+                    <div class="box-header">submitted labels</div>
                     <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
-                    <table st-table="features" st-safe-src="svm_results.features" class="table table-striped">
+                    <table st-table="labels" st-safe-src="submittedLabels" class="table table-striped">
                         <thead>
                             <tr>
-                                <td class='dist-title' colspan="3">Training code distribution</td>
-                                <td class="bar-td" ng-repeat="code in svm_results.codes">
-                                    <div>{$ code.train_count $}</div>
-                                    <div ng-style=dist(code) class="bar"></div>
-                                </td>
-                                <td></td>
-                                <td ng-if="vector"></td>
-                                <td ng-if="vector"></td>
-                            </tr>
-                            <tr>
-                                <th st-sort="word_index">word_index</th>
-                                <th st-sort="word">word</th>
-                                <th st-sort="count">count</th>
-                                <th st-sort="codes.{$ code.text $}.order" ng-repeat="code in svm_results.codes">
+                                <th st-sort="text">Text</th>
+                                <th st-sort="codes.{$ code.text $}.order" ng-repeat="code in codes">
                                     {$ code.text $}
                                 </th>
-                                <th st-sort="in_top_features" st-sort-default="reverse"># in top</th>
-                                <td ng-show="vector"></td>
-                                <th st-sort="getter.vector" ng-if="vector" st-sort-default="reverse"> {$ 'Tweet ' + vector.message.id $}</th>
+                                <th st-sort="ambiguous">Ambiguous</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="feature in features">
-                                <th>{$ feature.word_index $}</th>
-                                <th>{$ feature.word $}</th>
-                                <th>{$ feature.count $}</th>
-                                <td ng-style="style(feature.codes[code.text],code.index)" ng-repeat="code in svm_results.codes">
-                                    {$ feature.codes[code.text].weight | number: 2 $}
+                            <tr ng-repeat="label in submittedLabels">
+                                <td>{$ label.text $}</td>
+                                <td ng-repeat="code in label.codes track by $index">
+                                    {$ code $}
                                 </td>
-                                <td>{$ feature.in_top_features $}</td>
-                                <td></td>
-                                <td ng-if="vector" ng-style="on_off(vector.feature_vector[feature.word_index])">
-                                    {$ vector.feature_vector[feature.word_index] $}
-                                </td>
-
+                                <td>{$ label.ambiguous $}</td>
                             </tr>
                         </tbody>
                     </table>
