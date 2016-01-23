@@ -10,4 +10,5 @@ urlpatterns = patterns('',
                        url(r'^accounts/', include('django.contrib.auth.urls')),
                        url(r'^textcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TextCoderView.as_view(), name='textcoder'),
                        url(r'^tweetcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TweetCoderView.as_view(), name='tweetcoder'),
+                       url(r'^tweetcoderviz(?:/(?P<dictionary_pk>\d+))?/$', views.TweetCoderVizView.as_view(), name='tweetcoderviz'),
 )
