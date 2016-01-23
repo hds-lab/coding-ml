@@ -61,8 +61,18 @@
         // load the svm results
         $scope.load();
 
-        $scope.style = function(code){
-            var colors = ["#fff5eb","#fee6ce","#fdd0a2","#fdae6b","#fd8d3c","#f16913","#d94801","#a63603","#7f2704"];
+        $scope.style = function(code, codeIndex){
+            var fullColors = 
+                [["#f6faea","#e5f1c0","#d4e897","#bada58","#98bc29","#769220","#556817","#333f0e","#222a09"],
+                ["#f4eef6","#dfcde4","#bf9cc9","#aa7bb7","#865195","#683f74","#4a2d53","#35203b","#1e1221"],
+                ["#fce8f1","#f7bbd4","#f28db7","#ec5f9a","#e41b6e","#b71558","#911146","#720d37","#440821"],
+                ["#e9f0fb","#bed1f4","#92b3ed","#5185e1","#2361cf","#1a4899","#12336d","#0b1f41","#07142c"],
+                ["#fff5eb","#fee6ce","#fdd0a2","#fdae6b","#fd8d3c","#f16913","#d94801","#a63603","#7f2704"]];
+            
+            var colorIndex = 0;
+            if (codeIndex < fullColors.length) { colorIndex = codeIndex;}
+            var colors = fullColors[colorIndex];
+
             var css = {
                 'background-color' : 'none',
                 'color': 'black'

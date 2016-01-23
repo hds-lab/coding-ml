@@ -110,7 +110,7 @@
                             <th>{$ feature.word_index $}</th>
                             <th>{$ feature.word $}</th>
                             <th>{$ feature.count $}</th>
-                            <td ng-style="style(feature.codes[code.text])" ng-repeat="code in svm_results.codes">
+                            <td ng-style="style(feature.codes[code.text],code.index)" ng-repeat="code in svm_results.codes">
                                 {$ feature.codes[code.text].weight | number: 2 $}
                             </td>
                             <td>{$ feature.in_top_features $}</td>
