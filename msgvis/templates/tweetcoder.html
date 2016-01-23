@@ -80,21 +80,22 @@
         <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoder.controllers.ViewController" >
             <div class="wrap">
                 <div class="box">
+                    <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="box-header">new label</div>
-                    <div class="tweet-main">@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please</div>
+                    <div class="tweet-main">{$ currentMessage $}</div>
                     <div class="btn-group-code" data-toggle="buttons">
-                        <label class="btn btn-default" ng-repeat="code in codes">
+                        <label class="btn btn-default" ng-repeat="code in codes"
+                                   ng-click="selectLabel(code.text)"
+                                   ng-class="{'active': code.text == currentLabel}">
                             <input type="radio" ng-attr-id="{$ 'code-' + code.index $}"
-                                   ng-attr-name="{$ code.text $}" ng-attr-value="{$ code.index $}" /> {$ code.text $}
+                                   name="code.text" value="code.index"/> {$ code.text $}
                         </label>
                     </div>
                     <div class="form-inline">
                         <div class="checkbox">
-                            <label>
-                                <input type="checkbox"> ambiguous
-                            </label>
+                            <label><input type="checkbox" ng-model="isCurrentMessageAmbiguous"> ambiguous</label>
                         </div>
-                        <button type="submit" class="btn btn-default">Submit Code</button>
+                        <button class="btn btn-default" ng-disabled="!currentLabel" ng-click="submitLabel()">Submit Code</button>
                     </div>
                 </div>
                 <div class="box">

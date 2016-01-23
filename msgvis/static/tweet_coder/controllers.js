@@ -31,7 +31,7 @@
     ];
     module.controller('TweetCoder.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, Dictionary, SVMResult, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, SVMResult, usSpinnerService) {
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -39,8 +39,10 @@
             length: 10,
             color: "#000000"
         };
-        var dist_max_height = 20; // in pixel
 
+        $scope.currentMessage = undefined;
+        $scope.currentLabel = undefined;
+        $scope.isCurrentMessageAmbiguous = false;
         $scope.codes = undefined;
         $scope.submittedLabels = undefined;
         $scope.displayedLabels = [];
@@ -73,12 +75,39 @@
             }
         };
 
+        $scope.getMessage = function() {
+            console.log("getMessage");
+            usSpinnerService.spin('label-spinner');
+
+            $timeout(function(){
+                console.log("gotMessage");
+                usSpinnerService.stop('label-spinner');
+                $scope.currentMessage = (new Date()) + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
+                $scope.selectLabel(null);
+                $scope.isCurrentMessageAmbiguous = false;
+            }, 1000);
+        };
+
+        $scope.selectLabel = function(label){
+            console.log("selectLabel " + label);
+            $scope.currentLabel = label;
+        };
+
+        $scope.submitLabel = function(){
+            console.log("submitLabel");
+            $scope.getMessage();
+        };
+
         // load the svm results
         $scope.load();
+
+        // fetch a message to label
+        $scope.getMessage();
     };
 
     ViewController.$inject = [
         '$scope',
+        '$timeout',
         'TweetCoder.services.Dictionary',
         'TweetCoder.services.SVMResult',
         'usSpinnerService'
