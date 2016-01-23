@@ -9,4 +9,5 @@ urlpatterns = patterns('',
                        (r'^accounts/logout/$', 'django.contrib.auth.views.logout',{'next_page': '/'}),
                        url(r'^accounts/', include('django.contrib.auth.urls')),
                        url(r'^textcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TextCoderView.as_view(), name='textcoder'),
+                       url(r'^tweetcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TweetCoderView.as_view(), name='tweetcoder'),
 )
