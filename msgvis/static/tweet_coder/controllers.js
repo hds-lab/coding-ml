@@ -43,6 +43,7 @@
 
         $scope.codes = undefined;
         $scope.submittedLabels = undefined;
+        $scope.displayedLabels = [];
 
         $scope.load = function(){
             var request = SVMResult.load(Dictionary.id);
@@ -59,9 +60,13 @@
                         var ambiguous = Math.random() < 0.5;
                         var label = {
                             text: i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please",
-                            codes: $scope.codes.map(function(c) { return (c.index == codeIndex ? "X" : ""); }),
-                            ambiguous: ambiguous
+                            ambiguous: ambiguous.toString()
                         };
+
+                        $scope.codes.forEach(function(c) {
+                            label[c.text] = (c.index == codeIndex ? "X" : "");
+                        });
+
                         $scope.submittedLabels.push(label);
                     }
                 });
