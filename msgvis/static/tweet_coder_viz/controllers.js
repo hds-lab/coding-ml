@@ -32,6 +32,12 @@
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
     var ViewController = function ($scope, $timeout, Dictionary, SVMResult, usSpinnerService) {
+        $scope.fullColors =
+            [["#f6faea","#e5f1c0","#d4e897","#bada58","#98bc29","#769220","#556817","#333f0e","#222a09"],
+            ["#f4eef6","#dfcde4","#bf9cc9","#aa7bb7","#865195","#683f74","#4a2d53","#35203b","#1e1221"],
+            ["#fce8f1","#f7bbd4","#f28db7","#ec5f9a","#e41b6e","#b71558","#911146","#720d37","#440821"],
+            ["#e9f0fb","#bed1f4","#92b3ed","#5185e1","#2361cf","#1a4899","#12336d","#0b1f41","#07142c"],
+            ["#fff5eb","#fee6ce","#fdd0a2","#fdae6b","#fd8d3c","#f16913","#d94801","#a63603","#7f2704"]];
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -56,7 +62,7 @@
                     $scope.codes = SVMResult.data.codes;
                     $scope.submittedLabels = [];
 
-                    // Fake data for now
+                    // Fake labels for now
                     for (var i = 0; i < 100; i++){
                         var codeIndex = Math.floor(Math.random() * ($scope.codes.length + 1));
                         var ambiguous = Math.random() < 0.5;
@@ -70,6 +76,29 @@
                         });
 
                         $scope.submittedLabels.push(label);
+                    }
+
+                    $scope.features = {
+                        user: [],
+                        system: []
+                    };
+
+                    // Fake features for now
+                    for (var i = 0; i < 10; i++){
+                        var feature = {
+                            word: "feature" + i,
+                            count: Math.floor(Math.random() * 30) + 1,
+                            codes: []
+                        };
+
+                        $scope.codes.forEach(function(c) {
+                            feature.codes[c.text] = {
+                                weight: Math.random() * Number(Math.random() < 0.5),
+                                order: Math.floor(Math.random() * 10)
+                            };
+                        });
+
+                        $scope.features.user.push(feature);
                     }
                 });
             }
@@ -96,6 +125,53 @@
         $scope.submitLabel = function(){
             console.log("submitLabel");
             $scope.getMessage();
+        };
+
+        $scope.codeStyle = function(codeIndex, code){
+
+            var colorIndex = 0;
+            if (codeIndex < $scope.fullColors.length) { colorIndex = codeIndex;}
+            var colors = $scope.fullColors[colorIndex];
+
+            var css = {
+                'background-color' : '#eee',
+                'color': '#eee'
+            };
+
+            if (code != null) {
+                var code_order = (Math.floor(code.order / 2));
+                if (code_order < colors.length) {
+                    css['background-color'] = colors[colors.length - code_order - 1];
+                    css['color'] = colors[colors.length - code_order - 1];
+                }
+            }
+            else {
+                css['background-color'] = colors[colors.length - 5];
+                css['color'] = colors[colors.length - 5];
+            }
+
+            return css;
+        };
+
+        $scope.buttonStyle = function(code){
+
+            var colorIndex = 0;
+            if (code.index < $scope.fullColors.length) { colorIndex = code.index;}
+            var colors = $scope.fullColors[colorIndex];
+            var color = colors[colors.length - 5];
+
+            var css = {
+                border: 'solid 1px ' + color
+            };
+
+            if (code.text == $scope.currentLabel){
+                css['background-color'] = color;
+            }
+            else {
+                css['color'] = color;
+            }
+
+            return css;
         };
 
         // load the svm results

@@ -78,10 +78,23 @@
 
         </div>
         <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
-            <div class="col-md-4 no-padding" id="feature-pane">
-                <div class="box full-height">Features go here</div>
+            <div class="no-padding" id="left-pane">
+                <div class="box full-height" id="feature-pane">
+                    <div class="box-header">user features ({$ features.user.length $})</div>
+                    <div class="feature-sort">
+                        <div class="feature-sort-label">sort by:</div>
+                        <div class="feature-sort-block">w</div>
+                        <div class="feature-sort-block">#</div>
+                        <div class="feature-sort-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)">{$ code.index $}</div>
+                    </div>
+                    <div class="feature-item" ng-repeat="feature in features.user">
+                        <div class="feature-item-word">{$ feature.word $} ({$ feature.count $})</div>
+                        <div class="feature-item-block" ng-repeat="code in codes"
+                             ng-style="codeStyle(code.index, feature.codes[code.text])">{$ code.index $}</div>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-8 no-padding">
+            <div class="no-padding" id="right-pane">
                 <div class="box" id="label-pane">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="box-header">new label</div>
@@ -89,7 +102,8 @@
                     <div class="btn-group-code" data-toggle="buttons">
                         <label class="btn btn-default" ng-repeat="code in codes"
                                    ng-click="selectLabel(code.text)"
-                                   ng-class="{'active': code.text == currentLabel}">
+                                   ng-class="{'active': code.text == currentLabel}"
+                                   ng-style="buttonStyle(code)">
                             <input type="radio" ng-attr-id="{$ 'code-' + code.index $}"
                                    name="code.text" value="code.index"/> {$ code.text $}
                         </label>
