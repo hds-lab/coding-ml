@@ -51,7 +51,6 @@
         $scope.isCurrentMessageAmbiguous = false;
         $scope.codes = undefined;
         $scope.submittedLabels = undefined;
-        $scope.displayedLabels = [];
 
         $scope.load = function(){
             var request = SVMResult.load(Dictionary.id);
@@ -68,6 +67,7 @@
                         var ambiguous = Math.random() < 0.5;
                         var partnerIndex = (Math.random() < 0.5) ? Math.floor(Math.random() * ($scope.codes.length + 1)) : -1;
                         var label = {
+                            id: i,
                             text: i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please",
                             mine: { code : codeIndex, ambiguous: ambiguous },
                             partner: partnerIndex != -1 ? { code : partnerIndex, ambiguous: (Math.random() < 0.5) } : null
@@ -103,11 +103,9 @@
         };
 
         $scope.getMessage = function() {
-            console.log("getMessage");
             usSpinnerService.spin('label-spinner');
 
             $timeout(function(){
-                console.log("gotMessage");
                 usSpinnerService.stop('label-spinner');
                 $scope.currentMessage = (new Date()) + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
                 $scope.selectLabel(null);
@@ -116,12 +114,10 @@
         };
 
         $scope.selectLabel = function(label){
-            console.log("selectLabel " + label);
             $scope.currentLabel = label;
         };
 
         $scope.submitLabel = function(){
-            console.log("submitLabel");
             $scope.getMessage();
         };
 
@@ -192,6 +188,18 @@
             return "";
         };
 
+        $scope.boxColor = function(code) {
+
+            var colorIndex = 0;
+            if (code.index < $scope.fullColors.length) {
+                colorIndex = code.index;
+            }
+            var colors = $scope.fullColors[colorIndex];
+            var color = colors[colors.length - 5];
+
+            return color;
+        };
+
         // load the svm results
         $scope.load();
 
@@ -208,52 +216,93 @@
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);
 
+    module.directive('tweetItems', function () {
+         var TweetItems = function (scope, $element, attrs) {
 
-    module.directive('datetimeFormat', function() {
-      return {
-        require: 'ngModel',
-        link: function(scope, element, attrs, ngModelController) {
-          ngModelController.$parsers.push(function(data) {
-            //convert data from view format to model format
-            data = moment.utc(data, "YYYY-MM-DD HH:mm:ss");
-            if (data.isValid()) return data.toDate();
-            else return undefined;
-          });
+            var DEFAULT_VALUE_KEY = 'value';
 
-          ngModelController.$formatters.push(function(data) {
-            //convert data from model format to view format
-              if (data !== undefined) return moment.utc(data).format("YYYY-MM-DD HH:mm:ss"); //converted
-              return data;
-          });
-        }
-      }
-    });
+            var width = 300;
+            var height = 300;
+            var heightPerCode = height / scope.codes.length;
+             var margin = 5;
 
-    module.directive('whenScrolled', function() {
-        return function(scope, element, attr) {
-            var raw = element[0];
+            var self = this;
+            var codes = scope.codes;
+            var boxColor = scope.boxColor;
+            var svg = d3.select($element[0]).append('svg')
+                .attr('width', width)
+                .attr('height', height);
 
-            var checkBounds = function(evt) {
-                if (Math.abs(raw.scrollTop + $(raw).height() - raw.scrollHeight) < 10) {
-                    scope.$apply(attr.whenScrolled);
+            var codeBox = svg.selectAll('.code')
+                .data(codes)
+                .enter()
+                .append('g')
+                .attr('class', 'code')
+                .attr('transform', function(c,i) { return 'translate(0,'+ (i * heightPerCode + margin) + ')';})
+                .attr('width', width)
+                .attr('height', heightPerCode - 2 * margin);
+
+            self.render = function (data) {
+                if (!data) {
+                    return;
                 }
 
+                var boxSize = 10;
+                var boxSpacing = 2;
+                var colCount = Math.floor((heightPerCode - 2 * margin) / (boxSize + boxSpacing));
+
+                codeBox.each(function(code){
+                    console.log(code);
+                    var box = d3.select(this);
+
+                    var labels = data.filter(function(d) { return d.mine.code == code.index; });
+                    var i = 0;
+                    var tweets = box.selectAll('.tweet-box')
+                        .data(labels, function(l) {
+                            l.index = i++;
+                            return l.id;
+                        });
+
+                    tweets.enter().append("rect")
+                        .attr("class", "tweet-box")
+                        .attr("x", function(l) {
+                            var row = Math.floor(l.index / colCount);
+                            return row * (boxSize + boxSpacing); })
+                        .attr("y", function(l) {
+                            var col = l.index % colCount;
+                            return col * (boxSize + boxSpacing);
+                        })
+                        .attr("width", boxSize)
+                        .attr("height", boxSize)
+                        .attr("fill", boxColor(code))
+                        .attr("data-item", function(l) { return JSON.stringify(l); });
+
+                    tweets.exit().remove();
+                });
             };
-            element.bind('scroll load', checkBounds);
         };
-    });
 
-    module.directive('ngEnter', function () {
-        return function (scope, element, attrs) {
-            element.bind("keydown keypress", function (event) {
-                if(event.which === 13) {
-                    scope.$apply(function (){
-                        scope.$eval(attrs.ngEnter);
-                    });
+        return {
+            restrict: 'EA',
+            scope: {
+                data: '=',
+                codes: '=',
+                boxColor: "="
+            },
+            link: function (scope, element, attrs) {
 
-                    event.preventDefault();
+                if (!scope._TweetItems) {
+                    var vis = scope._TweetItems = new TweetItems(scope, element, attrs);
+
+                    // Watch for changes to the data
+                    scope.$watch('data', function (newVals, oldVals) {
+                        return vis.render(scope.data);
+                    }, false);
+
+                } else {
+                    throw("What is this madness");
                 }
-            });
+            }
         };
     });
 })();
