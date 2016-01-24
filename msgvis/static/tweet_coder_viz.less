@@ -72,15 +72,29 @@ th:hover{
 }
 #right-pane {
     position:absolute;
-    left: 365px;
-    right: 25px;
-    top:65px;
-    bottom:20px;
+    padding: 5px;
+    left: 360px;
+    right: 20px;
+    top:60px;
+    bottom: 5px;
     overflow-y:hidden;
+}
+#label-pane {
+    height:213px;
 }
 #review-pane {
     overflow-y: auto;
-    height:100%;
+    height:~'calc(100% - 233px)';
+    width:~'calc(100% - 330px)';
+    float: left;
+    margin: 0;
+}
+#summary-pane {
+    padding-left: 10px;
+    width: 320px;
+    height:~'calc(100% - 233px)';
+    float: right;
+    margin: 0;
 }
 .full-height {
     height: 100%;
@@ -105,12 +119,14 @@ th:hover{
     font-size: 2em;
     font-weight: 300;
     margin: 10px 0;
+    height: 68px;
 }
 .btn {
     border-radius: 0;
 }
 .btn-group-code{
     margin: 10px 0;
+    height: 34px;
 }
 .btn-group-code > .btn {
     margin-right: 15px;

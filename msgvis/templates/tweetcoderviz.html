@@ -116,47 +116,50 @@
                     </div>
                 </div>
                 <div class="box" id="review-pane">
-                <div class="box-header">submitted labels</div>
-                <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
-                <table st-table="displayedLabels" st-safe-src="submittedLabels" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th st-sort="text">Text</th>
-                            <th ng-attr-st-sort="{$ code.text $}" ng-repeat="code in codes">
-                                {$ code.text $}
-                            </th>
-                            <th st-sort="ambiguous">Ambiguous</th>
-                        </tr>
-                        <tr>
-                            <th>
-                                <input st-search="text" placeholder="search for text" class="input-sm form-control" type="search"/>
-                            </th>
-                            <th ng-repeat="code in codes">
-                                <input ng-attr-st-search="{$ code.text $}"
-                                       ng-attr-placeholder="{$ code.text $}"
-                                       class="input-sm form-control" type="search"/>
-                            </th>
-                            <th>
-                                <select st-search="ambiguous" placeholder="search for ambiguous" class="input-sm form-control"
-                                       type="search">
-                                    <option value="">All</option>
-                                    <option value="true">true</option>
-                                    <option value="false">false</option>
-                                </select>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="label in displayedLabels">
-                            <td>{$ label.text $}</td>
-                            <td ng-repeat="code in codes">
-                                {$ label[code.text] $}
-                            </td>
-                            <td>{$ label.ambiguous $}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    <div class="box-header">submitted labels</div>
+                    <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
+                    <table st-table="displayedLabels" st-safe-src="submittedLabels" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th st-sort="text">Text</th>
+                                <th ng-attr-st-sort="{$ code.text $}" ng-repeat="code in codes">
+                                    {$ code.text $}
+                                </th>
+                                <th st-sort="ambiguous">Ambiguous</th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <input st-search="text" placeholder="search for text" class="input-sm form-control" type="search"/>
+                                </th>
+                                <th ng-repeat="code in codes">
+                                    <input ng-attr-st-search="{$ code.text $}"
+                                           ng-attr-placeholder="{$ code.text $}"
+                                           class="input-sm form-control" type="search"/>
+                                </th>
+                                <th>
+                                    <select st-search="ambiguous" placeholder="search for ambiguous" class="input-sm form-control"
+                                           type="search">
+                                        <option value="">All</option>
+                                        <option value="true">true</option>
+                                        <option value="false">false</option>
+                                    </select>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="label in displayedLabels">
+                                <td>{$ label.text $}</td>
+                                <td ng-repeat="code in codes">
+                                    {$ label[code.text] $}
+                                </td>
+                                <td>{$ label.ambiguous $}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="box" id="summary-pane">
+                    <div class="box-header">overview</div>
+                </div>
             </div>
         </div>
 </div>
