@@ -66,14 +66,12 @@
                     for (var i = 0; i < 100; i++){
                         var codeIndex = Math.floor(Math.random() * ($scope.codes.length + 1));
                         var ambiguous = Math.random() < 0.5;
+                        var partnerIndex = (Math.random() < 0.5) ? Math.floor(Math.random() * ($scope.codes.length + 1)) : -1;
                         var label = {
                             text: i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please",
-                            ambiguous: ambiguous.toString()
+                            mine: { code : codeIndex, ambiguous: ambiguous },
+                            partner: partnerIndex != -1 ? { code : partnerIndex, ambiguous: (Math.random() < 0.5) } : null
                         };
-
-                        $scope.codes.forEach(function(c) {
-                            label[c.text] = (c.index == codeIndex ? "X" : "");
-                        });
 
                         $scope.submittedLabels.push(label);
                     }
@@ -172,6 +170,26 @@
             }
 
             return css;
+        };
+
+        $scope.labelStyle = function(label) {
+
+            if (label) {
+                var colorIndex = 0;
+                if (label.code < $scope.fullColors.length) {
+                    colorIndex = label.code;
+                }
+                var colors = $scope.fullColors[colorIndex];
+                var color = colors[colors.length - 5];
+
+                var css = {
+                    'background-color': color,
+                    'color': label.ambiguous ? 'white' : color
+                };
+
+                return css;
+            }
+            return "";
         };
 
         // load the svm results

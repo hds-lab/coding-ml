@@ -83,11 +83,16 @@ th:hover{
     height:213px;
 }
 #review-pane {
-    overflow-y: auto;
     height:~'calc(100% - 233px)';
     width:~'calc(100% - 330px)';
     float: left;
     margin: 0;
+}
+#labels {
+    overflow-y: auto;
+    height: ~'calc(100% - 74px)';
+    margin: 0;
+    margin-bottom: 10px;
 }
 #summary-pane {
     padding-left: 10px;
@@ -184,27 +189,36 @@ th:hover{
     background-color: #fee0d2;
 }
 
-.feature-sort {
+.feature-sort, .label-filter {
     margin: 0;
     margin-top:10px;
     margin-bottom:5px;
 }
-.feature-sort .feature-sort-label {
+.feature-sort .feature-sort-label, .label-filter .label-filter-label {
     width: 80px;
-    heigt: 15px;
+    heigt: 17px;
     font-weight:300;
     display: inline-block;
 }
-.feature-sort .feature-sort-block {
+.feature-sort .feature-sort-block, .label-filter .label-filter-block{
     background-color: #777;
     width: 30px;
-    height: 15px;
+    height: 17px;
     display: inline-block;
     font-weight:600;
     color:white;
     text-align: center;
 }
 
+.label-filter .label-filter-type {
+    background-color: #777;
+    padding: 0 10px;
+    height: 17px;
+    display: inline-block;
+    font-weight:600;
+    color:white;
+    text-align: center;
+}
 .feature-item {
     background-color: #eee;
     width: 300px;
@@ -227,4 +241,31 @@ th:hover{
     font-weight:300;
     height: 45px;
     display: inline-block;
+}
+
+.label-item {
+    background-color: #eee;
+    height: 60px;
+    margin: 5px 0;
+}
+
+.label-item .label-item-text {
+    width: ~'calc(100% - 30px)';
+    padding: 10px;
+    font-weight: 300;
+    font-size: 1.2em;
+    height: 60px;
+    display: inline-block;
+}
+
+.label-item .label-item-label {
+    width: 30px;
+    height: 60px;
+    text-align: center;
+    font-size: 1.7em;
+    font-weight: 600;
+}
+.label-item .label-item-label.label-split {
+    width: 30px;
+    height: 30px;
 }
