@@ -114,39 +114,10 @@
                 usSpinnerService.spin('vector-spinner');
                 request.then(function() {
                     usSpinnerService.stop('vector-spinner');
-                    $scope.vector = FeatureVector.data;
 
-                    // TODO (jinasuh): Replace with actual data from service
-                    var text = "RT @iNialls_Girl: R.I.P. to the 8 year old boy who died in Bostons explosions, while running for the Sandy Hook kids. #PrayForBoston ht ...";
+                    var text = FeatureVector.data.message.text;
                     var characters = text.split("");
-
-                    var tokens = ["rt",
-                                "@inialls_girl",
-                                ":",
-                                "r.i.p.",
-                                "to",
-                                "the",
-                                "8",
-                                "year",
-                                "old",
-                                "boy",
-                                "who",
-                                "died",
-                                "in",
-                                "bostons",
-                                "explosions",
-                                ",",
-                                "while",
-                                "running",
-                                "for",
-                                "the",
-                                "sandy",
-                                "hook",
-                                "kids",
-                                ".",
-                                "#prayforboston",
-                                "ht",
-                                "..."];
+                    var tokens = FeatureVector.data.tokens;
 
                     var tokenItems = [];
                     var charToToken = [];
@@ -179,7 +150,7 @@
                         }
                     }
 
-                    $scope.vector.message.text = text;
+                    $scope.vector = FeatureVector.data;
                     $scope.vector.message.tokens = tokenItems;
                     $scope.vector.message.characters = characters;
                     $scope.vector.message.charToToken = charToToken;
