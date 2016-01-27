@@ -653,7 +653,7 @@ class TweetWord(models.Model):
     original_text = base_models.Utf8CharField(max_length=100, db_index=True, blank=True, default="")
     pos = models.CharField(max_length=4, null=True, blank=True, default="")
     text = base_models.Utf8CharField(max_length=100, db_index=True, blank=True, default="")
-    messages = models.ManyToManyField(Message, related_name='tweet_words')
+    messages = models.ManyToManyField(Message, related_name='tweet_words', through="TweetWordMessageConnection")
 
     def __repr__(self):
         return self.text
@@ -671,7 +671,13 @@ class TweetWord(models.Model):
         queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_words)))
         return queryset
 
+class TweetWordMessageConnection(models.Model):
+    message = models.ForeignKey(Message)
+    tweet_word = models.ForeignKey(TweetWord)
+    order = models.IntegerField()
 
+    class Meta:
+        ordering = ["order"]
 
 class PrecalcCategoricalDistribution(models.Model):
     dataset = models.ForeignKey(Dataset, related_name="distributions", null=True, blank=True, default=None)

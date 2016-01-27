@@ -1,6 +1,6 @@
 import logging
 
-from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution
+from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution, TweetWordMessageConnection
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs
 import re
@@ -311,6 +311,7 @@ def import_from_tweet_parser_results(dataset_id, filename):
     current_msg = None
     word_list = []
     count = 0
+    order = 0
     with codecs.open(filename, encoding='utf-8', mode='r') as f:
         print "Reading file %s" % filename
 
@@ -319,9 +320,10 @@ def import_from_tweet_parser_results(dataset_id, filename):
             if re.search("ID=(\d+)", line):
                 # save the previous word list
                 if len(word_list) > 0:
-                    current_msg.tweet_words.add(*word_list)
+                    TweetWordMessageConnection.objects.bulk_create(word_list)
                     word_list = []
                     count += 1
+                    order = 0
                     if count % 1000 == 0:
                         print "Processed %d messages" % count
                         print "Time: %.2fs" % (time() - start)
@@ -344,10 +346,12 @@ def import_from_tweet_parser_results(dataset_id, filename):
                     continue
                 else:
                     word_obj, created = TweetWord.objects.get_or_create(dataset_id=dataset_id, original_text=original_text, pos=pos, text=text)
-                    word_list.append(word_obj)
+
+                    order += 1
+                    word_list.append(TweetWordMessageConnection(message=current_msg, tweet_word=word_obj, order=order))
         # save the previous word list
         if len(word_list) > 0:
-            current_msg.tweet_words.add(*word_list)
+            TweetWordMessageConnection.objects.bulk_create(word_list)
             count += 1
             word_list = []
         print "Processed %d messages" % count

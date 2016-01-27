@@ -64,6 +64,7 @@ class SVMResultSerializer(serializers.Serializer):
 
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
+    tokens = serializers.ListField()
     feature_vector = serializers.ListField()
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
