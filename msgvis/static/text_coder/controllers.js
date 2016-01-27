@@ -124,7 +124,7 @@
 
                     var lowerText = text.toLowerCase();
                     var currentIndex = 0;
-                    for (var i = 0; i < tokens.length; i++)
+                    for (var i = 0; i < tokens.length / 2; i++)
                     {
                         var token = tokens[i];
                         if (token != null && token.length > 0)
