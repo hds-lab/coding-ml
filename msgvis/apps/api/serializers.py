@@ -84,5 +84,5 @@ class DictionarySerializer(serializers.ModelSerializer):
     dataset = DatasetSerializer()
     class Meta:
         model = enhance_models.Dictionary
-        fields = ('id', 'name', 'time', 'word_count', 'dataset', )
-        read_only_fields = ('id', 'name', 'time', 'word_count', 'dataset', )
+        fields = ('id', 'name', 'time', 'word_count', 'feature_count', 'dataset', )
+        read_only_fields = ('id', 'name', 'time', 'word_count', 'feature_count', 'dataset', )

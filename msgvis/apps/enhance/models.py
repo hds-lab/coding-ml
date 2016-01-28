@@ -42,6 +42,10 @@ class Dictionary(models.Model):
         return self.words.count()
 
     @property
+    def feature_count(self):
+        return self.features.count()
+
+    @property
     def gensim_dictionary(self):
         if not hasattr(self, '_gensim_dict'):
             setattr(self, '_gensim_dict', self._make_gensim_dictionary())
@@ -143,6 +147,135 @@ class Dictionary(models.Model):
         dict_model._populate_from_gensim_dictionary(dictionary)
 
         return dict_model
+
+    # TODO: generalize bigram, trigram
+    def _create_features_from_texts(self, dict_model, tokenized_texts, name, queryset, minimum_frequency=2):
+        from gensim.corpora import Dictionary as GensimDictionary
+        from gensim.models import Phrases        
+
+        tokenized_texts_trigrams = []
+
+        bigram = Phrases()
+        for t in tokenized_texts:
+            bigram.add_vocab([t])
+
+        trigram = Phrases(bigram[tokenized_texts])  
+
+        for t in tokenized_texts:
+            trigram.add_vocab([bigram[t]])
+
+        for t in tokenized_texts:
+            tokenized_texts_trigrams.append(trigram[bigram[t]])
+
+        # build a dictionary of features
+        logger.info("Creating features (including n-grams) from texts")
+        dictionary = GensimDictionary(tokenized_texts_trigrams)
+
+        # Remove extremely rare features
+        logger.info("Features dictionary contains %d features. Filtering..." % len(dictionary.token2id))
+        dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
+        dictionary.compactify()
+        logger.info("Features Dictionary contains %d features." % len(dictionary.token2id))
+
+        dict_model._populate_features_from_gensim_dictionary(dictionary)
+        dict_model._vectorize_features_from_gensim_dictionary(dictionary, queryset, tokenized_texts, trigram, bigram)
+
+        return dict_model
+
+    def _populate_features_from_gensim_dictionary(self, gensim_dict):
+
+        logger.info("Saving gensim dictionary of features '%s' in the database" % self.name)
+
+        batch = []
+        count = 0
+        print_freq = 10000
+        batch_size = 1000
+        total_features = len(gensim_dict.token2id)
+
+        for token, id in gensim_dict.token2id.iteritems():
+            feature = Feature(dictionary=self,
+                        text=token,
+                        index=id,
+                        document_frequency=gensim_dict.dfs[id])
+            batch.append(feature)
+            count += 1
+
+            if len(batch) > batch_size:
+                Feature.objects.bulk_create(batch)
+                batch = []
+
+                if settings.DEBUG:
+                    # prevent memory leaks
+                    from django.db import connection
+
+                    connection.queries = []
+
+            if count % print_freq == 0:
+                logger.info("Saved %d / %d features in the database dictionary" % (count, total_features))
+
+        if len(batch):
+            Feature.objects.bulk_create(batch)
+            count += len(batch)
+
+            logger.info("Saved %d / %d features in the database dictionary" % (count, total_features))
+
+        return self
+
+    def _vectorize_features_from_gensim_dictionary(self, gdict, queryset, tokenizer, trigram, bigram):
+
+        import math
+
+        logger.info("Saving document features vectors in corpus.")
+
+        total_documents = self.num_docs
+        count = 0
+        total_count = queryset.count()
+        batch = []
+        batch_size = 1000
+        print_freq = 10000
+
+        for msg in queryset.iterator():
+            tokens_raw = tokenizer.tokenize(msg)
+            tokens = trigram[bigram[tokens_raw]]
+            bow = gdict.doc2bow(tokens)
+
+            for feature_index, feature_freq in bow:
+                feature_id = Feature.objects.filter(index=feature_index).first()
+
+                document_freq = gdict.dfs[feature_index]
+
+                # Not sure why tf is calculated like the final version
+                num_tokens = len(tokens)
+                tf = float(feature_freq) / float(num_tokens)
+                idf = math.log(total_documents / document_freq)
+                tfidf = tf * idf
+                #tfidf = word_freq * math.log(total_documents / document_freq)
+                batch.append(MessageFeature(dictionary=self,
+                                         feature=feature_id,
+                                         feature_index=feature_index,
+                                         count=feature_freq,
+                                         tfidf=tfidf,
+                                         message=msg))
+            count += 1
+
+            if len(batch) > batch_size:
+                MessageFeature.objects.bulk_create(batch)
+                batch = []
+
+                if settings.DEBUG:
+                    # prevent memory leaks
+                    from django.db import connection
+
+                    connection.queries = []
+
+            if count % print_freq == 0:
+                logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        if len(batch):
+            MessageFeature.objects.bulk_create(batch)
+            logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        logger.info("Created %d feature vector entries" % count)
 
     def _vectorize_corpus(self, queryset, tokenizer):
 
@@ -331,7 +464,7 @@ class Dictionary(models.Model):
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        feature_num = self.words.count()
+        feature_num = self.features.count()
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
@@ -364,8 +497,8 @@ class Dictionary(models.Model):
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.filter(dictionary=self).all():
-                data['training']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            for feature in msg.feature_scores.filter(dictionary=self).all():
+                data['training']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
             data['training']['y'].append(code_id)
@@ -373,8 +506,8 @@ class Dictionary(models.Model):
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.filter(dictionary=self).all():
-                data['testing']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            for feature in msg.feature_scores.filter(dictionary=self).all():
+                data['testing']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
             data['testing']['y'].append(code_id)
@@ -390,10 +523,10 @@ class Dictionary(models.Model):
             data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
             data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
 
-        for word in self.words.all().order_by('index'):
-            data['meta']['features'].append({'index': word.index,
-                                          'text': word.text,
-                                          'count': word.document_frequency})
+        for feature in self.features.all().order_by('index'):
+            data['meta']['features'].append({'index': feature.index,
+                                          'text': (feature.text).replace("_", " "),
+                                          'count': feature.document_frequency})
 
         return data
 
@@ -502,27 +635,27 @@ class Dictionary(models.Model):
                 order[code['index']][item[0]] = idx
 
 
-        for word in data['meta']['features']:
+        for feature in data['meta']['features']:
             in_top_features = 0
 
             row = {
-                'word_index': word['index'],
-                'word': word['text'],
-                'count': word['count'],
+                'feature_index': feature['index'],
+                'feature': feature['text'],
+                'count': feature['count'],
                 'codes': {}
             }
 
             for idx, code in enumerate(data['meta']['codes']):
                 row['codes'][code['text']] = {
-                    'weight': lin_clf.coef_[code['index']][word['index']],
-                    'mean': data['training']['mean'][code['index']][word['index']],
-                    'var': data['training']['var'][code['index']][word['index']],
-                    'order': order[code['index']][word['index']]
+                    'weight': lin_clf.coef_[code['index']][feature['index']],
+                    'mean': data['training']['mean'][code['index']][feature['index']],
+                    'var': data['training']['var'][code['index']][feature['index']],
+                    'order': order[code['index']][feature['index']]
                 }
-                max_domain = data['training']['mean'][code['index']][word['index']] + 3 * math.sqrt(data['training']['var'][code['index']][word['index']])
+                max_domain = data['training']['mean'][code['index']][feature['index']] + 3 * math.sqrt(data['training']['var'][code['index']][feature['index']])
                 if max_domain > results['codes'][idx]['domain'][1]:
                    results['codes'][idx]['domain'][1] = max_domain
-                in_top_features += 1 if order[code['index']][word['index']] < 20 else 0
+                in_top_features += 1 if order[code['index']][feature['index']] < 20 else 0
             row['in_top_features'] = in_top_features
 
             results['features'].append(row)
@@ -536,6 +669,20 @@ class Word(models.Model):
     document_frequency = models.IntegerField()
 
     messages = models.ManyToManyField(Message, through='MessageWord', related_name='words')
+
+    def __repr__(self):
+        return self.text
+
+    def __unicode__(self):
+        return self.__repr__()
+
+class Feature(models.Model):
+    dictionary = models.ForeignKey(Dictionary, related_name='features')
+    index = models.IntegerField()
+    text = base_models.Utf8CharField(max_length=150)
+    document_frequency = models.IntegerField()
+
+    messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
 
     def __repr__(self):
         return self.text
@@ -620,6 +767,30 @@ class MessageWord(models.Model):
             return"%d:%f" %(int(self.word_id), float(self.tfidf))
         else:
             return"%d:%f" %(int(self.word_id), float(self.count))
+
+class MessageFeature(models.Model):
+    class Meta:
+        index_together = (
+            ('message', 'feature'),
+        )
+
+    dictionary = models.ForeignKey(Dictionary, db_index=False)
+
+    feature = models.ForeignKey(Feature, related_name="message_scores")
+    message = models.ForeignKey(Message, related_name='feature_scores', db_index=False)
+
+    feature_index = models.IntegerField()
+    count = models.FloatField()
+    tfidf = models.FloatField()
+
+    def to_tuple(self, use_tfidf=True):
+        return (self.feature_index, self.tfidf) if use_tfidf else (self.dic_token_index, self.count)
+
+    def to_libsvm_tuple(self, use_tfidf=True):
+        if use_tfidf:
+            return"%d:%f" %(int(self.feature_id), float(self.tfidf))
+        else:
+            return"%d:%f" %(int(self.feature_id), float(self.count))
 
 
 class MessageTopic(models.Model):
