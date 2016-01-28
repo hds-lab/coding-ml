@@ -81,11 +81,15 @@
             <div class="no-padding" id="left-pane">
                 <div class="box full-height" id="feature-pane">
                     <div class="box-header">user features ({$ features.user.length $})</div>
-                    <div class="feature-sort">
+                    <div class="feature-sort noselect">
                         <div class="feature-sort-label">sort by:</div>
-                        <div class="feature-sort-block">w</div>
-                        <div class="feature-sort-block">#</div>
-                        <div class="feature-sort-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)">{$ code.index $}</div>
+                        <div class="feature-sort-block" ng-click="sortUserFeatures('word')" ng-class="{ 'selected': userFeatureSortKey == 'word'}">
+                            w<span class="caret" ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
+                        <div class="feature-sort-block" ng-click="sortUserFeatures('count')" ng-class="{ 'selected': userFeatureSortKey == 'count'}">
+                            #<span class="caret" ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
+                        <div class="feature-sort-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)"
+                            ng-click="sortUserFeatures(code.text)" ng-class="{ 'selected': userFeatureSortKey == code.text}">
+                            {$ code.index $}<span class="caret"  ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
                     </div>
                     <div class="feature-item" ng-repeat="feature in features.user">
                         <div class="feature-item-word">{$ feature.word $} ({$ feature.count $})</div>

@@ -208,6 +208,28 @@ th:hover{
     font-weight:600;
     color:white;
     text-align: center;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.feature-sort .feature-sort-block > span {
+    display: none;
+    color: white;
+}
+
+.feature-sort .feature-sort-block > span.rotate {
+    -ms-transform: rotate(180deg); /* IE 9 */
+    -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
+    transform: rotate(180deg);
+}
+
+.feature-sort .feature-sort-block.selected {
+    opacity: 1;
+    color: white;
+}
+
+.feature-sort .feature-sort-block.selected > span {
+    display: inherit;
 }
 
 .label-filter .label-filter-type {
@@ -238,7 +260,7 @@ th:hover{
     width: 30px;
     padding: 10px;
     font-size: 1.5em;
-    font-weight:300;
+    font-weight: 300;
     height: 45px;
     display: inline-block;
 }
@@ -268,4 +290,13 @@ th:hover{
 .label-item .label-item-label.label-split {
     width: 30px;
     height: 30px;
+}
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* IE/Edge */
+  user-select: none;           /* non-prefixed version, currently
+                                  not supported by any browser */
 }

@@ -32,6 +32,15 @@
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
     var ViewController = function ($scope, $timeout, Dictionary, SVMResult, usSpinnerService) {
+
+        var sortOption_None = 0;
+        var sortOption_Ascending = 1;
+        var sortOption_Descending = 2;
+
+        var toggleSort = function(previousSortOption){
+            return (previousSortOption+1) % 3;
+        }
+
         $scope.fullColors =
             [["#f6faea","#e5f1c0","#d4e897","#bada58","#98bc29","#769220","#556817","#333f0e","#222a09"],
             ["#f4eef6","#dfcde4","#bf9cc9","#aa7bb7","#865195","#683f74","#4a2d53","#35203b","#1e1221"],
@@ -46,13 +55,21 @@
             color: "#000000"
         };
 
+        // Labeling pane
         $scope.currentMessage = undefined;
         $scope.currentLabel = undefined;
         $scope.isCurrentMessageAmbiguous = false;
         $scope.codes = undefined;
+
+        // review pane
         $scope.submittedLabels = undefined;
 
-        $scope.load = function(){
+        // feature pane
+        $scope.features = undefined;
+        $scope.userFeatureSortKey = undefined;
+        $scope.userFeatureSortOption = sortOption_None;
+
+        var load = function(){
             var request = SVMResult.load(Dictionary.id);
             if (request) {
                 usSpinnerService.spin('table-spinner');
@@ -86,7 +103,8 @@
                         var feature = {
                             word: "feature" + i,
                             count: Math.floor(Math.random() * 30) + 1,
-                            codes: []
+                            codes: [],
+                            index: i
                         };
 
                         $scope.codes.forEach(function(c) {
@@ -102,7 +120,7 @@
             }
         };
 
-        $scope.getMessage = function() {
+        var getMessage = function() {
             usSpinnerService.spin('label-spinner');
 
             $timeout(function(){
@@ -121,7 +139,38 @@
             $scope.getMessage();
         };
 
-        $scope.codeStyle = function(codeIndex, code){
+        $scope.sortUserFeatures = function(key){
+            // Check if the sort key has changed
+            if ($scope.userFeatureSortKey == key){
+                $scope.userFeatureSortOption = toggleSort($scope.userFeatureSortOption);
+            }
+            else {
+                $scope.userFeatureSortKey = key;
+                $scope.userFeatureSortOption = sortOption_Ascending;
+            }
+
+            if ($scope.userFeatureSortOption == sortOption_None) {
+                $scope.userFeatureSortKey = undefined;
+                $scope.features.user.sort(function (a, b) {
+                    return a.index - b.index;
+                });
+            }
+            else {
+                $scope.features.user.sort(function (a, b) {
+                    var sign = $scope.userFeatureSortOption == sortOption_Ascending ? 1 : -1;
+                    switch ($scope.userFeatureSortKey) {
+                        case "word":
+                            return sign * ((a.word.toLowerCase() <= b.word.toLowerCase()) ? -1 : 1);
+                        case "count":
+                            return sign * (a.count - b.count);
+                        default:
+                            return sign * (a.codes[$scope.userFeatureSortKey].weight - b.codes[$scope.userFeatureSortKey].weight);
+                    }
+                });
+            }
+        }
+
+        $scope.codeStyle = function(codeIndex, code, selected){
 
             var colorIndex = 0;
             if (codeIndex < $scope.fullColors.length) { colorIndex = codeIndex;}
@@ -201,10 +250,10 @@
         };
 
         // load the svm results
-        $scope.load();
+        load();
 
         // fetch a message to label
-        $scope.getMessage();
+        getMessage();
     };
 
     ViewController.$inject = [
@@ -252,7 +301,6 @@
                 var colCount = Math.floor((heightPerCode - 2 * margin) / (boxSize + boxSpacing));
 
                 codeBox.each(function(code){
-                    console.log(code);
                     var box = d3.select(this);
 
                     var labels = data.filter(function(d) { return d.mine.code == code.index; });
