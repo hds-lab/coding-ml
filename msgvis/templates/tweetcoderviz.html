@@ -102,7 +102,14 @@
                 <div class="box" id="label-pane">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="box-header">new label</div>
-                    <div class="tweet-main">{$ currentMessage $}</div>
+                    <div class="tweet-main">
+                        <span ng-repeat="char in currentMessage.characters track by $index" class="ng-class:'char-'+$index;"
+                           ng-mouseenter="onCharMouseEnter($index)"
+                           ng-mouseleave="onCharMouseLeave($index)"
+                           ng-mousedown="onCharMouseDown($index, $event)"
+                           ng-mouseup="onCharMouseUp($index, $event)"
+                           ng-style="charStyle($index)">{$char$}</span>
+                    </div>
                     <div class="btn-group-code" data-toggle="buttons">
                         <label class="btn btn-default" ng-repeat="code in codes"
                                    ng-click="selectLabel(code.text)"

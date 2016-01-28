@@ -31,7 +31,7 @@
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, $timeout, Dictionary, SVMResult, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
 
         var sortOption_None = 0;
         var sortOption_Ascending = 1;
@@ -39,7 +39,7 @@
 
         var toggleSort = function(previousSortOption){
             return (previousSortOption+1) % 3;
-        }
+        };
 
         $scope.fullColors =
             [["#f6faea","#e5f1c0","#d4e897","#bada58","#98bc29","#769220","#556817","#333f0e","#222a09"],
@@ -70,6 +70,13 @@
         $scope.features = undefined;
         $scope.userFeatureSortKey = undefined;
         $scope.userFeatureSortOption = sortOption_None;
+
+        // Feature selection logic and states
+        $scope.hoveredCharStart = -1;
+        $scope.hoveredCharEnd = -1;
+        $scope.clickStartTokenItem = undefined;
+        $scope.selectedTokens = undefined;
+        $scope.selectedTokenIndices = new Map();
 
         var load = function(){
             var request = SVMResult.load(Dictionary.id);
@@ -124,15 +131,58 @@
             }
         };
 
-        var getMessage = function() {
+        var getMessage = function(){
+            var request = FeatureVector.load(128);
+            if (request) {
             usSpinnerService.spin('label-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('label-spinner');
 
-            $timeout(function(){
-                usSpinnerService.stop('label-spinner');
-                $scope.currentMessage = (new Date()) + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
-                $scope.selectLabel(null);
-                $scope.isCurrentMessageAmbiguous = false;
-            }, 1000);
+                    var text = FeatureVector.data.message.text;
+                    var characters = text.split("");
+                    var tokens = FeatureVector.data.tokens;
+
+                    var tokenItems = [];
+                    var charToToken = [];
+
+                    var lowerText = text.toLowerCase();
+                    var currentIndex = 0;
+                    for (var i = 0; i < tokens.length / 2; i++)
+                    {
+                        var token = tokens[i];
+                        if (token != null && token.length > 0)
+                        {
+                            var foundIndex = lowerText.substr(currentIndex).indexOf(token) + currentIndex;
+
+                            var tokenItem = {
+                                text: token,
+                                index: i
+                            };
+
+                            currentIndex = foundIndex;
+                            tokenItem.startIndex = currentIndex;
+                            currentIndex += token.length - 1;
+                            tokenItem.endIndex = currentIndex;
+
+                            tokenItems.push(tokenItem);
+
+                            for (var j = tokenItem.startIndex; j <= tokenItem.endIndex; j++)
+                            {
+                                charToToken[j] = i;
+                            }
+                        }
+                    }
+
+                    $scope.currentMessage = {
+                        text: text,
+                        tokens: tokenItems,
+                        characters: characters,
+                        charToToken: charToToken
+                    };
+                    $scope.selectLabel(null);
+                    $scope.isCurrentMessageAmbiguous = false;
+                });
+            }
         };
 
         $scope.selectLabel = function(label){
@@ -196,7 +246,148 @@
                     }
                 });
             }
-        }
+        };
+
+        var updateSelection = function(startIndex, endIndex, isSelected, shouldClear) {
+            if (shouldClear) {
+                $scope.selectedTokenIndices.clear();
+            }
+
+            for (var i = startIndex; i <= endIndex; i++) {
+                var existing = $scope.selectedTokenIndices.get(i);
+                if (existing == i && !isSelected) {
+                    $scope.selectedTokenIndices.delete(i);
+                }
+                else if (existing != i && isSelected) {
+                    $scope.selectedTokenIndices.set(i, i);
+                }
+            }
+        };
+
+        var isTokenSelectedAtCharIndex = function (charIndex){
+            if ($scope.currentMessage) {
+                var tokenIndex = $scope.currentMessage.charToToken[charIndex];
+                if (tokenIndex != undefined && $scope.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $scope.onCharMouseEnter = function(charIndex){
+            //console.log("onCharMouseEnter:" + charIndex);
+
+            if ($scope.currentMessage){
+                var tokenIndex = $scope.currentMessage.charToToken[charIndex];
+
+                if (tokenIndex != undefined && $scope.currentMessage.tokens[tokenIndex] != undefined) {
+                    var tokenItem = $scope.currentMessage.tokens[tokenIndex];
+                    $scope.hoveredCharStart = tokenItem.startIndex;
+                    $scope.hoveredCharEnd = tokenItem.endIndex;
+
+                    // If we're in the middle of selection, update selected char indices
+                    if ($scope.clickStartTokenItem != undefined) {
+
+                        var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                        if (tokenIndex < $scope.clickStartTokenItem.index) {
+                            updateSelection(tokenIndex, $scope.clickStartTokenItem.index, true, !ctrlClick);
+                        }
+                        else if (tokenIndex > $scope.clickStartTokenItem.index) {
+                            updateSelection($scope.clickStartTokenItem.index, tokenIndex, true, !ctrlClick);
+                        }
+                    }
+                }
+                else {
+                    $scope.hoveredCharStart = -1;
+                    $scope.hoveredCharEnd = -1;
+                }
+            }
+        };
+
+        $scope.onCharMouseLeave = function(charIndex){
+            //console.log("onCharMouseLeave:" + charIndex);
+
+            $scope.hoveredCharStart = -1;
+            $scope.hoveredCharEnd = -1;
+        };
+
+        $scope.onCharMouseDown = function(charIndex, event){
+            //console.log("onCharMouseDown:" + charIndex);
+
+            if ($scope.currentMessage) {
+
+                var tokenIndex = $scope.currentMessage.charToToken[charIndex];
+
+                if (tokenIndex != undefined && $scope.currentMessage.tokens[tokenIndex] != undefined) {
+
+                    var tokenItem = $scope.currentMessage.tokens[tokenIndex];
+
+                    var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                    // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
+                    // clear the selection on this token index
+                    if ($scope.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
+                        $scope.clickStartTokenItem = undefined;
+                        updateSelection(tokenIndex, tokenIndex, false, false);
+                    }
+                    else {
+                        $scope.clickStartTokenItem = tokenItem;
+                        updateSelection(tokenIndex, tokenIndex, true, !ctrlClick);
+                    }
+                }
+                else {
+                    $scope.clickStartTokenItem = undefined;
+                    $scope.selectedTokenIndices.clear();
+                }
+            }
+        };
+
+        $scope.onCharMouseUp = function(charIndex) {
+            $scope.clickStartTokenItem = undefined;
+            $scope.selectedTokens = undefined;
+
+            if ($scope.selectedTokenIndices.size > 0) {
+                if ($scope.currentMessage) {
+
+                    // Get sorted list of selected token indices
+                    var indices = [];
+                    $scope.selectedTokenIndices.forEach(function (val) {
+                        indices.push(val);
+                    });
+                    indices.sort(function (a, b) {
+                        return a - b;
+                    });
+
+                    var tokens = [];
+                    var currentTokenIndex = -1;
+                    for (var i = 0; i < indices.length; i++) {
+                        var tokenIndex = indices[i];
+
+                        if (tokenIndex != currentTokenIndex) {
+                            tokens.push($scope.currentMessage.tokens[tokenIndex].text);
+                            currentTokenIndex = tokenIndex;
+                        }
+                    }
+
+                    $scope.selectedTokens = tokens;
+                }
+            }
+        };
+
+        $scope.charStyle = function(charIndex) {
+            var style = {};
+            if (charIndex >= $scope.hoveredCharStart && charIndex <= $scope.hoveredCharEnd) {
+                style["background"] = "#ffcc99";
+            }
+
+
+            if (isTokenSelectedAtCharIndex(charIndex) || (isTokenSelectedAtCharIndex(charIndex - 1) && isTokenSelectedAtCharIndex(charIndex + 1))) {
+                style["background"] = "#ff6600";
+            }
+            return style;
+        };
 
         $scope.codeStyle = function(codeIndex, code, selected){
 
@@ -289,6 +480,7 @@
         '$timeout',
         'TweetCoderViz.services.Dictionary',
         'TweetCoderViz.services.SVMResult',
+        'TweetCoderViz.services.FeatureVector',
         'usSpinnerService'
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);
