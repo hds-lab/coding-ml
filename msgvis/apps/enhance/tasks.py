@@ -380,25 +380,6 @@ def import_from_tweet_parser_results(dataset_id, filename):
         print "Processed %d messages" % count
         print "Time: %.2fs" % (time() - start)
 
-def precalc_categorical_dimension(dataset_id=1, dimension_key=None):
-    datatable = datatable_models.DataTable(primary_dimension=dimension_key)
-    dataset = Dataset.objects.get(id=dataset_id)
-
-    # remove existing calculation
-    PrecalcCategoricalDistribution.objects.filter(dataset=dataset, dimension_key=dimension_key).delete()
-
-    result = datatable.generate(dataset)
-    bulk = []
-    for bucket in result["table"]:
-        level = bucket[dimension_key]
-        if level is None:
-            level = ""
-        count = bucket["value"]
-        obj = PrecalcCategoricalDistribution(dataset=dataset, dimension_key=dimension_key, level=level, count=count)
-        bulk.append(obj)
-
-    PrecalcCategoricalDistribution.objects.bulk_create(objs=bulk, batch_size=10000)
-
 
 def dump_tweets(dataset_id, save_path):
     dataset = Dataset.objects.get(id=dataset_id)

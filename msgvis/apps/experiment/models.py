@@ -46,8 +46,8 @@ class Experiment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     """The experiment created time"""
 
-    dataset = models.ForeignKey(corpus_models.Dataset, related_name='groups')
-    """Which :class:`corpus_models.Dataset` this experiment uses"""
+    dictionary = models.ForeignKey(enhance_models.Dictionary, related_name='experiments')
+    """Which :class:`enhance_models.Dictionary` this experiment uses"""
 
     @property
     def stage_count(self):
@@ -116,8 +116,8 @@ class Experiment(models.Model):
                 print >>output, "Pair #%d" %(pair_list[i].id)
 
     def random_assign_messages(self):
-        message_count = self.dataset.message_set.count()
-        messages = map(lambda x: x, self.dataset.message_set.all())
+        message_count = self.dictionary.dataset.message_set.count()
+        messages = map(lambda x: x, self.dictionary.dataset.message_set.all())
         shuffle(messages)
         num_stages = self.stage_count
         num_per_stage = int(round(message_count / num_stages))
@@ -219,3 +219,36 @@ class MessageSelection(models.Model):
 
     class Meta:
         ordering = ["order"]
+
+
+class CodeAssignment(models.Model):
+    """
+    A model for recording code assignment
+    """
+    user = models.ForeignKey(User, related_name="code_assignments")
+    code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code is valid (False indicate the code to the message has been removed) """
+
+class FeatureAssignment(models.Model):
+    """
+    A model for recording feature assignment
+    """
+    user = models.ForeignKey(User, related_name="feature_assignments")
+    feature = models.ForeignKey(enhance_models.Feature, related_name="feature_assignments")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code is valid (False indicate the code to the message has been removed) """

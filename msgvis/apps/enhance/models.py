@@ -662,6 +662,11 @@ class Dictionary(models.Model):
 
         return results
 
+    def add_a_feature(self, text, source):
+        # TODO: implement feature add
+        pass
+
+
 class Word(models.Model):
     dictionary = models.ForeignKey(Dictionary, related_name='words')
     index = models.IntegerField()
@@ -683,6 +688,12 @@ class Feature(models.Model):
     document_frequency = models.IntegerField()
 
     messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
+
+    SOURCE_CHOICES = (
+        ('S', 'System'),
+        ('U', 'User'),
+    )
+    source = models.CharField(max_length=1, choices=SOURCE_CHOICES, default=SOURCE_CHOICES[0])
 
     def __repr__(self):
         return self.text
@@ -813,11 +824,6 @@ class MessageTopic(models.Model):
         examples = cls.objects.filter(topic=topic)
         return examples.order_by('-probability')
 
-
-def set_message_sentiment(message, save=True):
-    message.sentiment = int(round(textblob.TextBlob(message.text).sentiment.polarity))
-    if save:
-        message.save()
 
 class TweetWord(models.Model):
     dataset = models.ForeignKey(Dataset, related_name="tweet_words", null=True, blank=True, default=None)
