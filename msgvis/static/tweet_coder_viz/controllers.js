@@ -63,6 +63,8 @@
 
         // review pane
         $scope.submittedLabels = undefined;
+        $scope.selectedLabelFilter = undefined;
+        $scope.filteredLabels = undefined;
 
         // feature pane
         $scope.features = undefined;
@@ -87,11 +89,13 @@
                             id: i,
                             text: i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please",
                             mine: { code : codeIndex, ambiguous: ambiguous },
-                            partner: partnerIndex != -1 ? { code : partnerIndex, ambiguous: (Math.random() < 0.5) } : null
+                            partner: partnerIndex > 0 ? { code : partnerIndex, ambiguous: (Math.random() < 0.5) } : null
                         };
 
                         $scope.submittedLabels.push(label);
                     }
+
+                    $scope.filterLabels("all");
 
                     $scope.features = {
                         user: [],
@@ -165,6 +169,30 @@
                             return sign * (a.count - b.count);
                         default:
                             return sign * (a.codes[$scope.userFeatureSortKey].weight - b.codes[$scope.userFeatureSortKey].weight);
+                    }
+                });
+            }
+        }
+
+        $scope.filterLabels = function(filter) {
+            if ($scope.selectedLabelFilter != filter) {
+                $scope.selectedLabelFilter = filter;
+                $scope.filteredLabels = $scope.submittedLabels.filter(function (label) {
+                    switch (filter) {
+                        case "all":
+                            return true;
+                        case "gold":
+                            return label.gold != null;
+                        case "ambiguous":
+                            return label.mine != null && label.mine.ambiguous;
+                        case "disagreement":
+                            var good = label.mine != null && label.partner != null && label.mine.code != label.partner.code;
+                            if (good){
+                                console.log(label.partner.code + " " + label.mine.code);
+                            }
+                            return good;
+                        default:
+                            return label.mine != null && label.mine.code == filter;
                     }
                 });
             }

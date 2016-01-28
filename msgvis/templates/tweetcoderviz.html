@@ -122,17 +122,18 @@
                 <div class="box" id="review-pane">
                     <div class="box-header">submitted labels</div>
                     <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
-                    <div class="label-filter">
+                    <div class="label-filter noselect">
                         <div class="label-filter-label">filter by:</div>
-                        <div class="label-filter-type">all</div>
-                        <div class="label-filter-type">gold</div>
-                        <div class="label-filter-type">ambiguous</div>
-                        <div class="label-filter-type">disagreement</div>
-                        <div class="label-filter-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)">{$ code.index $}</div>
+                        <div class="label-filter-type" ng-click="filterLabels('all')" ng-class="{ 'selected': selectedLabelFilter == 'all'}">all</div>
+                        <div class="label-filter-type" ng-click="filterLabels('gold')" ng-class="{ 'selected': selectedLabelFilter == 'gold'}">gold</div>
+                        <div class="label-filter-type" ng-click="filterLabels('ambiguous')" ng-class="{ 'selected': selectedLabelFilter == 'ambiguous'}">ambiguous</div>
+                        <div class="label-filter-type" ng-click="filterLabels('disagreement')" ng-class="{ 'selected': selectedLabelFilter == 'disagreement'}">disagreement</div>
+                        <div class="label-filter-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)"
+                            ng-click="filterLabels(code.index)" ng-class="{ 'selected': selectedLabelFilter == code.index}">{$ code.index $}</div>
                     </div>
                     <input placeholder="search for text" class="input-sm form-control" type="search"/>
                     <div id="labels">
-                        <div ng-repeat="label in submittedLabels" class="label-item">
+                        <div ng-repeat="label in filteredLabels" class="label-item">
                             <div class="label-item-text">{$ label.text $}</div>
                             <div style="float:right">
                                 <div class="label-item-label label-split" ng-show="label.partner" ng-style="labelStyle(label.partner)">?</div>
