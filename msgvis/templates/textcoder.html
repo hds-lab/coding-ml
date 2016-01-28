@@ -139,9 +139,23 @@
 
                 <div class="box" ng-show="vector">
                     <h4>Current Tweet {$ vector.message.id $}</h4>
-                    <div class="tweet" >{$ vector.message.text $}</div>
+                    <div class="tweet-selectable"><span ng-repeat="char in vector.message.characters track by $index" class="ng-class:'char-'+$index;"
+                               ng-mouseenter="onCharMouseEnter($index)"
+                               ng-mouseleave="onCharMouseLeave($index)"
+                               ng-mousedown="onCharMouseDown($index, $event)"
+                               ng-mouseup="onCharMouseUp($index, $event)"
+                               ng-style="charStyle($index)">{$char$}</span></div>
+
+                    <button class="btn btn-default" ng-show="selectedTokens" ng-click="addFeature(selectedTokens)">Add Feature</button>
                 </div>
 
+                <div class="box">
+                    <h4>User-defined Features</h4>
+                    <div ng-repeat="(key, feature) in featureList track by key" class="user-feature">
+                        <span>{$ feature.tokens.join(" ") $}</span>
+                        <button class="btn btn-default" ng-click="removeFeature(feature)">Remove</button>
+                    </div>
+                </div>
             </div>
 
         </div>

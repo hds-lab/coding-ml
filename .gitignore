@@ -71,3 +71,4 @@ target/
 *.model.state
 
 /msgvis/static/media
+dataset/*
