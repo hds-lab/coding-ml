@@ -693,7 +693,7 @@ class Feature(models.Model):
         ('S', 'System'),
         ('U', 'User'),
     )
-    source = models.CharField(max_length=1, choices=SOURCE_CHOICES, default=SOURCE_CHOICES[0])
+    source = models.CharField(max_length=1, choices=SOURCE_CHOICES, default='S')
 
     def __repr__(self):
         return self.text

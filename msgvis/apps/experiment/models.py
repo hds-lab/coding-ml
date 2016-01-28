@@ -46,7 +46,7 @@ class Experiment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     """The experiment created time"""
 
-    dictionary = models.ForeignKey(enhance_models.Dictionary, related_name='experiments')
+    dictionary = models.ForeignKey(enhance_models.Dictionary, related_name='experiments', default=None, null=True)
     """Which :class:`enhance_models.Dictionary` this experiment uses"""
 
     @property
