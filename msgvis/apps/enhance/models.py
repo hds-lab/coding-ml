@@ -671,15 +671,3 @@ class TweetWord(models.Model):
         queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_words)))
         return queryset
 
-
-
-class PrecalcCategoricalDistribution(models.Model):
-    dataset = models.ForeignKey(Dataset, related_name="distributions", null=True, blank=True, default=None)
-    dimension_key = models.CharField(db_index=True, max_length=64, blank=True, default="")
-    level = base_models.Utf8CharField(db_index=True, max_length=128, blank=True, default="")
-    count = models.IntegerField()
-
-    class Meta:
-        index_together = [
-            ["dimension_key", "level"],
-        ]
