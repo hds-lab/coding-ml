@@ -5,6 +5,31 @@ from msgvis.apps.enhance import models as enhance_models
 from django.contrib.auth.models import User
 import operator
 from django.utils import timezone
+from random import shuffle
+
+
+def create_a_pair(output):
+
+    current_user_count = User.objects.count()
+
+    username1 = "user_%3d" % (current_user_count + 1)
+    password1 = User.objects.make_random_password()
+    user1 = User.objects.create_user(username=username1,
+                                     password=password1)
+
+    username2 = "user_%3d" % (current_user_count + 2)
+    password2 = User.objects.make_random_password()
+    user2 = User.objects.create_user(username=username2,
+                                     password=password2)
+
+    pair = Pair(user1=user1, user2=user2)
+    pair.save()
+
+    print >> output, "Pair #%d" %(pair.id)
+    print >> output, "username: %s | password: %s" %(username1, password1)
+    print >> output, "username: %s | password: %s" %(username2, password2)
+
+    return pair
 
 
 class Experiment(models.Model):
@@ -41,6 +66,64 @@ class Experiment(models.Model):
 
     def __unicode__(self):
         return self.__repr__()
+
+    def initialize_experiment(self, num_conditions, num_stages, num_pairs, output):
+
+        print >>output, "Initializing the experiment with %d conditions." %num_conditions
+
+        # create a list for saving conditions
+        condition_list = []
+        # create conditions
+        for i in range(num_conditions):
+            condition_name = "Condition %d" %(i + 1)
+            condition = Condition(experiment=self, name=condition_name)
+            condition.save()
+            condition_list.append(condition)
+
+        print >>output, "For each condition, users will go through %d stages." %num_stages
+        # create a list for saving stages
+        stage_list = []
+        # create stages
+        for i in range(1, num_stages + 1):
+            stage = Stage(experiment=self, order=i)
+            stage.save()
+            stage_list.append(stage)
+
+        print >>output, "Each condition has %d pairs." %num_pairs
+        print >>output, "Pair list"
+        print >>output, "========="
+        # create a list for saving pairs
+        pair_list = []
+        num_total_pairs = num_conditions * num_pairs
+        for i in range(num_total_pairs):
+            pair = create_a_pair(output)
+            pair_list.append(pair)
+
+        print >>output, "Assignment list"
+        print >>output, "==============="
+        # shuffle pair list for random assignment
+        shuffle(pair_list)
+        for idx, condition in enumerate(condition_list):
+            print >>output, "\nIn %s" %(condition.name)
+            for i in range(num_pairs):
+                assignment = Assignment(pair=pair_list[idx * num_pairs + i],
+                                        experiment=self,
+                                        condition=condition)
+                assignment.save()
+                print >>output, "Pair #%d" %(pair_list[i].id)
+
+    def random_assign_messages(self):
+        messages = self.dataset.message_set()
+        shuffle(messages)
+        num_stages = self.stage_count
+        num_per_stage = int(round(messages.count() / num_stages))
+
+        start = 0
+        end = num_per_stage
+        for stage in self.stages:
+            stage.messages.add(*messages[start:end]) # add a list
+            start += num_per_stage
+            end += num_per_stage
 
 
 class Condition(models.Model):
