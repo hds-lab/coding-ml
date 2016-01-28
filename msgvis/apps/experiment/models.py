@@ -89,6 +89,9 @@ class Experiment(models.Model):
             stage.save()
             stage_list.append(stage)
 
+        # random assign messages
+        self.random_assign_messages()
+
         print >>output, "Each condition has %d pairs." %num_pairs
         print >>output, "Pair list"
         print >>output, "========="
@@ -113,15 +116,21 @@ class Experiment(models.Model):
                 print >>output, "Pair #%d" %(pair_list[i].id)
 
     def random_assign_messages(self):
-        messages = self.dataset.message_set()
+        message_count = self.dataset.message_set.count()
+        messages = map(lambda x: x, self.dataset.message_set.all())
         shuffle(messages)
         num_stages = self.stage_count
-        num_per_stage = int(round(messages.count() / num_stages))
+        num_per_stage = int(round(message_count / num_stages))
 
         start = 0
         end = num_per_stage
-        for stage in self.stages:
-            stage.messages.add(*messages[start:end]) # add a list
+        for stage in self.stages.all():
+            selection = []
+            for idx, message in enumerate(messages[start:end]):
+                item = MessageSelection(stage=stage, message=message, order=idx + 1)
+                selection.append(item)
+            MessageSelection.objects.bulk_create(selection)
+            selection = []
             start += num_per_stage
             end += num_per_stage
 
