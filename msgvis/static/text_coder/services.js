@@ -118,4 +118,72 @@
         }
     ]);
 
+    //A service for user defined features.
+    module.factory('TextCoder.services.UserFeatures', [
+        '$http', 'djangoUrl',
+        function scriptFactory($http, djangoUrl) {
+
+            var listApiUrl = djangoUrl.reverse('featurelist');
+
+            var UserFeatures = function () {
+                var self = this;
+                self.data = undefined;
+            };
+
+            angular.extend(UserFeatures.prototype, {
+                load: function () {
+                    var self = this;
+
+                    var request = {
+                        params: {
+                        }
+                    };
+                    return $http.get(listApiUrl, request)
+                        .success(function (data) {
+                            self.data = data;
+                        });
+
+                }
+            });
+
+            angular.extend(UserFeatures.prototype, {
+                add: function (tokens) {
+                    var self = this;
+
+                    var request = {
+                        params: {
+                        },
+                        data: tokens
+                    };
+
+                    return $http.post(listApiUrl, request)
+                        .success(function (data) {
+                            self.data = data;
+                        });
+
+                }
+            });
+
+            angular.extend(UserFeatures.prototype, {
+                remove: function (id) {
+                    var self = this;
+
+                    var request = {
+                        params: {
+                        }
+                    };
+
+                    var itemApiUrl = djangoUrl.reverse('feature', { 'id' : id });
+                    return $http.delete(itemApiUrl, request)
+                        .success(function (data) {
+                            self.data = data;
+                        });
+
+                }
+            });
+
+            return new UserFeatures();
+        }
+    ]);
+
 })();
