@@ -1,6 +1,6 @@
 import logging
 
-from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution, TweetWordMessageConnection
+from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, TweetWordMessageConnection
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs
 import re
@@ -291,10 +291,16 @@ class LambdaWordFilter(object):
     def __contains__(self, item):
         return self.fn(item)
 
-def standard_features_pipeline(context, name, dataset_id):
-    
-    dictionary = context.find_dictionary_by_name_dataset(name, dataset_id)
+def standard_features_pipeline(context, dataset_id):
+    dictionary = context.find_dictionary()
+    if dictionary is None:
+        dictionary = context.build_dictionary(dataset_id=dataset_id)
+
+    if not context.bows_exist(dictionary):
+        context.build_bows(dictionary)
+
     print dictionary
+
     context.build_features(dictionary)
 
 
@@ -379,25 +385,6 @@ def import_from_tweet_parser_results(dataset_id, filename):
             word_list = []
         print "Processed %d messages" % count
         print "Time: %.2fs" % (time() - start)
-
-def precalc_categorical_dimension(dataset_id=1, dimension_key=None):
-    datatable = datatable_models.DataTable(primary_dimension=dimension_key)
-    dataset = Dataset.objects.get(id=dataset_id)
-
-    # remove existing calculation
-    PrecalcCategoricalDistribution.objects.filter(dataset=dataset, dimension_key=dimension_key).delete()
-
-    result = datatable.generate(dataset)
-    bulk = []
-    for bucket in result["table"]:
-        level = bucket[dimension_key]
-        if level is None:
-            level = ""
-        count = bucket["value"]
-        obj = PrecalcCategoricalDistribution(dataset=dataset, dimension_key=dimension_key, level=level, count=count)
-        bulk.append(obj)
-
-    PrecalcCategoricalDistribution.objects.bulk_create(objs=bulk, batch_size=10000)
 
 
 def dump_tweets(dataset_id, save_path):
