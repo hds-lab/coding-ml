@@ -1,6 +1,6 @@
 import logging
 
-from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution, TweetWordMessageConnection
+from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, TweetWordMessageConnection
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs
 import re
