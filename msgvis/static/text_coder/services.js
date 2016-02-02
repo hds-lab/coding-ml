@@ -123,7 +123,7 @@
         '$http', 'djangoUrl',
         function scriptFactory($http, djangoUrl) {
 
-            var listApiUrl = djangoUrl.reverse('featurelist');
+            var listApiUrl = djangoUrl.reverse('feature');
 
             var UserFeatures = function () {
                 var self = this;
