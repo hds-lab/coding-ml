@@ -607,6 +607,25 @@ class Dictionary(models.Model):
         lin_clf = svm.LinearSVC()
         lin_clf.fit(data['training']['X'], data['training']['y'])
 
+        def get_prediction(lin_model, X):
+            prediction = lin_model.predict(X)
+            distances = lin_model.decision_function(X)
+            if hasattr(lin_model, "predict_proba"):
+                prob = lin_model.predict_proba(X)[:, 1]
+            else:  # use decision function
+                prob = lin_model.decision_function(X)
+                min = prob.min()
+                max = prob.max()
+                prob = \
+                    (prob - min) / (max - min)
+            return {
+                'prediction': prediction,
+                'probabilities': prob
+            }
+
+        test_prediction = get_prediction(lin_clf, data['testing']['X'])
+        train_prediction = get_prediction(lin_clf, data['training']['X'])
+
         results = {
             'codes': [],
             'features': [],
@@ -615,6 +634,14 @@ class Dictionary(models.Model):
             'accuracy': {
                 'training': lin_clf.score(data['training']['X'], data['training']['y']),
                 'testing': lin_clf.score(data['testing']['X'], data['testing']['y'])
+            },
+            'prediction': {
+                'training': train_prediction['prediction'],
+                'testing': test_prediction['prediction']
+            },
+            'probabilities': {
+                'training': train_prediction['probabilities'],
+                'testing': test_prediction['probabilities']
             }
         }
 
