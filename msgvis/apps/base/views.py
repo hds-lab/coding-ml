@@ -15,7 +15,7 @@ class LoginRequiredMixin(object):
         view = super(LoginRequiredMixin, cls).as_view(**initkwargs)
         return login_required(view)
 
-class HomeView(generic.TemplateView):
+class HomeView(LoginRequiredMixin, generic.TemplateView):
     """The homepage view for the website."""
 
     template_name = 'home.html'
@@ -84,7 +84,7 @@ class GrouperView(LoginRequiredMixin, generic.DetailView):
                           {'verbose_name': queryset.model._meta.verbose_name})
         return obj
 
-class TextCoderView(generic.DetailView):
+class TextCoderView(LoginRequiredMixin, generic.DetailView):
     """The view for the visualization tool."""
 
     template_name = 'textcoder.html'
