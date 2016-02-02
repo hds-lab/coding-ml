@@ -98,6 +98,7 @@ class Experiment(models.Model):
             stage_list.append(stage)
 
         # random assign messages
+        # TODO: may keep this to be done after each stage
         self.random_assign_messages()
 
         # create a stage for golden code data
@@ -288,3 +289,30 @@ class Progress(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
 
+
+class SVMModel(models.Model):
+    """
+    A model for svm model
+    """
+    user = models.ForeignKey(User, related_name="svm_models", unique=True)
+    source_stage = models.ForeignKey(Stage, related_name="svm_models")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+
+class SVMModelWeight(models.Model):
+    """
+    A model for svm model weight
+    """
+    svm_model = models.ForeignKey(SVMModel, related_name="weights")
+    weight = models.FloatField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
