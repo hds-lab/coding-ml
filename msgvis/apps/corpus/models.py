@@ -68,7 +68,7 @@ class Message(models.Model):
         return self.__repr__()
 
     def get_feature_vector(self, dictionary):
-        words = self.word_scores.filter(dictionary=dictionary).all()
+        words = self.feature_scores.filter(dictionary=dictionary).all()
         vector = numpy.zeros(dictionary.words.count())
         for word in words:
             vector[word.word_index] = word.count

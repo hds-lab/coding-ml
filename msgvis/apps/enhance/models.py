@@ -287,7 +287,7 @@ class Dictionary(models.Model):
 
         for msg in messages:
             message_id_list.append(msg.id)
-            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all()))
+            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.feature_scores.filter(dictionary=self).all()))
 
         return message_id_list, results
 
