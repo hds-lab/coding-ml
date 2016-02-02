@@ -127,8 +127,7 @@ class FeatureVectorView(APIView):
                 tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
                 # TODO: make sure to better communicate the fact we lemmatize words
                 output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
-                #import json
-                #output = json.dumps(results)
+
                 return Response(output.data, status=status.HTTP_200_OK)
             except:
                 import traceback
@@ -142,7 +141,7 @@ class FeatureVectorView(APIView):
 
 
 
-class UserFeatureListView(APIView):
+class UserFeatureView(APIView):
     """
     Get or set user features
 
@@ -168,34 +167,38 @@ class UserFeatureListView(APIView):
 
             dictionary = data["dictionary"]
             token_list = data["token_list"]
-            feature = dictionary.add_a_feature(token_list, 'U')
+            feature = dictionary.add_a_feature(token_list, source='U')
 
             if self.request.user is not None:
                 user = self.request.user
                 if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
                     participant = User.objects.get(id=self.request.user.id)
 
-            assignment = experiment_models.FeatureAssignment(user=participant, feature=feature)
-            assignment.save()
+                    assignment, created = experiment_models.FeatureAssignment.objects.get_or_create(user=participant, feature=feature, valid=True)
+
 
             output = serializers.FeatureSerializer(feature)
             return Response(output.data, status=status.HTTP_200_OK)
 
         return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, feature_id, format=None):
+        if self.request.user is not None:
+            user = self.request.user
+            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                participant = User.objects.get(id=self.request.user.id)
+
+                feature = enhance_models.Feature.objects.get(id=feature_id)
+                assignment = experiment_models.FeatureAssignment.objects.get(user=participant, feature=feature, valid=True)
+                assignment.valid = False
+                assignment.save()
+                return Response(status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 
-class UserFeatureView(APIView):
-    """
-    Manages individual user feature object
 
-    **Request:** ``GET /api/feature/id``
-    """
-
-    def delete(self, request, id, format=None):
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 

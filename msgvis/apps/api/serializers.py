@@ -71,11 +71,9 @@ class FeatureSerializer(serializers.ModelSerializer):
         return instance.text
 
 
-
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:
         object_serializer_class = MessageSerializer
-
 
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
