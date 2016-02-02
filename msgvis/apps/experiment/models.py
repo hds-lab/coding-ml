@@ -113,7 +113,7 @@ class Experiment(models.Model):
                                         experiment=self,
                                         condition=condition)
                 assignment.save()
-                print >>output, "Pair #%d" %(pair_list[i].id)
+                print >>output, "Pair #%d" %(pair_list[idx * num_pairs + i].id)
 
     def random_assign_messages(self):
         message_count = self.dictionary.dataset.message_set.count()

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = "Create a new experiment."
-    args = '<dataset_id> <output_filename>'
+    args = '<dictionary_id> <output_filename>'
     option_list = BaseCommand.option_list + (
         make_option('-p', '--num_pairs',
                     default=3,
@@ -32,14 +32,14 @@ class Command(BaseCommand):
 
     )
 
-    def handle(self, dataset_id, output_filename, **options):
+    def handle(self, dictionary_id, output_filename, **options):
 
-        if not dataset_id:
-            raise CommandError("Dataset id is required.")
+        if not dictionary_id:
+            raise CommandError("Dictionary id is required.")
         try:
-            dataset_id = int(dataset_id)
+            dictionary_id = int(dictionary_id)
         except ValueError:
-            raise CommandError("Dataset id must be a number.")
+            raise CommandError("Dictionary id must be a number.")
 
         if not output_filename:
             raise CommandError("Output filename is required.")
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         with open(output_filename, "w") as output:
             # create an experiment
             experiment = experiment_models.Experiment(name=experiment_name,
-                                                      dataset_id=dataset_id)
+                                                      dictionary_id=dictionary_id)
             experiment.save()
 
             experiment.initialize_experiment(num_conditions=num_conditions,
