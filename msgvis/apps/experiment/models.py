@@ -12,12 +12,12 @@ def create_a_pair(output):
 
     current_user_count = User.objects.count()
 
-    username1 = "user_%3d" % (current_user_count + 1)
+    username1 = "user_%03d" % (current_user_count + 1)
     password1 = User.objects.make_random_password()
     user1 = User.objects.create_user(username=username1,
                                      password=password1)
 
-    username2 = "user_%3d" % (current_user_count + 2)
+    username2 = "user_%03d" % (current_user_count + 2)
     password2 = User.objects.make_random_password()
     user2 = User.objects.create_user(username=username2,
                                      password=password2)
