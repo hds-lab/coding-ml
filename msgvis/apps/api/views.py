@@ -124,7 +124,7 @@ class FeatureVectorView(APIView):
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 message = corpus_models.Message.objects.get(id=message_id)
                 feature_vector = message.get_feature_vector(dictionary=dictionary)
-                tweet_words = map(lambda x: x.original_text, message.tweet_words.all()) # get the token list and extract only original text
+                tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
                 # TODO: make sure to better communicate the fact we lemmatize words
                 output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
                 #import json

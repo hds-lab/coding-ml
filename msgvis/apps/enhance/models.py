@@ -38,10 +38,6 @@ class Dictionary(models.Model):
     num_nnz = PositiveBigIntegerField(default=0)
 
     @property
-    def word_count(self):
-        return self.words.count()
-
-    @property
     def feature_count(self):
         return self.features.count()
 
@@ -51,7 +47,7 @@ class Dictionary(models.Model):
             setattr(self, '_gensim_dict', self._make_gensim_dictionary())
         return getattr(self, '_gensim_dict')
 
-    def get_word_id(self, bow_index):
+    def get_feature_id(self, bow_index):
         if not hasattr(self, '_index2id'):
             g = self.gensim_dictionary
         try:
@@ -72,14 +68,39 @@ class Dictionary(models.Model):
         gensim_dict.num_pos = self.num_pos
         gensim_dict.num_nnz = self.num_nnz
 
-        for word in self.words.all():
-            self._index2id[word.index] = word.id
-            gensim_dict.token2id[word.text] = word.index
-            gensim_dict.dfs[word.index] = word.document_frequency
+        for feature in self.features.all():
+            self._index2id[feature.index] = feature.id
+            gensim_dict.token2id[feature.text] = feature.index
+            gensim_dict.dfs[feature.index] = feature.document_frequency
 
-        logger.info("Dictionary contains %d words" % len(gensim_dict.token2id))
+        logger.info("Dictionary contains %d features" % len(gensim_dict.token2id))
 
         return gensim_dict
+
+
+    @classmethod
+    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, minimum_frequency=2):
+        from gensim.corpora import Dictionary as GensimDictionary
+
+        # build a dictionary of features
+        logger.info("Creating features (including n-grams) from texts")
+        gemsim_dictionary = GensimDictionary(tokenized_texts)
+
+        # Remove extremely rare features
+        logger.info("Features dictionary contains %d features. Filtering..." % len(gemsim_dictionary.token2id))
+        gemsim_dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
+        gemsim_dictionary.compactify()
+        logger.info("Features Dictionary contains %d features." % len(gemsim_dictionary.token2id))
+
+        dict_model = cls(name=name,
+                         dataset=dataset,
+                         settings=settings)
+        dict_model.save()
+
+        dict_model._populate_from_gensim_dictionary(gemsim_dictionary)
+
+        return dict_model
+
 
     def _populate_from_gensim_dictionary(self, gensim_dict):
 
@@ -89,102 +110,6 @@ class Dictionary(models.Model):
         self.save()
 
         logger.info("Saving gensim dictionary '%s' in the database" % self.name)
-
-        batch = []
-        count = 0
-        print_freq = 10000
-        batch_size = 1000
-        total_words = len(gensim_dict.token2id)
-
-        for token, id in gensim_dict.token2id.iteritems():
-            word = Word(dictionary=self,
-                        text=token,
-                        index=id,
-                        document_frequency=gensim_dict.dfs[id])
-            batch.append(word)
-            count += 1
-
-            if len(batch) > batch_size:
-                Word.objects.bulk_create(batch)
-                batch = []
-
-                if settings.DEBUG:
-                    # prevent memory leaks
-                    from django.db import connection
-
-                    connection.queries = []
-
-            if count % print_freq == 0:
-                logger.info("Saved %d / %d words in the database dictionary" % (count, total_words))
-
-        if len(batch):
-            Word.objects.bulk_create(batch)
-            count += len(batch)
-
-            logger.info("Saved %d / %d words in the database dictionary" % (count, total_words))
-
-        return self
-
-    @classmethod
-    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, minimum_frequency=2):
-        from gensim.corpora import Dictionary as GensimDictionary
-
-        # build a dictionary
-        logger.info("Building a dictionary from texts")
-        dictionary = GensimDictionary(tokenized_texts)
-
-        # Remove extremely rare words
-        logger.info("Dictionary contains %d words. Filtering..." % len(dictionary.token2id))
-        dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
-        dictionary.compactify()
-        logger.info("Dictionary contains %d words." % len(dictionary.token2id))
-
-        dict_model = cls(name=name,
-                         dataset=dataset,
-                         settings=settings)
-        dict_model.save()
-
-        dict_model._populate_from_gensim_dictionary(dictionary)
-
-        return dict_model
-
-    # TODO: generalize bigram, trigram
-    def _create_features_from_texts(self, dict_model, tokenized_texts, name, queryset, minimum_frequency=2):
-        from gensim.corpora import Dictionary as GensimDictionary
-        from gensim.models import Phrases        
-
-        tokenized_texts_trigrams = []
-
-        bigram = Phrases()
-        for t in tokenized_texts:
-            bigram.add_vocab([t])
-
-        trigram = Phrases(bigram[tokenized_texts])  
-
-        for t in tokenized_texts:
-            trigram.add_vocab([bigram[t]])
-
-        for t in tokenized_texts:
-            tokenized_texts_trigrams.append(trigram[bigram[t]])
-
-        # build a dictionary of features
-        logger.info("Creating features (including n-grams) from texts")
-        dictionary = GensimDictionary(tokenized_texts_trigrams)
-
-        # Remove extremely rare features
-        logger.info("Features dictionary contains %d features. Filtering..." % len(dictionary.token2id))
-        dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
-        dictionary.compactify()
-        logger.info("Features Dictionary contains %d features." % len(dictionary.token2id))
-
-        dict_model._populate_features_from_gensim_dictionary(dictionary)
-        dict_model._vectorize_features_from_gensim_dictionary(dictionary, queryset, tokenized_texts, trigram, bigram)
-
-        return dict_model
-
-    def _populate_features_from_gensim_dictionary(self, gensim_dict):
-
-        logger.info("Saving gensim dictionary of features '%s' in the database" % self.name)
 
         batch = []
         count = 0
@@ -221,13 +146,15 @@ class Dictionary(models.Model):
 
         return self
 
-    def _vectorize_features_from_gensim_dictionary(self, gdict, queryset, tokenizer, trigram, bigram):
+
+    def _vectorize_corpus(self, queryset, tokenizer):
 
         import math
 
         logger.info("Saving document features vectors in corpus.")
 
         total_documents = self.num_docs
+        gdict = self.gensim_dictionary
         count = 0
         total_count = queryset.count()
         batch = []
@@ -235,8 +162,7 @@ class Dictionary(models.Model):
         print_freq = 10000
 
         for msg in queryset.iterator():
-            tokens_raw = tokenizer.tokenize(msg)
-            tokens = trigram[bigram[tokens_raw]]
+            tokens = tokenizer.tokenize(msg)
             bow = gdict.doc2bow(tokens)
 
             for feature_index, feature_freq in bow:
@@ -244,12 +170,10 @@ class Dictionary(models.Model):
 
                 document_freq = gdict.dfs[feature_index]
 
-                # Not sure why tf is calculated like the final version
                 num_tokens = len(tokens)
                 tf = float(feature_freq) / float(num_tokens)
                 idf = math.log(total_documents / document_freq)
                 tfidf = tf * idf
-                #tfidf = word_freq * math.log(total_documents / document_freq)
                 batch.append(MessageFeature(dictionary=self,
                                          feature=feature_id,
                                          feature_index=feature_index,
@@ -430,20 +354,6 @@ class Dictionary(models.Model):
         pass
 
 
-class Word(models.Model):
-    dictionary = models.ForeignKey(Dictionary, related_name='words')
-    index = models.IntegerField()
-    text = base_models.Utf8CharField(max_length=100)
-    document_frequency = models.IntegerField()
-
-    messages = models.ManyToManyField(Message, through='MessageWord', related_name='words')
-
-    def __repr__(self):
-        return self.text
-
-    def __unicode__(self):
-        return self.__repr__()
-
 class Feature(models.Model):
     dictionary = models.ForeignKey(Dictionary, related_name='features')
     index = models.IntegerField()
@@ -505,19 +415,20 @@ class TweetWord(models.Model):
         return self.__repr__()
 
     @property
-    def related_words(self):
+    def related_features(self):
         return TweetWord.objects.filter(dataset=self.dataset, text=self.text).all()
 
     @property
     def all_messages(self):
         queryset = self.dataset.message_set.all()
-        queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_words)))
+        queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_features)))
         return queryset
 
 class TweetWordMessageConnection(models.Model):
-    message = models.ForeignKey(Message)
-    tweet_word = models.ForeignKey(TweetWord)
+    message = models.ForeignKey(Message, related_name="tweetword_connections")
+    tweet_word = models.ForeignKey(TweetWord, related_name="tweetword_connections")
     order = models.IntegerField()
 
     class Meta:
-        ordering = ["order"]
+        ordering = ["message", "order", ]
+        unique_together = ('message', 'tweet_word', 'order', )
