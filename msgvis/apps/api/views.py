@@ -31,6 +31,7 @@ from django.contrib.auth.models import User
 from msgvis.apps.api import serializers
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
+from msgvis.apps.experiment import models as experiment_models
 import json
 import logging
 
@@ -123,7 +124,7 @@ class FeatureVectorView(APIView):
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 message = corpus_models.Message.objects.get(id=message_id)
                 feature_vector = message.get_feature_vector(dictionary=dictionary)
-                tweet_words = map(lambda x: x.original_text, message.tweet_words.all()) # get the token list and extract only original text
+                tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
                 # TODO: make sure to better communicate the fact we lemmatize words
                 output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
                 #import json
@@ -160,15 +161,29 @@ class UserFeatureListView(APIView):
         return Response(test_features, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
-        #return fake feature id
-        if self.request.user is not None:
-            user = self.request.user
-            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
-                participant = User.objects.get(id=self.request.user.id)
+
+        input = serializers.FeatureSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+
+            dictionary = data["dictionary"]
+            token_list = data["token_list"]
+            feature = dictionary.add_a_feature(token_list, 'U')
+
+            if self.request.user is not None:
+                user = self.request.user
+                if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                    participant = User.objects.get(id=self.request.user.id)
+
+            assignment = experiment_models.FeatureAssignment(user=participant, feature=feature)
+            assignment.save()
+
+            output = serializers.FeatureSerializer(feature)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-        return Response(1357, status=status.HTTP_200_OK)
 
 
 class UserFeatureView(APIView):
