@@ -8,19 +8,27 @@ from django.utils import timezone
 from random import shuffle
 
 
-def create_a_pair(output):
+def create_a_pair(output, default_stage):
 
     current_user_count = User.objects.count()
 
+    # user 1
     username1 = "user_%03d" % (current_user_count + 1)
     password1 = User.objects.make_random_password()
     user1 = User.objects.create_user(username=username1,
                                      password=password1)
 
+    # set the user to the default stage
+    Progress.objects.get_or_create(user1, default_stage)
+
+    # user 2
     username2 = "user_%03d" % (current_user_count + 2)
     password2 = User.objects.make_random_password()
     user2 = User.objects.create_user(username=username2,
                                      password=password2)
+
+    # set the user to the default stage
+    Progress.objects.get_or_create(user2, default_stage)
 
     pair = Pair(user1=user1, user2=user2)
     pair.save()
@@ -80,7 +88,7 @@ class Experiment(models.Model):
             condition.save()
             condition_list.append(condition)
 
-        print >>output, "For each condition, users will go through %d stages." %num_stages
+        print >>output, "For each condition, users will go through %d stages." % num_stages
         # create a list for saving stages
         stage_list = []
         # create stages
@@ -92,6 +100,11 @@ class Experiment(models.Model):
         # random assign messages
         self.random_assign_messages()
 
+        # create a stage for golden code data
+        golden_stage = Stage(experiment=self, order=0)
+        golden_stage.save()
+        self.assign_messages_with_golden_code(golden_stage)
+
         print >>output, "Each condition has %d pairs." %num_pairs
         print >>output, "Pair list"
         print >>output, "========="
@@ -99,7 +112,7 @@ class Experiment(models.Model):
         pair_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = create_a_pair(output)
+            pair = create_a_pair(output, default_stage=golden_stage)
             pair_list.append(pair)
 
         print >>output, "Assignment list"
@@ -107,17 +120,17 @@ class Experiment(models.Model):
         # shuffle pair list for random assignment
         shuffle(pair_list)
         for idx, condition in enumerate(condition_list):
-            print >>output, "\nIn %s" %(condition.name)
+            print >>output, "\nIn %s" % condition.name
             for i in range(num_pairs):
                 assignment = Assignment(pair=pair_list[idx * num_pairs + i],
                                         experiment=self,
                                         condition=condition)
                 assignment.save()
-                print >>output, "Pair #%d" %(pair_list[idx * num_pairs + i].id)
+                print >>output, "Pair #%d" %pair_list[idx * num_pairs + i].id
 
     def random_assign_messages(self):
-        message_count = self.dictionary.dataset.message_set.count()
-        messages = map(lambda x: x, self.dictionary.dataset.message_set.all())
+        message_count = self.dictionary.dataset.get_messages_without_golden_code().count()
+        messages = map(lambda x: x, self.dictionary.dataset.get_messages_without_golden_code())
         shuffle(messages)
         num_stages = self.stage_count
         num_per_stage = int(round(message_count / num_stages))
@@ -130,9 +143,18 @@ class Experiment(models.Model):
                 item = MessageSelection(stage=stage, message=message, order=idx + 1)
                 selection.append(item)
             MessageSelection.objects.bulk_create(selection)
-            selection = []
             start += num_per_stage
             end += num_per_stage
+
+    def assign_messages_with_golden_code(self, golden_stage):
+
+        messages = map(lambda x: x, self.dictionary.dataset.get_messages_with_golden_code())
+
+        selection = []
+        for idx, message in enumerate(messages):
+            item = MessageSelection(stage=golden_stage, message=message, order=idx + 1)
+            selection.append(item)
+        MessageSelection.objects.bulk_create(selection)
 
 
 class Condition(models.Model):
@@ -252,3 +274,17 @@ class FeatureAssignment(models.Model):
 
     valid = models.BooleanField(default=True)
     """ Whether this code is valid (False indicate the code to the message has been removed) """
+
+class Progress(models.Model):
+    """
+    A model for recording a user's current stage
+    """
+    user = models.ForeignKey(User, related_name="progress", unique=True)
+    current_stage = models.ForeignKey(Stage, related_name="progress")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+

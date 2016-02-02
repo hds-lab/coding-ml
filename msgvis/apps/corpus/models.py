@@ -34,6 +34,13 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_messages_with_golden_code(self):
+        return self.message_set.filter(has_golden_code=True).all()
+
+    def get_messages_without_golden_code(self):
+        return self.message_set.filter(has_golden_code=False).all()
+
+
 class Code(models.Model):
     """A code of a message"""
 
@@ -60,6 +67,8 @@ class Message(models.Model):
     """The actual text of the message."""
 
     code = models.ForeignKey(Code, null=True, blank=True, default=None)
+
+    has_golden_code = models.BooleanField(default=False)
 
     def __repr__(self):
         return self.text
