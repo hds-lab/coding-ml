@@ -67,13 +67,18 @@ class FeatureVectorSerializer(serializers.Serializer):
     tokens = serializers.ListField()
     feature_vector = serializers.ListField()
 
+class FeatureSerializer(serializers.Serializer):
+    message = MessageSerializer()
+    tokens = serializers.ListField()
+    feature_vector = serializers.ListField()
+
+
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:
         object_serializer_class = MessageSerializer
 
 
 class DatasetSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = corpus_models.Dataset
         fields = ('id', 'name', 'description', 'message_count', )

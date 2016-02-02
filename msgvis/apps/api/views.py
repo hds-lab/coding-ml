@@ -140,6 +140,50 @@ class FeatureVectorView(APIView):
         return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
 
 
+
+class UserFeatureListView(APIView):
+    """
+    Get or set user features
+
+    **Request:** ``GET /api/feature``
+    """
+
+
+    def get(self, request, format=None):
+
+        #return fake data for now
+
+        test_features = []
+        test_features[0] = { "id": 123, "tokens": ["rumor", "has", "it"]}
+        test_features[1] = { "id": 456, "tokens": ["fake"]}
+
+        return Response(test_features, status=status.HTTP_200_OK)
+
+    def post(self, request, format=None):
+        #return fake feature id
+        if self.request.user is not None:
+            user = self.request.user
+            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                participant = User.objects.get(id=self.request.user.id)
+
+
+
+        return Response(1357, status=status.HTTP_200_OK)
+
+
+class UserFeatureView(APIView):
+    """
+    Manages individual user feature object
+
+    **Request:** ``GET /api/feature/id``
+    """
+
+    def delete(self, request, id, format=None):
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
 class APIRoot(APIView):
     """
     The Text Visualization DRG Root API View.
@@ -165,37 +209,3 @@ class APIRoot(APIView):
                 continue
 
         return Response(ret)
-
-class UserFeatureListView(APIView):
-    """
-    Get or set user features
-
-    **Request:** ``GET /api/feature``
-    """
-
-
-    def get(self, request, format=None):
-
-        #return fake data for now
-
-        test_features = []
-        test_features[0] = { "id": 123, "tokens": ["rumor", "has", "it"]}
-        test_features[1] = { "id": 456, "tokens": ["fake"]}
-
-        return Response(test_features, status=status.HTTP_200_OK)
-
-    def post(self, request, format=None):
-        #return fake feature id
-        return Response(1357, status=status.HTTP_200_OK)
-
-
-class UserFeatureView(APIView):
-    """
-    Manages individual user feature object
-
-    **Request:** ``GET /api/feature/id``
-    """
-
-    def delete(self, request, id, format=None):
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
