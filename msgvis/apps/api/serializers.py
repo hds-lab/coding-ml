@@ -67,10 +67,15 @@ class FeatureVectorSerializer(serializers.Serializer):
     tokens = serializers.ListField()
     feature_vector = serializers.ListField()
 
-class FeatureSerializer(serializers.Serializer):
-    message = MessageSerializer()
-    tokens = serializers.ListField()
-    feature_vector = serializers.ListField()
+class FeatureSerializer(serializers.ModelSerializer):
+
+    token_list = serializers.ListField(child=serializers.CharField(), required=False)
+    class Meta:
+        model = enhance_models.Feature
+        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', )
+        read_only_fields = ('id', 'index', 'text', 'document_frequency', )
+
+
 
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
