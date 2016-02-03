@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand, make_option, CommandError
-from msgvis.apps.enhance.utils import check_or_create_dir
+
+from msgvis.apps.base.utils import check_or_create_dir
+
 
 class Command(BaseCommand):
     help = "Run tweet parser on a dataset. Results will be saved into files."

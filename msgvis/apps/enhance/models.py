@@ -1,19 +1,16 @@
+import random
+import math
+from operator import itemgetter
+
 from django.db import models
 from django.conf import settings
-import random
-import codecs
-import math
-
-import scipy.sparse
 import numpy
-from operator import itemgetter
 
 from fields import PositiveBigIntegerField
 from msgvis.apps.corpus.models import Message, Dataset
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
-from msgvis.apps.enhance.utils import check_or_create_dir
 
 # Create your models here.
 
@@ -220,7 +217,7 @@ class Dictionary(models.Model):
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        feature_num = self.features.count()
+        feature_num = self.features.filter(source='S').count()
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
@@ -253,7 +250,7 @@ class Dictionary(models.Model):
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self).all():
+            for feature in msg.feature_scores.filter(dictionary=self, feature__source='S').all():
                 data['training']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
@@ -262,7 +259,7 @@ class Dictionary(models.Model):
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self).all():
+            for feature in msg.feature_scores.filter(dictionary=self, feature__source='S').all():
                 data['testing']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
@@ -279,7 +276,7 @@ class Dictionary(models.Model):
             data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
             data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
 
-        for feature in self.features.all().order_by('index'):
+        for feature in self.features.filter(source='S').all().order_by('index'):
             data['meta']['features'].append({'index': feature.index,
                                           'text': (feature.text).replace("_", " "),
                                           'count': feature.document_frequency})

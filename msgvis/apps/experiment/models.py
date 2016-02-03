@@ -1,12 +1,10 @@
 from django.db import models
-from msgvis.apps.corpus import utils
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from django.contrib.auth.models import User
-import operator
-from django.utils import timezone
 from random import shuffle
-
+from msgvis.apps.experiment import utils as experiment_utils
+from msgvis.apps.base.utils import check_or_create_dir
 
 def create_a_pair(output, default_stage):
 
@@ -39,7 +37,6 @@ def create_a_pair(output, default_stage):
 
     return pair
 
-
 class Experiment(models.Model):
     """
     A model for experiments
@@ -56,6 +53,10 @@ class Experiment(models.Model):
 
     dictionary = models.ForeignKey(enhance_models.Dictionary, related_name='experiments', default=None, null=True)
     """Which :class:`enhance_models.Dictionary` this experiment uses"""
+
+    saved_path_root = models.FilePathField(default=None, blank=True, null=True)
+    """The root path of this experiment.
+       The svm model in scikit-learn format will be saved in the directories in this path."""
 
     @property
     def stage_count(self):
@@ -98,7 +99,7 @@ class Experiment(models.Model):
             stage_list.append(stage)
 
         # random assign messages
-        # TODO: may keep this to be done after each stage
+        # TODO: may change this to be done after each stage
         self.random_assign_messages()
 
         # create a stage for golden code data
@@ -113,7 +114,7 @@ class Experiment(models.Model):
         pair_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = create_a_pair(output, default_stage=golden_stage)
+            pair = experiment_utils.create_a_pair(output, default_stage=golden_stage)
             pair_list.append(pair)
 
         print >>output, "Assignment list"
@@ -156,6 +157,46 @@ class Experiment(models.Model):
             item = MessageSelection(stage=golden_stage, message=message, order=idx + 1)
             selection.append(item)
         MessageSelection.objects.bulk_create(selection)
+
+    def process_stage(self, stage, user, use_tfidf=False):
+        features = self.dictionary.features.filter(source='S').all()[:]
+        features += user.feature_assignments.filter(valid=True).all()[:]
+        messages = stage.messages.all()
+        model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, user.username, stage.order)
+        check_or_create_dir(model_save_path)
+
+        X, y, code_map_inverse = experiment_utils.get_formatted_data(user=user, messages=messages, features=features)
+        lin_clf = experiment_utils.train_model(X, y, model_save_path=model_save_path)
+
+        svm_model = SVMModel(user=user, source_stage=stage, saved_path=model_save_path)
+        svm_model.save()
+
+        weights = []
+        for code_index, code_id in code_map_inverse.iteritems():
+            for feature_index, feature in enumerate(features):
+                weight = lin_clf.coef_[code_index][feature_index]
+
+                model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
+                                              feature=feature, weight=weight)
+
+                weights.append(weights)
+
+        SVMModelWeight.objects.bulk_create(weights)
+
+        next_stage = stage.get_next_stage()
+        next_message_set = next_stage.messages.all()
+        next_message_num = next_message_set.count()
+
+        code_assignments = []
+        next_X = experiment_utils.get_formatted_X(messages=next_message_set, features=features)
+        predict_y, prob = experiment_utils.get_prediction(lin_clf, next_X)
+        for idx in range(next_message_num):
+            code_id = code_map_inverse[predict_y[idx]]
+            probability = prob[idx]
+            code_assignment = CodeAssignment(user=user, code_id=code_id, is_user_label=False, probability=probability)
+            code_assignments.append(code_assignment)
+        CodeAssignment.objects.bulk_create(code_assignments)
+
 
 
 class Condition(models.Model):
@@ -211,6 +252,9 @@ class Stage(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
+    def get_next_stage(self):
+        return self.experiment.stages.filter(order__gt=self.order).first()
+
     class Meta:
         ordering = ['order']
 
@@ -243,13 +287,21 @@ class MessageSelection(models.Model):
     class Meta:
         ordering = ["order"]
 
+    # TODO: add a field to subselect messages
+
 
 class CodeAssignment(models.Model):
     """
     A model for recording code assignment
     """
     user = models.ForeignKey(User, related_name="code_assignments")
+    message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
     code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
+
+    is_user_labeled = models.BooleanField(default=True)
+    """Whether this code assignment is user given. Otherwise it is from the user's model"""
+    probability = models.FloatField(default=1.0)
+    """How confident the code is; It will be 1.0 if this is user labeled"""
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The code created time"""
@@ -303,12 +355,17 @@ class SVMModel(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
 
+    saved_path = models.FilePathField(default=None, blank=True, null=True)
+    """scikit-learn model will be saved in the given path"""
+
 
 class SVMModelWeight(models.Model):
     """
     A model for svm model weight
     """
     svm_model = models.ForeignKey(SVMModel, related_name="weights")
+    code = models.ForeignKey(corpus_models.Code, related_name="weights")
+    feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
     weight = models.FloatField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
