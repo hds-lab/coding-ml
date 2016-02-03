@@ -34,8 +34,8 @@
     var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
 
         var sortOption_None = 0;
-        var sortOption_Ascending = 1;
-        var sortOption_Descending = 2;
+        var sortOption_Descending = 1;
+        var sortOption_Ascending = 2;
 
         var toggleSort = function(previousSortOption){
             return (previousSortOption+1) % 3;
@@ -68,8 +68,8 @@
 
         // feature pane
         $scope.features = undefined;
-        $scope.userFeatureSortKey = undefined;
-        $scope.userFeatureSortOption = sortOption_None;
+        $scope.featureSortKey = { user: undefined, system: undefined };
+        $scope.featureSortOption = { user: sortOption_None, system: sortOption_None };
 
         // Feature selection logic and states
         $scope.hoveredCharStart = -1;
@@ -78,55 +78,93 @@
         $scope.selectedTokens = undefined;
         $scope.selectedTokenIndices = new Map();
 
+        var tweetItem = function(messageData) {
+            var text = messageData.message.text;
+            var characters = text.split("");
+            var tokens = messageData.tokens;
+
+            var tokenItems = [];
+            var charToToken = [];
+
+            var lowerText = text.toLowerCase();
+            var currentIndex = 0;
+            for (var i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (token != null && token.length > 0) {
+                    var foundIndex = lowerText.substr(currentIndex).indexOf(token) + currentIndex;
+
+                    var tokenItem = {
+                        text: token,
+                        index: i
+                    };
+
+                    currentIndex = foundIndex;
+                    tokenItem.startIndex = currentIndex;
+                    currentIndex += token.length - 1;
+                    tokenItem.endIndex = currentIndex;
+
+                    tokenItems.push(tokenItem);
+
+                    for (var j = tokenItem.startIndex; j <= tokenItem.endIndex; j++) {
+                        charToToken[j] = i;
+                    }
+                }
+            }
+
+            return {
+                id: messageData.message.id,
+                text: text,
+                tokens: tokenItems,
+                characters: characters,
+                charToToken: charToToken,
+                features: messageData.message.feature_vector
+            };
+        };
+
         var load = function(){
             var request = SVMResult.load(Dictionary.id);
             if (request) {
-                usSpinnerService.spin('table-spinner');
+                usSpinnerService.spin('label-spinner');
                 request.then(function() {
-                    usSpinnerService.stop('table-spinner');
-                    $scope.codes = SVMResult.data.codes;
-                    $scope.submittedLabels = [];
+                    usSpinnerService.stop('label-spinner');
+                    var modelData = SVMResult.data.results;
+                    var messages = SVMResult.data.messages;
 
-                    // Fake labels for now
-                    for (var i = 0; i < 100; i++){
-                        var codeIndex = Math.floor(Math.random() * ($scope.codes.length + 1));
-                        var ambiguous = Math.random() < 0.5;
-                        var partnerIndex = (Math.random() < 0.5) ? Math.floor(Math.random() * ($scope.codes.length + 1)) : -1;
-                        var label = {
-                            id: i,
-                            text: i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please",
-                            mine: { code : codeIndex, ambiguous: ambiguous },
-                            partner: partnerIndex > 0 ? { code : partnerIndex, ambiguous: (Math.random() < 0.5) } : null
-                        };
+                    $scope.codes = modelData.codes;
 
-                        $scope.submittedLabels.push(label);
+                    // Map message id to model output
+                    var modelOutputMap = new Map();
+                    for (var i = 0; i < modelData.train_id.length; i++){
+                        modelOutputMap.set(modelData.train_id[i], {
+                            prediction: modelData.predictions[i],
+                            probabilities: modelData.probabilities[i],
+                            label: modelData.labels[i]
+                        });
                     }
+
+                    var tweetItems = [];
+
+                    // Merge training result with messages
+                    for (var i = 0; i < messages.length; i++) {
+                        var message = messages[i];
+                        var modelOutput = modelOutputMap.get(message.message.id);
+
+                        var item = tweetItem(message);
+                        item.prediction = modelOutput.prediction;
+                        item.probabilities = modelOutput.probabilities;
+                        item.label = modelOutput.label;
+
+                        tweetItems.push(item);
+                    }
+
+                    $scope.submittedLabels = tweetItems;
 
                     $scope.filterLabels("all");
 
                     $scope.features = {
                         user: [],
-                        system: []
+                        system: modelData.features
                     };
-
-                    // Fake features for now
-                    for (var i = 0; i < 10; i++){
-                        var feature = {
-                            word: "feature" + i,
-                            count: Math.floor(Math.random() * 30) + 1,
-                            codes: [],
-                            index: i
-                        };
-
-                        $scope.codes.forEach(function(c) {
-                            feature.codes[c.text] = {
-                                weight: Math.random() * Number(Math.random() < 0.5),
-                                order: Math.floor(Math.random() * 10)
-                            };
-                        });
-
-                        $scope.features.user.push(feature);
-                    }
                 });
             }
         };
@@ -137,48 +175,7 @@
             usSpinnerService.spin('label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('label-spinner');
-
-                    var text = FeatureVector.data.message.text;
-                    var characters = text.split("");
-                    var tokens = FeatureVector.data.tokens;
-
-                    var tokenItems = [];
-                    var charToToken = [];
-
-                    var lowerText = text.toLowerCase();
-                    var currentIndex = 0;
-                    for (var i = 0; i < tokens.length / 2; i++)
-                    {
-                        var token = tokens[i];
-                        if (token != null && token.length > 0)
-                        {
-                            var foundIndex = lowerText.substr(currentIndex).indexOf(token) + currentIndex;
-
-                            var tokenItem = {
-                                text: token,
-                                index: i
-                            };
-
-                            currentIndex = foundIndex;
-                            tokenItem.startIndex = currentIndex;
-                            currentIndex += token.length - 1;
-                            tokenItem.endIndex = currentIndex;
-
-                            tokenItems.push(tokenItem);
-
-                            for (var j = tokenItem.startIndex; j <= tokenItem.endIndex; j++)
-                            {
-                                charToToken[j] = i;
-                            }
-                        }
-                    }
-
-                    $scope.currentMessage = {
-                        text: text,
-                        tokens: tokenItems,
-                        characters: characters,
-                        charToToken: charToToken
-                    };
+                    $scope.currentMessage = tweetItem(FeatureVector.data);
                     $scope.selectLabel(null);
                     $scope.isCurrentMessageAmbiguous = false;
                 });
@@ -193,56 +190,53 @@
             $scope.getMessage();
         };
 
-        $scope.sortUserFeatures = function(key){
+        $scope.sortFeatures = function(featureType, key){
             // Check if the sort key has changed
-            if ($scope.userFeatureSortKey == key){
-                $scope.userFeatureSortOption = toggleSort($scope.userFeatureSortOption);
+            if ($scope.featureSortKey[featureType] == key){
+                $scope.featureSortOption[featureType] = toggleSort($scope.featureSortOption[featureType]);
             }
             else {
-                $scope.userFeatureSortKey = key;
-                $scope.userFeatureSortOption = sortOption_Ascending;
+                $scope.featureSortKey[featureType] = key;
+                $scope.featureSortOption[featureType] = sortOption_Descending;
             }
 
-            if ($scope.userFeatureSortOption == sortOption_None) {
-                $scope.userFeatureSortKey = undefined;
-                $scope.features.user.sort(function (a, b) {
+            if ($scope.featureSortOption[featureType] == sortOption_None) {
+                $scope.featureSortKey[featureType] = undefined;
+                $scope.features[featureType].sort(function (a, b) {
                     return a.index - b.index;
                 });
             }
             else {
-                $scope.features.user.sort(function (a, b) {
-                    var sign = $scope.userFeatureSortOption == sortOption_Ascending ? 1 : -1;
-                    switch ($scope.userFeatureSortKey) {
+                $scope.features[featureType].sort(function (a, b) {
+                    var sign = $scope.featureSortOption[featureType] == sortOption_Ascending ? 1 : -1;
+                    var key = $scope.featureSortKey[featureType];
+                    switch (key) {
                         case "word":
-                            return sign * ((a.word.toLowerCase() <= b.word.toLowerCase()) ? -1 : 1);
+                            return sign * ((a.feature.toLowerCase() <= b.feature.toLowerCase()) ? -1 : 1);
                         case "count":
                             return sign * (a.count - b.count);
                         default:
-                            return sign * (a.codes[$scope.userFeatureSortKey].weight - b.codes[$scope.userFeatureSortKey].weight);
+                            return sign * (a.codes[key].weight - b.codes[key].weight);
                     }
                 });
             }
-        }
+        };
 
         $scope.filterLabels = function(filter) {
             if ($scope.selectedLabelFilter != filter) {
                 $scope.selectedLabelFilter = filter;
-                $scope.filteredLabels = $scope.submittedLabels.filter(function (label) {
+                $scope.filteredLabels = $scope.submittedLabels.filter(function (item) {
                     switch (filter) {
                         case "all":
                             return true;
                         case "gold":
-                            return label.gold != null;
+                            return item.label.gold != null;
                         case "ambiguous":
-                            return label.mine != null && label.mine.ambiguous;
+                            return item.label.ambiguous;
                         case "disagreement":
-                            var good = label.mine != null && label.partner != null && label.mine.code != label.partner.code;
-                            if (good){
-                                console.log(label.partner.code + " " + label.mine.code);
-                            }
-                            return good;
+                            return item.label != item.prediction;
                         default:
-                            return label.mine != null && label.mine.code == filter;
+                            return item.label != null && item.label == filter;
                     }
                 });
             }
@@ -438,10 +432,10 @@
 
         $scope.labelStyle = function(label) {
 
-            if (label) {
+            if (label != undefined) {
                 var colorIndex = 0;
-                if (label.code < $scope.fullColors.length) {
-                    colorIndex = label.code;
+                if (label < $scope.fullColors.length) {
+                    colorIndex = label;
                 }
                 var colors = $scope.fullColors[colorIndex];
                 var color = colors[colors.length - 5];
@@ -523,7 +517,7 @@
                 codeBox.each(function(code){
                     var box = d3.select(this);
 
-                    var labels = data.filter(function(d) { return d.mine.code == code.index; });
+                    var labels = data.filter(function(d) { return d.label == code.index; });
                     var i = 0;
                     var tweets = box.selectAll('.tweet-box')
                         .data(labels, function(l) {

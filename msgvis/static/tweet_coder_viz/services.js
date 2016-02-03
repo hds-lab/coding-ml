@@ -60,16 +60,16 @@
 
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.data = data.results;
+                            self.data = data;
                             self.calc_dist();
                         });
 
                 },
                 calc_dist: function(){
                     var self = this;
-                    if (self.data){
+                    if (self.data && self.data.results){
                         var domain = [0, 0];
-                        self.data.codes.forEach(function(code){
+                        self.data.results.codes.forEach(function(code){
                             if (code.train_count > domain[1])
                                 domain[1] = code.train_count;
                         });

@@ -319,8 +319,9 @@ class Dictionary(models.Model):
                 'training': lin_clf.score(data['training']['X'], data['training']['y']),
                 'testing': 0.0 # lin_clf.score(data['testing']['X'], data['testing']['y'])
             },
-            'prediction': prediction,
-            'probabilities': prob
+            'predictions': [x-1 for x in prediction],
+            'probabilities': prob,
+            'labels': [x-1 for x in trainingOutput]
         }
 
         for code in data['meta']['codes']:
