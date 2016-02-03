@@ -19,7 +19,7 @@ def create_a_pair(output, default_stage):
                                      password=password1)
 
     # set the user to the default stage
-    Progress.objects.get_or_create(user1, default_stage)
+    Progress.objects.get_or_create(user=user1, current_stage=default_stage)
 
     # user 2
     username2 = "user_%03d" % (current_user_count + 2)
@@ -28,7 +28,7 @@ def create_a_pair(output, default_stage):
                                      password=password2)
 
     # set the user to the default stage
-    Progress.objects.get_or_create(user2, default_stage)
+    Progress.objects.get_or_create(user=user2, current_stage=default_stage)
 
     pair = Pair(user1=user1, user2=user2)
     pair.save()
