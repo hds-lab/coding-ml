@@ -374,8 +374,8 @@ class Dictionary(models.Model):
         return results
 
     def add_a_feature(self, text, source='S'):
-        # TODO: implement feature add
-        pass
+        # TODO: implement feature add; for now, use the first feature in db to mock up the behavior
+        return Feature.objects.first()
 
 
 class Feature(models.Model):

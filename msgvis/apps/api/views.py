@@ -154,8 +154,8 @@ class UserFeatureView(APIView):
         #return fake data for now
 
         test_features = []
-        test_features[0] = { "id": 123, "tokens": ["rumor", "has", "it"]}
-        test_features[1] = { "id": 456, "tokens": ["fake"]}
+        test_features.append({ "id": 123, "tokens": ["rumor", "has", "it"]})
+        test_features.append({ "id": 456, "tokens": ["fake"]})
 
         return Response(test_features, status=status.HTTP_200_OK)
 

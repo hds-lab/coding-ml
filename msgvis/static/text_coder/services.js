@@ -120,10 +120,10 @@
 
     //A service for user defined features.
     module.factory('TextCoder.services.UserFeatures', [
-        '$http', 'djangoUrl',
-        function scriptFactory($http, djangoUrl) {
+        '$http', 'djangoUrl', 'TextCoder.services.Dictionary',
+        function scriptFactory($http, djangoUrl, Dictionary) {
 
-            var listApiUrl = djangoUrl.reverse('feature');
+            var listApiUrl = djangoUrl.reverse('feature_list');
 
             var UserFeatures = function () {
                 var self = this;
@@ -151,9 +151,9 @@
                     var self = this;
 
                     var request = {
-                        params: {
-                        },
-                        data: tokens
+                        dictionary: Dictionary.id,
+                        token_list: tokens
+
                     };
 
                     return $http.post(listApiUrl, request)
