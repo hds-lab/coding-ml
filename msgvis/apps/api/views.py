@@ -94,9 +94,18 @@ class SVMResultView(APIView):
             try:
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 results = dictionary.do_training()
-                output = serializers.SVMResultSerializer({'results': results})
-                #import json
-                #output = json.dumps(results)
+                all_messages = corpus_models.Message.objects.all()
+                messages = []
+
+                for message in all_messages:
+
+                    feature_vector = message.get_feature_vector(dictionary=dictionary)
+                    tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
+                    output = {'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector}
+                    messages.append(output)
+
+                output = serializers.SVMResultSerializer({'results': results, 'messages': messages})
+
                 return Response(output.data, status=status.HTTP_200_OK)
             except:
                 import traceback

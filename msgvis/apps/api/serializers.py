@@ -51,13 +51,14 @@ class MessageSerializer(serializers.ModelSerializer):
         model = corpus_models.Message
         fields = ('id', 'dataset', 'text', )
 
-class SVMResultSerializer(serializers.Serializer):
-    results = serializers.DictField()
-
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     tokens = serializers.ListField()
     feature_vector = serializers.ListField()
+
+class SVMResultSerializer(serializers.Serializer):
+    results = serializers.DictField()
+    messages = serializers.ListField(child=FeatureVectorSerializer(), required=True)
 
 class FeatureSerializer(serializers.ModelSerializer):
 

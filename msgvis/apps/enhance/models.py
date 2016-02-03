@@ -215,7 +215,7 @@ class Dictionary(models.Model):
 
         return message_id_list, results
 
-    def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True):
+    def load_to_scikit_learn_format(self, training_portion=1.00, use_tfidf=True):
         messages = map(lambda x: x, self.dataset.message_set.all().order_by('id'))
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
@@ -289,29 +289,26 @@ class Dictionary(models.Model):
 
 
     def do_training(self):
-        data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False)
+        data = self.load_to_scikit_learn_format(training_portion=1.00, use_tfidf=False)
         from sklearn import svm
         lin_clf = svm.LinearSVC()
-        lin_clf.fit(data['training']['X'], data['training']['y'])
+        trainingInput = data['training']['X']
+        trainingOutput = data['training']['y']
 
-        def get_prediction(lin_model, X):
-            prediction = lin_model.predict(X)
-            distances = lin_model.decision_function(X)
-            if hasattr(lin_model, "predict_proba"):
-                prob = lin_model.predict_proba(X)[:, 1]
-            else:  # use decision function
-                prob = lin_model.decision_function(X)
-                min = prob.min()
-                max = prob.max()
-                prob = \
-                    (prob - min) / (max - min)
-            return {
-                'prediction': prediction,
-                'probabilities': prob
-            }
+        lin_clf.fit(trainingInput, trainingOutput)
 
-        test_prediction = get_prediction(lin_clf, data['testing']['X'])
-        train_prediction = get_prediction(lin_clf, data['training']['X'])
+        # get predictions
+        prediction = lin_clf.predict(trainingInput)
+        distances = lin_clf.decision_function(trainingInput)
+
+        if hasattr(lin_clf, "predict_proba"):
+            prob = lin_clf.predict_proba(trainingInput)[:, 1]
+        else:  # use decision function
+            prob = lin_clf.decision_function(trainingInput)
+            min = prob.min()
+            max = prob.max()
+            prob = \
+                (prob - min) / (max - min)
 
         results = {
             'codes': [],
@@ -320,16 +317,10 @@ class Dictionary(models.Model):
             'test_id': data['testing']['id'],
             'accuracy': {
                 'training': lin_clf.score(data['training']['X'], data['training']['y']),
-                'testing': lin_clf.score(data['testing']['X'], data['testing']['y'])
+                'testing': 0.0 # lin_clf.score(data['testing']['X'], data['testing']['y'])
             },
-            'prediction': {
-                'training': train_prediction['prediction'],
-                'testing': test_prediction['prediction']
-            },
-            'probabilities': {
-                'training': train_prediction['probabilities'],
-                'testing': test_prediction['probabilities']
-            }
+            'prediction': prediction,
+            'probabilities': prob
         }
 
         for code in data['meta']['codes']:
