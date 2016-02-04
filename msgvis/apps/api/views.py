@@ -157,7 +157,17 @@ class UserFeatureView(APIView):
         test_features.append({ "id": 123, "tokens": ["rumor", "has", "it"]})
         test_features.append({ "id": 456, "tokens": ["fake"]})
 
-        return Response(test_features, status=status.HTTP_200_OK)
+        if self.request.user is not None:
+            user = self.request.user
+            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                participant = User.objects.get(id=self.request.user.id)
+
+            features = map(lambda x: x.feature, participant.feature_assignments.filter(valid=True).all())
+
+            output = serializers.FeatureSerializer(features, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        return Response("Please log in first", status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, format=None):
 
