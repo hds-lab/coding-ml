@@ -37,7 +37,13 @@ class Dictionary(models.Model):
 
     @property
     def feature_count(self):
-        return self.features.count()
+        return self.features.filter(source='S').count()
+
+    def get_user_feature_count(self, user):
+        feature_num = 0
+        if user is not None:
+            feature_num += user.feature_assignments.filter(valid=True, feature__source='U').distinct().count()
+        return feature_num
 
     @property
     def gensim_dictionary(self):
@@ -213,12 +219,16 @@ class Dictionary(models.Model):
 
         return message_id_list, results
 
-    def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True):
+    def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True, user=None):
         messages = map(lambda x: x, self.dataset.message_set.all().order_by('id'))
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        feature_num = self.features.count()
+        features = list(self.features.filter(source='S').all())
+        if user is not None:
+            features += map(lambda x: x.feature, user.feature_assignments.filter(valid=True, feature__source='U').distinct())
+        features.sort(key=lambda x: x.index)
+        feature_num = len(features)
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
@@ -251,8 +261,11 @@ class Dictionary(models.Model):
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self).all():
-                data['training']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
+            for feature_score in msg.feature_scores.filter(dictionary=self).all():
+                if (feature_score.feature.source == 'S') \
+                   or (( user is not None ) and (feature_score.feature.source == 'U' and
+                         feature_score.feature.feature_assignments.filter(user=user, valid=True))):
+                   data['training']['X'][idx, feature_score.feature_index] = feature_score.tfidf if use_tfidf else feature_score.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
             data['training']['y'].append(code_id)
@@ -260,8 +273,11 @@ class Dictionary(models.Model):
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self).all():
-                data['testing']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
+            for feature_score in msg.feature_scores.filter(dictionary=self).all():
+                if (feature_score.feature.source == 'S') \
+                    or (( user is not None ) and (feature_score.feature.source == 'U' and
+                         feature_score.feature.feature_assignments.filter(user=user, valid=True))):
+                    data['testing']['X'][idx, feature_score.feature_index] = feature_score.tfidf if use_tfidf else feature_score.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
             data['testing']['y'].append(code_id)
@@ -277,7 +293,7 @@ class Dictionary(models.Model):
             data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
             data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
 
-        for feature in self.features.all().order_by('index'):
+        for feature in features:
             text = feature.text
             if text.find('&') > 0:
                 text = text.replace('&', ', ')
@@ -288,8 +304,8 @@ class Dictionary(models.Model):
 
         return data
 
-    def do_training(self):
-        data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False)
+    def do_training(self, user=None):
+        data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False, user=user)
         from sklearn import svm
         lin_clf = svm.LinearSVC()
         lin_clf.fit(data['training']['X'], data['training']['y'])

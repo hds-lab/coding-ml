@@ -159,8 +159,8 @@ class Experiment(models.Model):
         MessageSelection.objects.bulk_create(selection)
 
     def process_stage(self, stage, user, use_tfidf=False):
-        features = self.dictionary.features.filter(source='S').all()[:]
-        features += user.feature_assignments.filter(valid=True).all()[:]
+        features = list(self.dictionary.features.filter(source='S').all())
+        features += list(user.feature_assignments.filter(valid=True).all())
         messages = stage.messages.all()
         model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, user.username, stage.order)
         check_or_create_dir(model_save_path)

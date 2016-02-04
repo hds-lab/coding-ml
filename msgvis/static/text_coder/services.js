@@ -165,7 +165,7 @@
             });
 
             angular.extend(UserFeatures.prototype, {
-                remove: function (id) {
+                remove: function (feature) {
                     var self = this;
 
                     var request = {
@@ -173,7 +173,7 @@
                         }
                     };
 
-                    var itemApiUrl = djangoUrl.reverse('feature', { 'id' : id });
+                    var itemApiUrl = djangoUrl.reverse('feature', { 'feature_id' : feature.id });
                     return $http.delete(itemApiUrl, request)
                         .success(function (data) {
                             self.data = data;
