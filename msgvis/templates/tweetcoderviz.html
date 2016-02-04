@@ -108,14 +108,14 @@
                             ng-click="sortFeatures('system', code.text)" ng-class="{ 'selected': featureSortKey['system'] == code.text}">
                             {$ code.index $}<span class="caret"  ng-class="{'rotate': featureSortOption['system'] == 1}"></span></div>
                     </div>
-                    <div class="feature-item" ng-repeat="feature in features.system">
+                    <div class="feature-item" ng-repeat="feature in features.system" ng-mouseover="onFeatureMouseOver(feature)" ng-mouseleave="onFeatureMouseLeave(feature)">
                         <div class="feature-item-word">{$ feature.feature $} ({$ feature.count $})</div>
                         <div class="feature-item-block" ng-repeat="code in codes"
                              ng-style="codeStyle(code.index, feature.codes[code.text])">{$ code.index $}</div>
                     </div>
                 </div>
             </div>
-            <div class="no-padding" id="right-pane">
+            <div class="no-padding" id="right-pane" ng-show="showReview.visible == false">
                 <div class="box" id="label-pane">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="box-header">new label</div>
@@ -171,6 +171,34 @@
                     <div tweet-items ng-if="codes" codes="codes" data="submittedLabels" box-color="boxColor"></div>
                 </div>
             </div>
+            <div class="no-padding" id="review-pane-viz" ng-show="showReview.visible == true">
+                <div class="box" id="scatter-box">
+                    <div class="box-header">overview</div>
+                    <div scatter-box ng-if="codes" codes="codes" data="submittedLabels" box-color="boxColor" feature-callbacks="featureCallbacks"></div>
+                </div>
+                <div class="box" id="confusion-box">
+                    <div class="box-header">confusion</div>
+                    <div confusion-box ng-if="codes" codes="codes" data="submittedLabels" select-cells="selectCells"></div>
+                </div>
+            </div>
+            <div class="no-padding" id="review-pane-items" ng-show="showReview.visible == true">
+                <div class="box" style="height:100%">
+                    <div class="box-header">submitted labels</div>
+                    <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
+                    <div id="labels">
+                        <div ng-repeat="item in filteredReviewLabels" class="label-item">
+                            <div class="label-item-text">{$ item.text $}</div>
+                            <div style="float:right">
+                                <div class="label-item-label label-split" ng-show="item.prediction != null" ng-style="labelStyle(item.prediction)">?</div>
+                                <div class="label-item-label" ng-class="{'label-split': item.prediction != null }" ng-style="labelStyle(item.label)">?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div id="show-review" class="checkbox" style="display: inline-block; margin-left:20px">
+                 <input type="checkbox" name="show-review" ng-model="showReview.visible"> Show Review
+             </div>
         </div>
 </div>
 

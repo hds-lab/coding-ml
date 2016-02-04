@@ -33,6 +33,8 @@
 
     var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
 
+        $scope.showReview = { visible: true };
+
         var sortOption_None = 0;
         var sortOption_Descending = 1;
         var sortOption_Ascending = 2;
@@ -65,6 +67,15 @@
         $scope.submittedLabels = undefined;
         $scope.selectedLabelFilter = undefined;
         $scope.filteredLabels = undefined;
+
+        // review-confusion
+        $scope.filteredReviewLabels = [];
+        $scope.selectedCells = undefined;
+
+        // review-scatter
+        $scope.featureCallbacks = {
+            onFeatureHover: undefined
+        };
 
         // feature pane
         $scope.features = undefined;
@@ -117,7 +128,7 @@
                 tokens: tokenItems,
                 characters: characters,
                 charToToken: charToToken,
-                features: messageData.message.feature_vector
+                features: messageData.feature_vector
             };
         };
 
@@ -131,6 +142,13 @@
                     var messages = SVMResult.data.messages;
 
                     $scope.codes = modelData.codes;
+
+                    $scope.selectedCells = [];
+                    $scope.codes.forEach(function(codei, i) {
+                        $scope.selectedCells[i] = $scope.codes.map(function(codej, j){
+                            return false;
+                        });
+                    });
 
                     // Map message id to model output
                     var modelOutputMap = new Map();
@@ -158,6 +176,7 @@
                     }
 
                     $scope.submittedLabels = tweetItems;
+                    $scope.filteredReviewLabels = $scope.submittedLabels;
 
                     $scope.filterLabels("all");
 
@@ -450,16 +469,60 @@
             return "";
         };
 
-        $scope.boxColor = function(code) {
+        $scope.boxColor = function(codeIndex) {
 
             var colorIndex = 0;
-            if (code.index < $scope.fullColors.length) {
-                colorIndex = code.index;
+            if (codeIndex < $scope.fullColors.length) {
+                colorIndex = codeIndex;
             }
             var colors = $scope.fullColors[colorIndex];
             var color = colors[colors.length - 5];
 
             return color;
+        };
+
+        $scope.selectCells = function(labelPredictionPairs, selected) {
+            for (var i = 0; i < labelPredictionPairs.length; i++) {
+                var pair = labelPredictionPairs[i];
+                $scope.selectedCells[pair.prediction][pair.label] = selected;
+            }
+
+            var selected = false;
+            for (var i = 0; i < $scope.selectedCells.length; i++) {
+                for (var j = 0; j < $scope.selectedCells.length; j++) {
+                    if ($scope.selectedCells[i][j]){
+                        selected = true;
+                        break;
+                    }
+                }
+
+                if (selected){
+                    break;
+                }
+            }
+
+            if (selected) {
+                $scope.filteredReviewLabels = $scope.submittedLabels.filter(function (item) {
+                    return $scope.selectedCells[item.prediction][item.label];
+                });
+            }
+            else {
+                $scope.filteredReviewLabels = $scope.submittedLabels;
+            }
+
+            $scope.$apply();
+        };
+
+        $scope.onFeatureMouseOver = function(feature){
+          if ($scope.featureCallbacks.onFeatureHover){
+              $scope.featureCallbacks.onFeatureHover(feature.feature_index);
+          }
+        };
+
+        $scope.onFeatureMouseLeave = function(feature){
+          if ($scope.featureCallbacks.onFeatureHover){
+              $scope.featureCallbacks.onFeatureHover(-1);
+          }
         };
 
         // load the svm results
@@ -536,7 +599,7 @@
                         })
                         .attr("width", boxSize)
                         .attr("height", boxSize)
-                        .attr("fill", boxColor(code))
+                        .attr("fill", boxColor(code.index))
                         .attr("data-item", function(l) { return JSON.stringify(l); });
 
                     tweets.exit().remove();
@@ -555,6 +618,275 @@
 
                 if (!scope._TweetItems) {
                     var vis = scope._TweetItems = new TweetItems(scope, element, attrs);
+
+                    // Watch for changes to the data
+                    scope.$watch('data', function (newVals, oldVals) {
+                        return vis.render(scope.data);
+                    }, false);
+
+                } else {
+                    throw("What is this madness");
+                }
+            }
+        };
+    });
+
+    module.directive('scatterBox', function () {
+         var ScatterBox = function (scope, $element, attrs) {
+
+            var width = 460;
+            var height = 270;
+             var margin = { top: 0, left: 0, right: 0, bottom: 15};
+            var widthPerCode = (width - margin.left - margin.right) / scope.codes.length;
+             var codeMargin = 5;
+
+            var self = this;
+            var codes = scope.codes;
+            var boxColor = scope.boxColor;
+             var callbacks = scope.featureCallbacks;
+            var svg = d3.select($element[0]).append('svg')
+                .attr('width', width - margin.left - margin.right)
+                .attr('height', height - margin.top - margin.bottom);
+
+            var codeBox = svg.selectAll('.code')
+                .data(codes)
+                .enter()
+                .append('g')
+                .attr('class', 'code')
+                .attr('transform', function(c,i) { return 'translate(' + (i * widthPerCode + codeMargin) + ',' + '0)';})
+                .attr('width', widthPerCode - 2 * codeMargin)
+                .attr('height', height - margin.top - margin.left);
+
+            self.render = function (data) {
+                if (!data) {
+                    return;
+                }
+
+                callbacks.onFeatureHover = function(featureIndex){
+                    svg.selectAll(".scatter-box")
+                        .transition()
+                        .duration(200)
+                        .style("opacity", function(item){
+                            if (featureIndex == -1){
+                                return 1;
+                            }
+                            else if (item.features[featureIndex] > 0){
+                                return 1;
+                            }
+                            else {
+                                return 0.3;
+                            }
+                        });
+                };
+
+                var boxSize = 8;
+                var boxSpacing = 4;
+                var colCount = Math.floor((widthPerCode - 2 * codeMargin) / (boxSize + boxSpacing));
+
+                codeBox.each(function(code){
+                    var box = d3.select(this);
+
+                    box.append('text')
+                        .text(code.text)
+                        .attr("fill", boxColor(code.index))
+                        .attr("transform", "translate(0," + (height - margin.bottom - margin.top - 5) + ")");
+
+                    var labels = data.filter(function(d) { return d.label == code.index; });
+                    var i = 0;
+                    var tweets = box.selectAll('.scatter-box')
+                        .data(labels, function(l) {
+                            l.index = i++;
+                            return l.id;
+                        });
+
+                    tweets.enter().append("rect")
+                        .attr("class", "scatter-box")
+                        .attr("x", function(l) {
+                            var col = l.index % colCount;
+                            return col * (boxSize + boxSpacing);
+                        })
+                        .attr("y", function(l) {
+                            var row = Math.floor(l.index / colCount) + 3;
+                            return height - margin.top - margin.bottom - row * (boxSize + boxSpacing);
+                        })
+                        .attr("width", boxSize)
+                        .attr("height", boxSize)
+                        .attr("stroke-width", 2)
+                        .attr("stroke", function(l) { return boxColor(l.prediction); })
+                        .attr("fill", boxColor(code.index));
+
+                    tweets.exit().remove();
+                });
+            };
+        };
+
+        return {
+            restrict: 'EA',
+            scope: {
+                data: '=',
+                codes: '=',
+                boxColor: "=",
+                featureCallbacks: "="
+            },
+            link: function (scope, element, attrs) {
+
+                if (!scope._ScatterBox) {
+                    var vis = scope._ScatterBox = new ScatterBox(scope, element, attrs);
+
+                    // Watch for changes to the data
+                    scope.$watch('data', function (newVals, oldVals) {
+                        return vis.render(scope.data);
+                    }, false);
+
+                } else {
+                    throw("What is this madness");
+                }
+            }
+        };
+    });
+
+    module.directive('confusionBox', function () {
+         var ConfusionBox = function (scope, $element, attrs) {
+
+             var self = this;
+             var codes = scope.codes;
+             var selectCells = scope.selectCells;
+
+             var width = 460;
+             var height = 270;
+             var margin = { top: 0, left: 0, right: 0, bottom: 15};
+             var textSpacing = { top: 30, left: 60};
+             var cellSpacing = 2;
+             var rowHeight = (height - margin.top - margin.bottom - textSpacing.top) / codes.length;
+             var colWidth = (width - margin.left - margin.right - textSpacing.left) / codes.length;
+
+             var colors = ['#f7f7f7','#cccccc','#969696','#636363','#252525'];
+             var svg = d3.select($element[0]).append('svg')
+                .attr('width', width - margin.left - margin.right)
+                .attr('height', height - margin.top - margin.bottom);
+
+             self.render = function (data) {
+                if (!data) {
+                    return;
+                }
+
+                // split the data
+                 var codeMap = d3.range(codes.length);
+                 codes.forEach(function(code, i) {
+                     codeMap[code.index] = i;
+                 });
+
+                var matrix = [];
+                 codes.forEach(function(codei, i) {
+                     matrix[i] = codes.map(function(codej, j){
+                        return {
+                            label: codej,
+                            prediction: codei,
+                            items: [],
+                            itemCount: 0
+                        }
+                     });
+                 });
+
+                 var maxCount = 0;
+                 data.forEach(function(item){
+                    var j = codeMap[item.label];
+                     var i = codeMap[item.prediction];
+                     matrix[i][j].items.push(item);
+                     matrix[i][j].itemCount++;
+
+                     maxCount = Math.max(maxCount, matrix[i][j].itemCount);
+                 });
+
+
+                 var colorScale = d3.scale.quantile()
+                  .domain([0, colors.length - 1, maxCount])
+                  .range(colors);
+
+                var row = svg.selectAll(".row")
+                    .data(matrix)
+                    .enter().append("g")
+                    .attr("class", "row")
+                    .attr("transform", function(d, i) { return "translate(" + textSpacing.left + "," + (i * rowHeight + textSpacing.top) + ")"; })
+                    .each(renderRow);
+
+                row.append("text")
+                    .attr("x", -10)
+                    .attr("text-anchor", "end")
+                    .attr("transform", "rotate(-45)")
+                    .text(function(d, i) { return codes[i].text; })
+                    .on('click', selectRow);
+
+                var column = svg.selectAll(".column")
+                    .data(matrix)
+                    .enter().append("g")
+                    .attr("class", "column")
+                    .attr("transform", function(d, i) { return "translate(" + i * colWidth + ", " + textSpacing.top + ")"; });
+
+                column.append("text")
+                    .attr("x", textSpacing.left)
+                    .attr("y", - textSpacing.top / 2)
+                    .attr("text-anchor", "start")
+                    .text(function(d, i) { return codes[i].text; })
+                    .on('click', function(c) { return selectRow(c, true);});
+
+                function renderRow(row) {
+                    var cell = d3.select(this).selectAll(".cell")
+                        .data(row)
+                        .enter().append("rect")
+                        .attr("class", "cell")
+                        .attr("id", function(d) { return "cell" + d.label.index + "_" + d.prediction.index; })
+                        .attr("x", function(d, i) { return i * colWidth; })
+                        .attr("width", colWidth - cellSpacing)
+                        .attr("height", rowHeight - cellSpacing)
+                        .style("fill", function(d) {
+                            if (d.itemCount > 0) {
+                                return colorScale(d.itemCount);
+                            }
+                            else {
+                                return 'transparent';
+                            }
+                        })
+                        .on('click', selectCell)
+                        .attr("data-val", function(d) { return d.itemCount; });
+                }
+
+                function selectRow(row, isCol) {
+                    row.selected = !row.selected;
+                    d3.select(this).classed("selected", row.selected);
+
+                    var selection = row.map(function(r) {
+                        var i = isCol ? r.prediction.index : r.label.index;
+                        var j = isCol ? r.label.index: r.prediction.index;
+                        svg.select("#cell" + i + "_" + j).classed("selected", row.selected);
+
+                        return {
+                        label: r.label.index,
+                        prediction: r.prediction.index
+                    }});
+
+                    selectCells(selection, row.selected);
+                }
+
+                function selectCell(item) {
+                    item.selected = !d3.select(this).classed("selected");
+                    d3.select(this).classed("selected", item.selected);
+                    selectCells([{ label: item.label.index, prediction: item.prediction.index }], item.selected);
+                }
+            };
+        };
+
+        return {
+            restrict: 'EA',
+            scope: {
+                data: '=',
+                codes: '=',
+                selectCells: "="
+            },
+            link: function (scope, element, attrs) {
+
+                if (!scope._ConfusionBox) {
+                    var vis = scope._ConfusionBox = new ConfusionBox(scope, element, attrs);
 
                     // Watch for changes to the data
                     scope.$watch('data', function (newVals, oldVals) {
