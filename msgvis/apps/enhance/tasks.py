@@ -282,7 +282,9 @@ class LambdaWordFilter(object):
     def __contains__(self, item):
         return self.fn(item)
 
-def standard_features_pipeline(context, name, dataset_id):
+
+def standard_features_pipeline(context, dataset_id):
+
     dictionary = context.find_dictionary()
     if dictionary is None:
         dictionary = context.build_dictionary(dataset_id=dataset_id)
