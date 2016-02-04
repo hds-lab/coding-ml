@@ -34,6 +34,13 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_messages_with_golden_code(self):
+        return self.message_set.filter(has_golden_code=True).all()
+
+    def get_messages_without_golden_code(self):
+        return self.message_set.filter(has_golden_code=False).all()
+
+
 class Code(models.Model):
     """A code of a message"""
 
@@ -61,6 +68,8 @@ class Message(models.Model):
 
     code = models.ForeignKey(Code, null=True, blank=True, default=None)
 
+    has_golden_code = models.BooleanField(default=False)
+
     def __repr__(self):
         return self.text
 
@@ -68,10 +77,10 @@ class Message(models.Model):
         return self.__repr__()
 
     def get_feature_vector(self, dictionary):
-        words = self.word_scores.filter(dictionary=dictionary).all()
-        vector = numpy.zeros(dictionary.words.count())
-        for word in words:
-            vector[word.word_index] = word.count
+        features = self.feature_scores.filter(dictionary=dictionary).all()
+        vector = numpy.zeros(dictionary.features.count())
+        for feature in features:
+            vector[feature.feature_index] = feature.count
         return vector.tolist()
 
 

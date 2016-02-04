@@ -51,14 +51,6 @@ class MessageSerializer(serializers.ModelSerializer):
         model = corpus_models.Message
         fields = ('id', 'dataset', 'text', )
 
-
-class WordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = enhance_models.Word
-
-    def to_representation(self, instance):
-        return instance.text
-
 class SVMResultSerializer(serializers.Serializer):
     results = serializers.DictField()
 
@@ -67,13 +59,20 @@ class FeatureVectorSerializer(serializers.Serializer):
     tokens = serializers.ListField()
     feature_vector = serializers.ListField()
 
+class FeatureSerializer(serializers.ModelSerializer):
+
+    token_list = serializers.ListField(child=serializers.CharField(), required=False)
+    class Meta:
+        model = enhance_models.Feature
+        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', )
+        read_only_fields = ('id', 'index', 'text', 'document_frequency', )
+
+
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:
         object_serializer_class = MessageSerializer
 
-
 class DatasetSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = corpus_models.Dataset
         fields = ('id', 'name', 'description', 'message_count', )
@@ -84,5 +83,5 @@ class DictionarySerializer(serializers.ModelSerializer):
     dataset = DatasetSerializer()
     class Meta:
         model = enhance_models.Dictionary
-        fields = ('id', 'name', 'time', 'word_count', 'feature_count', 'dataset', )
-        read_only_fields = ('id', 'name', 'time', 'word_count', 'feature_count', 'dataset', )
+        fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
+        read_only_fields = ('id', 'name', 'time', 'feature_count', 'dataset', )

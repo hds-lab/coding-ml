@@ -1,26 +1,32 @@
 from django.db import models
-from msgvis.apps.corpus import utils
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from django.contrib.auth.models import User
-import operator
-from django.utils import timezone
 from random import shuffle
+from msgvis.apps.experiment import utils as experiment_utils
+from msgvis.apps.base.utils import check_or_create_dir
 
-
-def create_a_pair(output):
+def create_a_pair(output, default_stage):
 
     current_user_count = User.objects.count()
 
-    username1 = "user_%3d" % (current_user_count + 1)
+    # user 1
+    username1 = "user_%03d" % (current_user_count + 1)
     password1 = User.objects.make_random_password()
     user1 = User.objects.create_user(username=username1,
                                      password=password1)
 
-    username2 = "user_%3d" % (current_user_count + 2)
+    # set the user to the default stage
+    Progress.objects.get_or_create(user=user1, current_stage=default_stage)
+
+    # user 2
+    username2 = "user_%03d" % (current_user_count + 2)
     password2 = User.objects.make_random_password()
     user2 = User.objects.create_user(username=username2,
                                      password=password2)
+
+    # set the user to the default stage
+    Progress.objects.get_or_create(user=user2, current_stage=default_stage)
 
     pair = Pair(user1=user1, user2=user2)
     pair.save()
@@ -30,7 +36,6 @@ def create_a_pair(output):
     print >> output, "username: %s | password: %s" %(username2, password2)
 
     return pair
-
 
 class Experiment(models.Model):
     """
@@ -46,8 +51,12 @@ class Experiment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     """The experiment created time"""
 
-    dataset = models.ForeignKey(corpus_models.Dataset, related_name='groups')
-    """Which :class:`corpus_models.Dataset` this experiment uses"""
+    dictionary = models.ForeignKey(enhance_models.Dictionary, related_name='experiments', default=None, null=True)
+    """Which :class:`enhance_models.Dictionary` this experiment uses"""
+
+    saved_path_root = models.FilePathField(default=None, blank=True, null=True)
+    """The root path of this experiment.
+       The svm model in scikit-learn format will be saved in the directories in this path."""
 
     @property
     def stage_count(self):
@@ -80,7 +89,7 @@ class Experiment(models.Model):
             condition.save()
             condition_list.append(condition)
 
-        print >>output, "For each condition, users will go through %d stages." %num_stages
+        print >>output, "For each condition, users will go through %d stages." % num_stages
         # create a list for saving stages
         stage_list = []
         # create stages
@@ -89,6 +98,15 @@ class Experiment(models.Model):
             stage.save()
             stage_list.append(stage)
 
+        # random assign messages
+        # TODO: may change this to be done after each stage
+        self.random_assign_messages()
+
+        # create a stage for golden code data
+        golden_stage = Stage(experiment=self, order=0)
+        golden_stage.save()
+        self.assign_messages_with_golden_code(golden_stage)
+
         print >>output, "Each condition has %d pairs." %num_pairs
         print >>output, "Pair list"
         print >>output, "========="
@@ -96,7 +114,7 @@ class Experiment(models.Model):
         pair_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = create_a_pair(output)
+            pair = experiment_utils.create_a_pair(output, default_stage=golden_stage)
             pair_list.append(pair)
 
         print >>output, "Assignment list"
@@ -104,26 +122,81 @@ class Experiment(models.Model):
         # shuffle pair list for random assignment
         shuffle(pair_list)
         for idx, condition in enumerate(condition_list):
-            print >>output, "\nIn %s" %(condition.name)
+            print >>output, "\nIn %s" % condition.name
             for i in range(num_pairs):
                 assignment = Assignment(pair=pair_list[idx * num_pairs + i],
                                         experiment=self,
                                         condition=condition)
                 assignment.save()
-                print >>output, "Pair #%d" %(pair_list[i].id)
+                print >>output, "Pair #%d" %pair_list[idx * num_pairs + i].id
 
     def random_assign_messages(self):
-        messages = self.dataset.message_set()
+        message_count = self.dictionary.dataset.get_messages_without_golden_code().count()
+        messages = map(lambda x: x, self.dictionary.dataset.get_messages_without_golden_code())
         shuffle(messages)
         num_stages = self.stage_count
-        num_per_stage = int(round(messages.count() / num_stages))
+        num_per_stage = int(round(message_count / num_stages))
 
         start = 0
         end = num_per_stage
-        for stage in self.stages:
-            stage.messages.add(*messages[start:end]) # add a list
+        for stage in self.stages.all():
+            selection = []
+            for idx, message in enumerate(messages[start:end]):
+                item = MessageSelection(stage=stage, message=message, order=idx + 1)
+                selection.append(item)
+            MessageSelection.objects.bulk_create(selection)
             start += num_per_stage
             end += num_per_stage
+
+    def assign_messages_with_golden_code(self, golden_stage):
+
+        messages = map(lambda x: x, self.dictionary.dataset.get_messages_with_golden_code())
+
+        selection = []
+        for idx, message in enumerate(messages):
+            item = MessageSelection(stage=golden_stage, message=message, order=idx + 1)
+            selection.append(item)
+        MessageSelection.objects.bulk_create(selection)
+
+    def process_stage(self, stage, user, use_tfidf=False):
+        features = self.dictionary.features.filter(source='S').all()[:]
+        features += user.feature_assignments.filter(valid=True).all()[:]
+        messages = stage.messages.all()
+        model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, user.username, stage.order)
+        check_or_create_dir(model_save_path)
+
+        X, y, code_map_inverse = experiment_utils.get_formatted_data(user=user, messages=messages, features=features)
+        lin_clf = experiment_utils.train_model(X, y, model_save_path=model_save_path)
+
+        svm_model = SVMModel(user=user, source_stage=stage, saved_path=model_save_path)
+        svm_model.save()
+
+        weights = []
+        for code_index, code_id in code_map_inverse.iteritems():
+            for feature_index, feature in enumerate(features):
+                weight = lin_clf.coef_[code_index][feature_index]
+
+                model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
+                                              feature=feature, weight=weight)
+
+                weights.append(weights)
+
+        SVMModelWeight.objects.bulk_create(weights)
+
+        next_stage = stage.get_next_stage()
+        next_message_set = next_stage.messages.all()
+        next_message_num = next_message_set.count()
+
+        code_assignments = []
+        next_X = experiment_utils.get_formatted_X(messages=next_message_set, features=features)
+        predict_y, prob = experiment_utils.get_prediction(lin_clf, next_X)
+        for idx in range(next_message_num):
+            code_id = code_map_inverse[predict_y[idx]]
+            probability = prob[idx]
+            code_assignment = CodeAssignment(user=user, code_id=code_id, is_user_label=False, probability=probability)
+            code_assignments.append(code_assignment)
+        CodeAssignment.objects.bulk_create(code_assignments)
+
 
 
 class Condition(models.Model):
@@ -179,6 +252,9 @@ class Stage(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
+    def get_next_stage(self):
+        return self.experiment.stages.filter(order__gt=self.order).first()
+
     class Meta:
         ordering = ['order']
 
@@ -210,3 +286,90 @@ class MessageSelection(models.Model):
 
     class Meta:
         ordering = ["order"]
+
+    # TODO: add a field to subselect messages
+
+
+class CodeAssignment(models.Model):
+    """
+    A model for recording code assignment
+    """
+    user = models.ForeignKey(User, related_name="code_assignments")
+    message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
+    code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
+
+    is_user_labeled = models.BooleanField(default=True)
+    """Whether this code assignment is user given. Otherwise it is from the user's model"""
+    probability = models.FloatField(default=1.0)
+    """How confident the code is; It will be 1.0 if this is user labeled"""
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code is valid (False indicate the code to the message has been removed) """
+
+class FeatureAssignment(models.Model):
+    """
+    A model for recording feature assignment
+    """
+    user = models.ForeignKey(User, related_name="feature_assignments")
+    feature = models.ForeignKey(enhance_models.Feature, related_name="feature_assignments")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code is valid (False indicate the code to the message has been removed) """
+
+class Progress(models.Model):
+    """
+    A model for recording a user's current stage
+    """
+    user = models.ForeignKey(User, related_name="progress", unique=True)
+    current_stage = models.ForeignKey(Stage, related_name="progress")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+
+class SVMModel(models.Model):
+    """
+    A model for svm model
+    """
+    user = models.ForeignKey(User, related_name="svm_models", unique=True)
+    source_stage = models.ForeignKey(Stage, related_name="svm_models")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
+
+    saved_path = models.FilePathField(default=None, blank=True, null=True)
+    """scikit-learn model will be saved in the given path"""
+
+
+class SVMModelWeight(models.Model):
+    """
+    A model for svm model weight
+    """
+    svm_model = models.ForeignKey(SVMModel, related_name="weights")
+    code = models.ForeignKey(corpus_models.Code, related_name="weights")
+    feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
+    weight = models.FloatField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
+    """The code updated time"""
