@@ -1,6 +1,6 @@
 import logging
 
-from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, PrecalcCategoricalDistribution, TweetWordMessageConnection
+from models import Dictionary, Feature, MessageFeature, TweetWord, TweetWordMessageConnection
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs
 import re
@@ -9,6 +9,8 @@ import subprocess
 import os
 import glob
 from nltk.stem import WordNetLemmatizer
+from gensim.models import Phrases
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class DbWordVectorIterator(object):
         self.current_vector = None
 
     def __iter__(self):
-        qset = MessageWord.objects.filter(dictionary=self.dictionary).order_by('message')
+        qset = MessageFeature.objects.filter(dictionary=self.dictionary).order_by('message')
         self.current_message_id = None
         self.current_vector = []
         current_position = 0
@@ -82,7 +84,7 @@ class DbWordVectorIterator(object):
     def __len__(self):
         from django.db.models import Count
 
-        count = MessageWord.objects \
+        count = MessageFeature.objects \
             .filter(dictionary=self.dictionary) \
             .aggregate(Count('message', distinct=True))
 
@@ -100,7 +102,7 @@ class Tokenizer(object):
         self.texts = texts
         self.lemmatizer = lemmatizer
         self.filters = filters
-        self.max_length = Word._meta.get_field('text').max_length
+        self.max_length = Feature._meta.get_field('text').max_length
 
     def __iter__(self):
         if self.texts is None:
@@ -140,6 +142,15 @@ class Tokenizer(object):
     def split(self, text):
         return text.split()
 
+    def extend_to_ngram(self, tokens, n=3):
+        results = tokens[:]
+        for i in range(1, len(tokens)):
+            bigram = "%s_%s" %(tokens[i - 1], tokens[i])
+            results.append(bigram)
+            if i >= 2:
+                trigram = "%s_%s_%s" % (tokens[i - 2], tokens[i - 1], tokens[i])
+                results.append(trigram)
+        return results
 
 class WordTokenizer(Tokenizer):
     def __init__(self, *args, **kwargs):
@@ -196,12 +207,15 @@ class TweetParserTokenizer(Tokenizer):
 
             words.append(word)
 
+        # extend to n-gram (trigram by default)
+        words = self.extend_to_ngram(words)
+
         return words
 
     def split(self, message):
         return self.tokenize(message)
 
-class TopicContext(object):
+class FeatureContext(object):
     def __init__(self, name, queryset, tokenizer, lemmatizer, filters, minimum_frequency=4):
         self.name = name
         self.queryset = queryset
@@ -226,9 +240,14 @@ class TopicContext(object):
 
         return json.dumps(settings, sort_keys=True)
 
-
+    # This method doesn't work in a different environment as the instances
+    # of filters have a different string representation
     def find_dictionary(self):
         results = Dictionary.objects.filter(settings=self.get_dict_settings())
+        return results.last()
+
+    def find_dictionary_by_name_dataset(self, name, dataset_id):
+        results = Dictionary.objects.filter(name=name, dataset_id=dataset_id)
         return results.last()
 
 
@@ -236,15 +255,16 @@ class TopicContext(object):
         texts = DbTextIterator(self.queryset)
 
         tokenized_texts = self.tokenizer(texts, self.lemmatizer, *self.filters)
+
         dataset = Dataset.objects.get(pk=dataset_id)
         return Dictionary._create_from_texts(tokenized_texts=tokenized_texts,
                                              name=self.name,
-                                             minimum_frequency=self.minimum_frequency,
                                              dataset=dataset,
+                                             minimum_frequency=self.minimum_frequency,
                                              settings=self.get_dict_settings())
 
     def bows_exist(self, dictionary):
-        return MessageWord.objects.filter(dictionary=dictionary).exists()
+        return MessageFeature.objects.filter(dictionary=dictionary).exists()
 
 
     def build_bows(self, dictionary):
@@ -253,18 +273,6 @@ class TopicContext(object):
 
         dictionary._vectorize_corpus(queryset=self.queryset,
                                      tokenizer=tokenized_texts)
-
-    def build_lda(self, dictionary, num_topics=30, **kwargs):
-        corpus = DbWordVectorIterator(dictionary)
-        return dictionary._build_lda(self.name, corpus, num_topics=num_topics, **kwargs)
-
-    def apply_lda(self, dictionary, model, lda=None):
-        corpus = DbWordVectorIterator(dictionary)
-        return dictionary._apply_lda(model, corpus, lda=lda)
-
-    def evaluate_lda(self, dictionary, model, lda=None):
-        corpus = DbWordVectorIterator(dictionary)
-        return dictionary._evaluate_lda(model, corpus, lda=lda)
 
 
 class LambdaWordFilter(object):
@@ -275,7 +283,8 @@ class LambdaWordFilter(object):
         return self.fn(item)
 
 
-def standard_topic_pipeline(context, dataset_id, num_topics, **kwargs):
+def standard_features_pipeline(context, dataset_id):
+
     dictionary = context.find_dictionary()
     if dictionary is None:
         dictionary = context.build_dictionary(dataset_id=dataset_id)
@@ -283,12 +292,7 @@ def standard_topic_pipeline(context, dataset_id, num_topics, **kwargs):
     if not context.bows_exist(dictionary):
         context.build_bows(dictionary)
 
-    model, lda = context.build_lda(dictionary, num_topics=num_topics, **kwargs)
-    context.apply_lda(dictionary, model, lda)
-    context.evaluate_lda(dictionary, model, lda)
-
-
-def default_topic_context(name, dataset_id):
+def default_feature_context(name, dataset_id):
     dataset = Dataset.objects.get(pk=dataset_id)
     queryset = dataset.message_set.all()#filter(language__code='en')
 
@@ -299,7 +303,7 @@ def default_topic_context(name, dataset_id):
         LambdaWordFilter(lambda word: word.startswith('http') and len(word) > 4)
     ]
 
-    return TopicContext(name=name, queryset=queryset,
+    return FeatureContext(name=name, queryset=queryset,
                         tokenizer=TweetParserTokenizer,
                         lemmatizer=None,#WordNetLemmatizer(),
                         filters=filters,
@@ -342,13 +346,13 @@ def import_from_tweet_parser_results(dataset_id, filename):
                 original_text = groups[0]
                 pos = groups[1]
                 text = groups[2]
-                if re.search('[,~U]', pos):
-                    continue
-                else:
-                    word_obj, created = TweetWord.objects.get_or_create(dataset_id=dataset_id, original_text=original_text, pos=pos, text=text)
+                #if re.search('[,~U]', pos):
+                #    continue
+                #else:
+                word_obj, created = TweetWord.objects.get_or_create(dataset_id=dataset_id, original_text=original_text, pos=pos, text=text)
 
-                    order += 1
-                    word_list.append(TweetWordMessageConnection(message=current_msg, tweet_word=word_obj, order=order))
+                order += 1
+                word_list.append(TweetWordMessageConnection(message=current_msg, tweet_word=word_obj, order=order))
         # save the previous word list
         if len(word_list) > 0:
             TweetWordMessageConnection.objects.bulk_create(word_list)
@@ -356,25 +360,6 @@ def import_from_tweet_parser_results(dataset_id, filename):
             word_list = []
         print "Processed %d messages" % count
         print "Time: %.2fs" % (time() - start)
-
-def precalc_categorical_dimension(dataset_id=1, dimension_key=None):
-    datatable = datatable_models.DataTable(primary_dimension=dimension_key)
-    dataset = Dataset.objects.get(id=dataset_id)
-
-    # remove existing calculation
-    PrecalcCategoricalDistribution.objects.filter(dataset=dataset, dimension_key=dimension_key).delete()
-
-    result = datatable.generate(dataset)
-    bulk = []
-    for bucket in result["table"]:
-        level = bucket[dimension_key]
-        if level is None:
-            level = ""
-        count = bucket["value"]
-        obj = PrecalcCategoricalDistribution(dataset=dataset, dimension_key=dimension_key, level=level, count=count)
-        bulk.append(obj)
-
-    PrecalcCategoricalDistribution.objects.bulk_create(objs=bulk, batch_size=10000)
 
 
 def dump_tweets(dataset_id, save_path):

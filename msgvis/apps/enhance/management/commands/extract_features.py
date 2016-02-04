@@ -4,10 +4,6 @@ class Command(BaseCommand):
     help = "Extract topics for a dataset."
     args = "<dataset id>"
     option_list = BaseCommand.option_list + (
-        make_option('--topics',
-                    dest='num_topics',
-                    default=30,
-                    help='The number of topics to model'),
         make_option('--name',
                     dest='name',
                     default='my topic model',
@@ -15,7 +11,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, dataset_id, *args, **options):
-        num_topics = options.get('num_topics')
         name = options.get('name')
 
         if not dataset_id:
@@ -25,7 +20,9 @@ class Command(BaseCommand):
         except ValueError:
             raise CommandError("Dataset id must be a number.")
 
-        from msgvis.apps.enhance.tasks import default_topic_context, standard_topic_pipeline
+        from msgvis.apps.enhance.tasks import default_feature_context, standard_features_pipeline
 
-        context = default_topic_context(name, dataset_id=dataset_id)
-        standard_topic_pipeline(context, dataset_id=dataset_id, num_topics=int(num_topics))
+
+        context = default_feature_context(name=name, dataset_id=dataset_id)
+        standard_features_pipeline(context=context, dataset_id=dataset_id)
+

@@ -31,6 +31,7 @@ from django.contrib.auth.models import User
 from msgvis.apps.api import serializers
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
+from msgvis.apps.experiment import models as experiment_models
 import json
 import logging
 
@@ -83,7 +84,7 @@ class SVMResultView(APIView):
     """
     Get svm result of a dictionary
 
-    **Request:** ``GET /api/svm?id=1``
+    **Request:** ``GET /api/svm?dictionary_id=1``
     """
 
 
@@ -123,11 +124,10 @@ class FeatureVectorView(APIView):
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 message = corpus_models.Message.objects.get(id=message_id)
                 feature_vector = message.get_feature_vector(dictionary=dictionary)
-                tweet_words = map(lambda x: x.original_text, message.tweet_words.all()) # get the token list and extract only original text
+                tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
                 # TODO: make sure to better communicate the fact we lemmatize words
                 output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
-                #import json
-                #output = json.dumps(results)
+
                 return Response(output.data, status=status.HTTP_200_OK)
             except:
                 import traceback
@@ -138,6 +138,68 @@ class FeatureVectorView(APIView):
                 return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
 
         return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class UserFeatureView(APIView):
+    """
+    Get or set user features
+
+    **Request:** ``GET /api/feature``
+    """
+
+
+    def get(self, request, format=None):
+
+        #return fake data for now
+
+        test_features = []
+        test_features.append({ "id": 123, "tokens": ["rumor", "has", "it"]})
+        test_features.append({ "id": 456, "tokens": ["fake"]})
+
+        return Response(test_features, status=status.HTTP_200_OK)
+
+    def post(self, request, format=None):
+
+        input = serializers.FeatureSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+
+            dictionary = data["dictionary"]
+            token_list = data["token_list"]
+            feature = dictionary.add_feature(token_list, source='U')
+
+            if self.request.user is not None:
+                user = self.request.user
+                if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                    participant = User.objects.get(id=self.request.user.id)
+
+                    assignment, created = experiment_models.FeatureAssignment.objects.get_or_create(user=participant, feature=feature, valid=True)
+
+
+            output = serializers.FeatureSerializer(feature)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, feature_id, format=None):
+        if self.request.user is not None:
+            user = self.request.user
+            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                participant = User.objects.get(id=self.request.user.id)
+
+                feature = enhance_models.Feature.objects.get(id=feature_id)
+                assignment = experiment_models.FeatureAssignment.objects.get(user=participant, feature=feature, valid=True)
+                assignment.valid = False
+                assignment.save()
+                return Response(status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
 
 
 class APIRoot(APIView):
@@ -165,37 +227,3 @@ class APIRoot(APIView):
                 continue
 
         return Response(ret)
-
-class UserFeatureListView(APIView):
-    """
-    Get or set user features
-
-    **Request:** ``GET /api/feature``
-    """
-
-
-    def get(self, request, format=None):
-
-        #return fake data for now
-
-        test_features = []
-        test_features[0] = { "id": 123, "tokens": ["rumor", "has", "it"]}
-        test_features[1] = { "id": 456, "tokens": ["fake"]}
-
-        return Response(test_features, status=status.HTTP_200_OK)
-
-    def post(self, request, format=None):
-        #return fake feature id
-        return Response(1357, status=status.HTTP_200_OK)
-
-
-class UserFeatureView(APIView):
-    """
-    Manages individual user feature object
-
-    **Request:** ``GET /api/feature/id``
-    """
-
-    def delete(self, request, id, format=None):
-
-        return Response(status=status.HTTP_204_NO_CONTENT)

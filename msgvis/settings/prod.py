@@ -17,7 +17,7 @@ INSTALLED_APPS += (
 REST_FRAMEWORK = {
     'VIEW_DESCRIPTION_FUNCTION': 'msgvis.apps.api.drf.get_view_description',
     'DEFAULT_PERMISSION_CLASSES': [
-        #'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 

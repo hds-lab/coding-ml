@@ -1,19 +1,17 @@
+import random
+import math
+import re
+from operator import itemgetter
+
 from django.db import models
 from django.conf import settings
-import random
-import codecs
-import math
-
-import scipy.sparse
 import numpy
-from operator import itemgetter
 
 from fields import PositiveBigIntegerField
 from msgvis.apps.corpus.models import Message, Dataset
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
-from msgvis.apps.enhance.utils import check_or_create_dir
 
 # Create your models here.
 
@@ -38,8 +36,8 @@ class Dictionary(models.Model):
     num_nnz = PositiveBigIntegerField(default=0)
 
     @property
-    def word_count(self):
-        return self.words.count()
+    def feature_count(self):
+        return self.features.count()
 
     @property
     def gensim_dictionary(self):
@@ -47,7 +45,7 @@ class Dictionary(models.Model):
             setattr(self, '_gensim_dict', self._make_gensim_dictionary())
         return getattr(self, '_gensim_dict')
 
-    def get_word_id(self, bow_index):
+    def get_feature_id(self, bow_index):
         if not hasattr(self, '_index2id'):
             g = self.gensim_dictionary
         try:
@@ -68,14 +66,39 @@ class Dictionary(models.Model):
         gensim_dict.num_pos = self.num_pos
         gensim_dict.num_nnz = self.num_nnz
 
-        for word in self.words.all():
-            self._index2id[word.index] = word.id
-            gensim_dict.token2id[word.text] = word.index
-            gensim_dict.dfs[word.index] = word.document_frequency
+        for feature in self.features.all():
+            self._index2id[feature.index] = feature.id
+            gensim_dict.token2id[feature.text] = feature.index
+            gensim_dict.dfs[feature.index] = feature.document_frequency
 
-        logger.info("Dictionary contains %d words" % len(gensim_dict.token2id))
+        logger.info("Dictionary contains %d features" % len(gensim_dict.token2id))
 
         return gensim_dict
+
+
+    @classmethod
+    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, minimum_frequency=2):
+        from gensim.corpora import Dictionary as GensimDictionary
+
+        # build a dictionary of features
+        logger.info("Creating features (including n-grams) from texts")
+        gemsim_dictionary = GensimDictionary(tokenized_texts)
+
+        # Remove extremely rare features
+        logger.info("Features dictionary contains %d features. Filtering..." % len(gemsim_dictionary.token2id))
+        gemsim_dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
+        gemsim_dictionary.compactify()
+        logger.info("Features Dictionary contains %d features." % len(gemsim_dictionary.token2id))
+
+        dict_model = cls(name=name,
+                         dataset=dataset,
+                         settings=settings)
+        dict_model.save()
+
+        dict_model._populate_from_gensim_dictionary(gemsim_dictionary)
+
+        return dict_model
+
 
     def _populate_from_gensim_dictionary(self, gensim_dict):
 
@@ -90,18 +113,18 @@ class Dictionary(models.Model):
         count = 0
         print_freq = 10000
         batch_size = 1000
-        total_words = len(gensim_dict.token2id)
+        total_features = len(gensim_dict.token2id)
 
         for token, id in gensim_dict.token2id.iteritems():
-            word = Word(dictionary=self,
+            feature = Feature(dictionary=self,
                         text=token,
                         index=id,
                         document_frequency=gensim_dict.dfs[id])
-            batch.append(word)
+            batch.append(feature)
             count += 1
 
             if len(batch) > batch_size:
-                Word.objects.bulk_create(batch)
+                Feature.objects.bulk_create(batch)
                 batch = []
 
                 if settings.DEBUG:
@@ -111,44 +134,22 @@ class Dictionary(models.Model):
                     connection.queries = []
 
             if count % print_freq == 0:
-                logger.info("Saved %d / %d words in the database dictionary" % (count, total_words))
+                logger.info("Saved %d / %d features in the database dictionary" % (count, total_features))
 
         if len(batch):
-            Word.objects.bulk_create(batch)
+            Feature.objects.bulk_create(batch)
             count += len(batch)
 
-            logger.info("Saved %d / %d words in the database dictionary" % (count, total_words))
+            logger.info("Saved %d / %d features in the database dictionary" % (count, total_features))
 
         return self
 
-    @classmethod
-    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, minimum_frequency=2):
-        from gensim.corpora import Dictionary as GensimDictionary
-
-        # build a dictionary
-        logger.info("Building a dictionary from texts")
-        dictionary = GensimDictionary(tokenized_texts)
-
-        # Remove extremely rare words
-        logger.info("Dictionary contains %d words. Filtering..." % len(dictionary.token2id))
-        dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
-        dictionary.compactify()
-        logger.info("Dictionary contains %d words." % len(dictionary.token2id))
-
-        dict_model = cls(name=name,
-                         dataset=dataset,
-                         settings=settings)
-        dict_model.save()
-
-        dict_model._populate_from_gensim_dictionary(dictionary)
-
-        return dict_model
 
     def _vectorize_corpus(self, queryset, tokenizer):
 
         import math
 
-        logger.info("Saving document word vectors in corpus.")
+        logger.info("Saving document features vectors in corpus.")
 
         total_documents = self.num_docs
         gdict = self.gensim_dictionary
@@ -159,31 +160,28 @@ class Dictionary(models.Model):
         print_freq = 10000
 
         for msg in queryset.iterator():
-            #text = msg.text
-            #bow = gdict.doc2bow(tokenizer.tokenize(text))
             tokens = tokenizer.tokenize(msg)
             bow = gdict.doc2bow(tokens)
 
-            for word_index, word_freq in bow:
-                word_id = self.get_word_id(word_index)
-                document_freq = gdict.dfs[word_index]
+            for feature_index, feature_freq in bow:
+                feature_id = Feature.objects.filter(index=feature_index).first()
 
-                # Not sure why tf is calculated like the final version
+                document_freq = gdict.dfs[feature_index]
+
                 num_tokens = len(tokens)
-                tf = float(word_freq) / float(num_tokens)
+                tf = float(feature_freq) / float(num_tokens)
                 idf = math.log(total_documents / document_freq)
                 tfidf = tf * idf
-                #tfidf = word_freq * math.log(total_documents / document_freq)
-                batch.append(MessageWord(dictionary=self,
-                                         word_id=word_id,
-                                         word_index=word_index,
-                                         count=word_freq,
+                batch.append(MessageFeature(dictionary=self,
+                                         feature=feature_id,
+                                         feature_index=feature_index,
+                                         count=feature_freq,
                                          tfidf=tfidf,
                                          message=msg))
             count += 1
 
             if len(batch) > batch_size:
-                MessageWord.objects.bulk_create(batch)
+                MessageFeature.objects.bulk_create(batch)
                 batch = []
 
                 if settings.DEBUG:
@@ -193,125 +191,14 @@ class Dictionary(models.Model):
                     connection.queries = []
 
             if count % print_freq == 0:
-                logger.info("Saved word-vectors for %d / %d documents" % (count, total_count))
+                logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
 
         if len(batch):
-            MessageWord.objects.bulk_create(batch)
-            logger.info("Saved word-vectors for %d / %d documents" % (count, total_count))
+            MessageFeature.objects.bulk_create(batch)
+            logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
 
-        logger.info("Created %d word vector entries" % count)
+        logger.info("Created %d feature vector entries" % count)
 
-
-    def _build_lda(self, name, corpus, num_topics=30, words_to_save=200, multicore=True):
-        from gensim.models import LdaMulticore, LdaModel
-
-        gdict = self.gensim_dictionary
-
-        if multicore:
-            lda = LdaMulticore(corpus=corpus,
-                               num_topics=num_topics,
-                               workers=3,
-                               id2word=gdict)
-        else:
-            lda = LdaModel(corpus=corpus,
-                               num_topics=num_topics,
-                               id2word=gdict)
-
-        model = TopicModel(name=name, dictionary=self)
-        model.save()
-
-        topics = []
-        for i in range(num_topics):
-            topic = lda.show_topic(i, topn=words_to_save)
-            alpha = lda.alpha[i]
-
-            topicm = Topic(model=model, name="?", alpha=alpha, index=i)
-            topicm.save()
-            topics.append(topicm)
-
-            words = []
-            for prob, word_text in topic:
-                word_index = gdict.token2id[word_text]
-                word_id = self.get_word_id(word_index)
-                tw = TopicWord(topic=topicm,
-                               word_id=word_id, word_index=word_index,
-                               probability=prob)
-                words.append(tw)
-            TopicWord.objects.bulk_create(words)
-
-            most_likely_word_scores = topicm.word_scores\
-                .order_by('-probability')\
-                .prefetch_related('word')
-                
-            topicm.name = ', '.join([score.word.text for score in most_likely_word_scores[:3]])
-            topicm.save()
-
-            if settings.DEBUG:
-                # prevent memory leaks
-                from django.db import connection
-
-                connection.queries = []
-
-        model.save_to_file(lda)
-
-        return (model, lda)
-
-    def _apply_lda(self, model, corpus, lda=None):
-
-        if lda is None:
-            # recover the lda
-            lda = model.load_from_file()
-
-        total_documents = len(corpus)
-        count = 0
-        batch = []
-        batch_size = 1000
-        print_freq = 10000
-
-        topics = list(model.topics.order_by('index'))
-
-        # Go through the bows and get their topic mixtures
-        for bow in corpus:
-            mixture = lda[bow]
-            message_id = corpus.current_message_id
-
-            for topic_index, prob in mixture:
-                topic = topics[topic_index]
-                itemtopic = MessageTopic(topic_model=model,
-                                         topic=topic,
-                                         message_id=message_id,
-                                         probability=prob)
-                batch.append(itemtopic)
-
-            count += 1
-
-            if len(batch) > batch_size:
-                MessageTopic.objects.bulk_create(batch)
-                batch = []
-
-                if settings.DEBUG:
-                    # prevent memory leaks
-                    from django.db import connection
-
-                    connection.queries = []
-
-            if count % print_freq == 0:
-                logger.info("Saved topic-vectors for %d / %d documents" % (count, total_documents))
-
-        if len(batch):
-            MessageTopic.objects.bulk_create(batch)
-            logger.info("Saved topic-vectors for %d / %d documents" % (count, total_documents))
-
-    def _evaluate_lda(self, model, corpus, lda=None):
-
-        if lda is None:
-            # recover the lda
-            lda = model.load_from_file()
-
-        logger.info("Calculating model perplexity on entire corpus...")
-        model.perplexity = lda.log_perplexity(corpus)
-        logger.info("Perplexity: %f" % model.perplexity)
-        model.save()
 
     def load_sparse_matrix(self, use_tfidf=True):
 
@@ -322,7 +209,7 @@ class Dictionary(models.Model):
 
         for msg in messages:
             message_id_list.append(msg.id)
-            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all()))
+            results.append(map(lambda x: x.to_tuple(use_tfidf), msg.feature_scores.filter(dictionary=self).all()))
 
         return message_id_list, results
 
@@ -331,7 +218,7 @@ class Dictionary(models.Model):
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        feature_num = self.words.count()
+        feature_num = self.features.count()
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
@@ -364,8 +251,8 @@ class Dictionary(models.Model):
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.filter(dictionary=self).all():
-                data['training']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            for feature in msg.feature_scores.filter(dictionary=self).all():
+                data['training']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
             data['training']['y'].append(code_id)
@@ -373,8 +260,8 @@ class Dictionary(models.Model):
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for word in msg.word_scores.filter(dictionary=self).all():
-                data['testing']['X'][idx, word.word_index] = word.tfidf if use_tfidf else word.count
+            for feature in msg.feature_scores.filter(dictionary=self).all():
+                data['testing']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
             data['testing']['y'].append(code_id)
@@ -390,89 +277,41 @@ class Dictionary(models.Model):
             data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
             data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
 
-        for word in self.words.all().order_by('index'):
-            data['meta']['features'].append({'index': word.index,
-                                          'text': word.text,
-                                          'count': word.document_frequency})
+        for feature in self.features.all().order_by('index'):
+            text = feature.text
+            if text.find('&') > 0:
+                text = text.replace('&', ', ')
+                text = '[' + text + ']'
+            data['meta']['features'].append({'index': feature.index,
+                                          'text': text.replace('_', ' '),
+                                          'count': feature.document_frequency})
 
         return data
-
-
-    def dump_to_libsvm(self, output_path, training_portion=0.80, use_tfidf=True):
-
-        check_or_create_dir(output_path)
-
-        filenames = {
-            'training': {
-                'data': 'training.data',
-                'id': 'training.id',
-            },
-            'testing': {
-                'data': 'testing.data',
-                'id': 'testing.id',
-                'gt': 'testing.gt'
-            },
-            'meta': {
-                'features': 'features.list',
-                'codes': 'code.list'
-            }
-        }
-
-        # extend to full path
-        for type in filenames:
-            for key in filenames[type]:
-                filenames[type][key] = output_path + '/' + filenames[type][key]
-
-        messages = map(lambda x: x, self.dataset.message_set.all())
-        count = len(messages)
-        training_data_num = int(round(float(count) * training_portion))
-        testing_data_num = count - training_data_num
-
-        random.shuffle(messages)
-
-        training_data = messages[:training_data_num]
-        testing_data = messages[training_data_num:]
-
-        try:
-            with open(filenames['training']['data'], mode='w') as data_fp:
-                with codecs.open(filenames['training']['id'], encoding='utf-8', mode='w') as id_fp:
-                    for msg in training_data:
-                        code_id = msg.code.id if msg.code else 0
-                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all())))
-                        print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
-
-            with open(filenames['testing']['data'], mode='w') as data_fp:
-                with codecs.open(filenames['testing']['id'], encoding='utf-8', mode='w') as id_fp:
-                    #with open(filenames['testing']['gt'], mode='w') as gt_fp:
-                    for msg in testing_data:
-                        code_id = msg.code.id if msg.code else 0
-                        print >> data_fp, "%d %s" %(code_id, " ".join(map(lambda x: x.to_libsvm_tuple(use_tfidf), msg.word_scores.filter(dictionary=self).all())))
-                        print >> id_fp, "%d %s" % (msg.id, msg.text.replace('\n', ' '))
-                            #print >> gt_fp, "%d" % code_id
-
-            with open(filenames['meta']['codes'], mode='w') as code_fp:
-                codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
-                for code in codes:
-                    if code['code_id'] is None:
-                        code['code_id'] = 0
-                        code['code_text'] = "No code"
-                    print >> code_fp, "%d %s" %(code['code_id'], code['code__text'])
-
-            with codecs.open(filenames['meta']['features'], encoding='utf-8', mode='w') as feature_fp:
-                for word in self.words.all():
-                    print >> feature_fp, "%d %s" %(word.id, word.text)
-        except:
-            import traceback
-            traceback.print_exc()
-            return False
-
-        return True
 
     def do_training(self):
         data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False)
         from sklearn import svm
         lin_clf = svm.LinearSVC()
         lin_clf.fit(data['training']['X'], data['training']['y'])
+
+        def get_prediction(lin_model, X):
+            prediction = lin_model.predict(X)
+            distances = lin_model.decision_function(X)
+            if hasattr(lin_model, "predict_proba"):
+                prob = lin_model.predict_proba(X)[:, 1]
+            else:  # use decision function
+                prob = lin_model.decision_function(X)
+                min = prob.min()
+                max = prob.max()
+                prob = \
+                    (prob - min) / (max - min)
+            return {
+                'prediction': prediction,
+                'probabilities': prob
+            }
+
+        test_prediction = get_prediction(lin_clf, data['testing']['X'])
+        train_prediction = get_prediction(lin_clf, data['training']['X'])
 
         results = {
             'codes': [],
@@ -482,6 +321,14 @@ class Dictionary(models.Model):
             'accuracy': {
                 'training': lin_clf.score(data['training']['X'], data['training']['y']),
                 'testing': lin_clf.score(data['testing']['X'], data['testing']['y'])
+            },
+            'prediction': {
+                'training': train_prediction['prediction'],
+                'testing': test_prediction['prediction']
+            },
+            'probabilities': {
+                'training': train_prediction['probabilities'],
+                'testing': test_prediction['probabilities']
             }
         }
 
@@ -502,40 +349,134 @@ class Dictionary(models.Model):
                 order[code['index']][item[0]] = idx
 
 
-        for word in data['meta']['features']:
+        for feature in data['meta']['features']:
             in_top_features = 0
 
             row = {
-                'word_index': word['index'],
-                'word': word['text'],
-                'count': word['count'],
+                'feature_index': feature['index'],
+                'feature': feature['text'],
+                'count': feature['count'],
                 'codes': {}
             }
 
             for idx, code in enumerate(data['meta']['codes']):
                 row['codes'][code['text']] = {
-                    'weight': lin_clf.coef_[code['index']][word['index']],
-                    'mean': data['training']['mean'][code['index']][word['index']],
-                    'var': data['training']['var'][code['index']][word['index']],
-                    'order': order[code['index']][word['index']]
+                    'weight': lin_clf.coef_[code['index']][feature['index']],
+                    'mean': data['training']['mean'][code['index']][feature['index']],
+                    'var': data['training']['var'][code['index']][feature['index']],
+                    'order': order[code['index']][feature['index']]
                 }
-                max_domain = data['training']['mean'][code['index']][word['index']] + 3 * math.sqrt(data['training']['var'][code['index']][word['index']])
+                max_domain = data['training']['mean'][code['index']][feature['index']] + 3 * math.sqrt(data['training']['var'][code['index']][feature['index']])
                 if max_domain > results['codes'][idx]['domain'][1]:
                    results['codes'][idx]['domain'][1] = max_domain
-                in_top_features += 1 if order[code['index']][word['index']] < 20 else 0
+                in_top_features += 1 if order[code['index']][feature['index']] < 20 else 0
             row['in_top_features'] = in_top_features
 
             results['features'].append(row)
 
         return results
 
-class Word(models.Model):
-    dictionary = models.ForeignKey(Dictionary, related_name='words')
+    def add_feature(self, token_list, source='S'):
+
+        clean_token_list = []
+        for f in token_list:
+            clean_f =  re.sub('[\s+]', ' ', f)
+            clean_token_list.append(clean_f)
+
+        dataset = self.dataset
+        queryset = dataset.message_set.all()
+
+        # 1. Calculate the document_frequency
+        document_freq = 0
+        for msg in queryset.iterator():
+            found = self.is_user_feature_in_message(clean_token_list, msg)
+            if found:
+                document_freq += 1
+
+        # 2. Create a new instance of Feature
+        index = self.get_last_feature_index() + 1
+        token = "&".join(clean_token_list)
+        feature = Feature(dictionary=self,
+                        text=token,
+                        index=index,
+                        source=source,
+                        document_frequency=document_freq)
+        feature.save()
+
+        # 3. Connect Features with Message through MessageFeature
+        total_documents = self.num_docs
+        count = 0
+        total_count = queryset.count()
+        batch = []
+        batch_size = 1000
+        print_freq = 10000
+        for msg in queryset.iterator():
+            found = self.is_user_feature_in_message(clean_token_list, msg)
+            if found is False:
+                continue
+
+            feature_freq = 1 # For now
+            num_tokens = msg.tweet_words.count()
+            tf = float(feature_freq) / float(num_tokens)
+            idf = math.log(total_documents / document_freq)
+            tfidf = tf * idf
+            batch.append(MessageFeature(dictionary=self,
+                                        feature=feature,
+                                        feature_index=feature.index,
+                                        count=feature_freq,
+                                        tfidf=tfidf,
+                                        message=msg))
+
+            count += 1
+
+            if len(batch) > batch_size:
+                MessageFeature.objects.bulk_create(batch)
+                batch = []
+
+                if settings.DEBUG:
+                    # prevent memory leaks
+                    from django.db import connection
+                    connection.queries = []
+
+            if count % print_freq == 0:
+                logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        if len(batch):
+            MessageFeature.objects.bulk_create(batch)
+            logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        logger.info("Created %d feature vector entries" % count)
+
+        return feature
+
+    def get_last_feature_index(self):
+        last_feature = Feature.objects.filter(dictionary_id=self.id).order_by('-index').first()
+        return last_feature.index
+
+    def is_user_feature_in_message(self, token_list, message):
+        found = True
+        clean_message = str(message).replace('\n', ' ')
+        for s in token_list:
+            pattern_string = '.*'
+            s_re = s.replace(' ', '[\s]+')
+            pattern_string += s_re + '.*'
+            p = re.compile(pattern_string, re.IGNORECASE)
+            found &= (p.search(clean_message) is not None)
+        return found
+
+class Feature(models.Model):
+    dictionary = models.ForeignKey(Dictionary, related_name='features')
     index = models.IntegerField()
-    text = base_models.Utf8CharField(max_length=100)
+    text = base_models.Utf8CharField(max_length=150)
     document_frequency = models.IntegerField()
 
-    messages = models.ManyToManyField(Message, through='MessageWord', related_name='words')
+    messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
+
+    SOURCE_CHOICES = (
+        ('S', 'System'),
+        ('U', 'User'),
+    )
+    source = models.CharField(max_length=1, choices=SOURCE_CHOICES, default='S')
 
     def __repr__(self):
         return self.text
@@ -544,109 +485,31 @@ class Word(models.Model):
         return self.__repr__()
 
 
-class TopicModel(models.Model):
-    dictionary = models.ForeignKey(Dictionary)
-
-    name = models.CharField(max_length=100)
-    description = models.CharField(max_length=200)
-
-    time = models.DateTimeField(auto_now_add=True)
-    perplexity = models.FloatField(default=0)
-
-    def load_from_file(self):
-        from gensim.models import LdaMulticore
-
-        return LdaMulticore.load("lda_out_%d.model" % self.id)
-
-    def save_to_file(self, gensim_lda):
-        gensim_lda.save("lda_out_%d.model" % self.id)
-
-    def get_probable_topic(self, message):
-        """For this model, get the most likely topic for the message."""
-        message_topics = message.topic_probabilities\
-            .filter(topic_model=self)\
-            .only('topic', 'probability')
-
-        max_prob = -100000
-        probable_topic = None
-        for mt in message_topics:
-            if mt.probability > max_prob:
-                probable_topic = mt.topic
-                max_prob = mt.probability
-
-        return probable_topic
-
-
-class Topic(models.Model):
-    model = models.ForeignKey(TopicModel, related_name='topics')
-    name = base_models.Utf8CharField(max_length=100)
-    description = base_models.Utf8CharField(max_length=200)
-    index = models.IntegerField()
-    alpha = models.FloatField()
-
-    messages = models.ManyToManyField(Message, through='MessageTopic', related_name='topics')
-    words = models.ManyToManyField(Word, through='TopicWord', related_name='topics')
-
-
-class TopicWord(models.Model):
-    word = models.ForeignKey(Word, related_name='topic_scores')
-    topic = models.ForeignKey(Topic, related_name='word_scores')
-
-    word_index = models.IntegerField()
-    probability = models.FloatField()
-
-
-class MessageWord(models.Model):
+class MessageFeature(models.Model):
     class Meta:
         index_together = (
-            ('dictionary', 'message'),
-            ('message', 'word'),
+            ('message', 'feature'),
         )
 
     dictionary = models.ForeignKey(Dictionary, db_index=False)
 
-    word = models.ForeignKey(Word, related_name="message_scores")
-    message = models.ForeignKey(Message, related_name='word_scores', db_index=False)
+    feature = models.ForeignKey(Feature, related_name="message_scores")
+    message = models.ForeignKey(Message, related_name='feature_scores', db_index=False)
 
-    word_index = models.IntegerField()
+    feature_index = models.IntegerField()
     count = models.FloatField()
     tfidf = models.FloatField()
 
     def to_tuple(self, use_tfidf=True):
-        return (self.word_index, self.tfidf) if use_tfidf else (self.dic_token_index, self.count)
+        return (self.feature_index, self.tfidf) if use_tfidf else (self.dic_token_index, self.count)
 
     def to_libsvm_tuple(self, use_tfidf=True):
         if use_tfidf:
-            return"%d:%f" %(int(self.word_id), float(self.tfidf))
+            return"%d:%f" %(int(self.feature_id), float(self.tfidf))
         else:
-            return"%d:%f" %(int(self.word_id), float(self.count))
+            return"%d:%f" %(int(self.feature_id), float(self.count))
 
 
-class MessageTopic(models.Model):
-    class Meta:
-        index_together = (
-            ('topic_model', 'message'),
-            ('message', 'topic'),
-        )
-
-    topic_model = models.ForeignKey(TopicModel, db_index=False)
-
-    topic = models.ForeignKey(Topic, related_name='message_probabilities')
-    message = models.ForeignKey(Message, related_name="topic_probabilities", db_index=False)
-
-    probability = models.FloatField()
-
-
-    @classmethod
-    def get_examples(cls, topic):
-        examples = cls.objects.filter(topic=topic)
-        return examples.order_by('-probability')
-
-
-def set_message_sentiment(message, save=True):
-    message.sentiment = int(round(textblob.TextBlob(message.text).sentiment.polarity))
-    if save:
-        message.save()
 
 class TweetWord(models.Model):
     dataset = models.ForeignKey(Dataset, related_name="tweet_words", null=True, blank=True, default=None)
@@ -662,30 +525,22 @@ class TweetWord(models.Model):
         return self.__repr__()
 
     @property
-    def related_words(self):
+    def related_features(self):
         return TweetWord.objects.filter(dataset=self.dataset, text=self.text).all()
 
     @property
     def all_messages(self):
         queryset = self.dataset.message_set.all()
-        queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_words)))
+        queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_features)))
         return queryset
 
 class TweetWordMessageConnection(models.Model):
-    message = models.ForeignKey(Message)
-    tweet_word = models.ForeignKey(TweetWord)
+    message = models.ForeignKey(Message, related_name="tweetword_connections")
+    tweet_word = models.ForeignKey(TweetWord, related_name="tweetword_connections")
     order = models.IntegerField()
 
     class Meta:
-        ordering = ["order"]
+        ordering = ["message", "order", ]
+        unique_together = ('message', 'tweet_word', 'order', )
 
-class PrecalcCategoricalDistribution(models.Model):
-    dataset = models.ForeignKey(Dataset, related_name="distributions", null=True, blank=True, default=None)
-    dimension_key = models.CharField(db_index=True, max_length=64, blank=True, default="")
-    level = base_models.Utf8CharField(db_index=True, max_length=128, blank=True, default="")
-    count = models.IntegerField()
 
-    class Meta:
-        index_together = [
-            ["dimension_key", "level"],
-        ]

@@ -94,8 +94,8 @@
                             <td ng-if="vector"></td>
                         </tr>
                         <tr>
-                            <th st-sort="word_index">word_index</th>
-                            <th st-sort="word">word</th>
+                            <th st-sort="feature_index">feature_index</th>
+                            <th st-sort="feature">feature</th>
                             <th st-sort="count">count</th>
                             <th st-sort="codes.{$ code.text $}.order" ng-repeat="code in svm_results.codes">
                                 {$ code.text $}
@@ -107,16 +107,16 @@
                     </thead>
                     <tbody>
                         <tr ng-repeat="feature in features">
-                            <th>{$ feature.word_index $}</th>
-                            <th>{$ feature.word $}</th>
+                            <th>{$ feature.feature_index $}</th>
+                            <th>{$ feature.feature $}</th>
                             <th>{$ feature.count $}</th>
                             <td ng-style="style(feature.codes[code.text],code.index)" ng-repeat="code in svm_results.codes">
                                 {$ feature.codes[code.text].weight | number: 2 $}
                             </td>
                             <td>{$ feature.in_top_features $}</td>
                             <td></td>
-                            <td ng-if="vector" ng-style="on_off(vector.feature_vector[feature.word_index])">
-                                {$ vector.feature_vector[feature.word_index] $}
+                            <td ng-if="vector" ng-style="on_off(vector.feature_vector[feature.feature_index])">
+                                {$ vector.feature_vector[feature.feature_index] $}
                             </td>
 
                         </tr>
@@ -127,7 +127,7 @@
                 <span us-spinner="spinnerOptions" spinner-key="vector-spinner"></span>
                 <div class="box" >
                     <h4>Meta</h4>
-                    <div class="dictionary"><strong>Dictionary {$ Dictionary.id $}</strong>: {$ Dictionary.word_count $} features</div>
+                    <div class="dictionary"><strong>Dictionary {$ Dictionary.id $}</strong>: {$ Dictionary.feature_count $} features</div>
                     <div class="accuracy"><strong>Training Accuracy</strong>: {$ svm_results.accuracy.training * 100 | number: 2 $}% </div>
                     <div class="accuracy"><strong>Testing Accuracy</strong>: {$ svm_results.accuracy.testing * 100 | number: 2 $}% </div>
                 </div>
