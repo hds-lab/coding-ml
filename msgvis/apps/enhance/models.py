@@ -228,7 +228,7 @@ class Dictionary(models.Model):
         if user is not None:
             features += map(lambda x: x.feature, user.feature_assignments.filter(valid=True, feature__source='U').distinct())
         features.sort(key=lambda x: x.index)
-        feature_num = len(features)
+        feature_num = self.features.order_by('index').last().index + 1 
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
