@@ -1,5 +1,6 @@
 import random
 import math
+import re
 from operator import itemgetter
 
 from django.db import models
@@ -217,7 +218,7 @@ class Dictionary(models.Model):
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        feature_num = self.features.filter(source='S').count()
+        feature_num = self.features.count()
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
         code_num = codes.count()
 
@@ -250,7 +251,7 @@ class Dictionary(models.Model):
         }
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self, feature__source='S').all():
+            for feature in msg.feature_scores.filter(dictionary=self).all():
                 data['training']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
@@ -259,7 +260,7 @@ class Dictionary(models.Model):
 
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
-            for feature in msg.feature_scores.filter(dictionary=self, feature__source='S').all():
+            for feature in msg.feature_scores.filter(dictionary=self).all():
                 data['testing']['X'][idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
@@ -276,14 +277,16 @@ class Dictionary(models.Model):
             data['testing']['mean'][code_idx] = numpy.mean(data['testing']['group_by_codes'][code_idx], axis=0)
             data['testing']['var'][code_idx] = numpy.var(data['testing']['group_by_codes'][code_idx], axis=0)
 
-        for feature in self.features.filter(source='S').all().order_by('index'):
+        for feature in self.features.all().order_by('index'):
+            text = feature.text
+            if text.find('&') > 0:
+                text = text.replace('&', ', ')
+                text = '[' + text + ']'
             data['meta']['features'].append({'index': feature.index,
-                                          'text': (feature.text).replace("_", " "),
+                                          'text': text.replace('_', ' '),
                                           'count': feature.document_frequency})
 
         return data
-
-
 
     def do_training(self):
         data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False)
@@ -373,10 +376,93 @@ class Dictionary(models.Model):
 
         return results
 
-    def add_a_feature(self, text, source='S'):
-        # TODO: implement feature add; for now, use the first feature in db to mock up the behavior
-        return Feature.objects.first()
+    def add_feature(self, token_list, source='S'):
 
+        clean_token_list = []
+        for f in token_list:
+            clean_f =  re.sub('[\s+]', ' ', f)
+            clean_token_list.append(clean_f)
+
+        dataset = self.dataset
+        queryset = dataset.message_set.all()
+
+        # 1. Calculate the document_frequency
+        document_freq = 0
+        for msg in queryset.iterator():
+            found = self.is_user_feature_in_message(clean_token_list, msg)
+            if found:
+                document_freq += 1
+
+        # 2. Create a new instance of Feature
+        index = self.get_last_feature_index() + 1
+        token = "&".join(clean_token_list)
+        feature = Feature(dictionary=self,
+                        text=token,
+                        index=index,
+                        source=source,
+                        document_frequency=document_freq)
+        feature.save()
+
+        # 3. Connect Features with Message through MessageFeature
+        total_documents = self.num_docs
+        count = 0
+        total_count = queryset.count()
+        batch = []
+        batch_size = 1000
+        print_freq = 10000
+        for msg in queryset.iterator():
+            found = self.is_user_feature_in_message(clean_token_list, msg)
+            if found is False:
+                continue
+
+            feature_freq = 1 # For now
+            num_tokens = msg.tweet_words.count()
+            tf = float(feature_freq) / float(num_tokens)
+            idf = math.log(total_documents / document_freq)
+            tfidf = tf * idf
+            batch.append(MessageFeature(dictionary=self,
+                                        feature=feature,
+                                        feature_index=feature.index,
+                                        count=feature_freq,
+                                        tfidf=tfidf,
+                                        message=msg))
+
+            count += 1
+
+            if len(batch) > batch_size:
+                MessageFeature.objects.bulk_create(batch)
+                batch = []
+
+                if settings.DEBUG:
+                    # prevent memory leaks
+                    from django.db import connection
+                    connection.queries = []
+
+            if count % print_freq == 0:
+                logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        if len(batch):
+            MessageFeature.objects.bulk_create(batch)
+            logger.info("Saved feature-vectors for %d / %d documents" % (count, total_count))
+
+        logger.info("Created %d feature vector entries" % count)
+
+        return feature
+
+    def get_last_feature_index(self):
+        last_feature = Feature.objects.filter(dictionary_id=self.id).order_by('-index').first()
+        return last_feature.index
+
+    def is_user_feature_in_message(self, token_list, message):
+        found = True
+        clean_message = str(message).replace('\n', ' ')
+        for s in token_list:
+            pattern_string = '.*'
+            s_re = s.replace(' ', '[\s]+')
+            pattern_string += s_re + '.*'
+            p = re.compile(pattern_string, re.IGNORECASE)
+            found &= (p.search(clean_message) is not None)
+        return found
 
 class Feature(models.Model):
     dictionary = models.ForeignKey(Dictionary, related_name='features')

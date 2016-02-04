@@ -167,7 +167,7 @@ class UserFeatureView(APIView):
 
             dictionary = data["dictionary"]
             token_list = data["token_list"]
-            feature = dictionary.add_a_feature(token_list, source='U')
+            feature = dictionary.add_feature(token_list, source='U')
 
             if self.request.user is not None:
                 user = self.request.user
