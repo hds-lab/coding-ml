@@ -1,9 +1,13 @@
 import logging
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 from models import Dictionary, Feature, MessageFeature, TweetWord, TweetWordMessageConnection
 =======
 from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, TweetWordMessageConnection
+>>>>>>> master
+=======
+from models import Dictionary, Feature, MessageFeature, TweetWord, TweetWordMessageConnection
 >>>>>>> master
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs

@@ -72,7 +72,16 @@ class DictionaryView(APIView):
             try:
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 output = serializers.DictionarySerializer(dictionary)
-                return Response(output.data, status=status.HTTP_200_OK)
+                final_output = dict(output.data)
+                if self.request.user is not None:
+                    user = self.request.user
+                    participant = None
+                    if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                        participant = User.objects.get(id=self.request.user.id)
+                    user_feature_count = dictionary.get_user_feature_count(user=participant)
+                    final_output['feature_count'] += user_feature_count
+
+                return Response(final_output, status=status.HTTP_200_OK)
             except:
                 return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
 
@@ -91,6 +100,11 @@ class SVMResultView(APIView):
     def get(self, request, format=None):
         if request.query_params.get('dictionary_id'):
             dictionary_id = int(request.query_params.get('dictionary_id'))
+            participant = None
+            if self.request.user is not None:
+                user = self.request.user
+                if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                    participant = User.objects.get(id=self.request.user.id)
             try:
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 results = dictionary.do_training()
@@ -129,6 +143,7 @@ class FeatureVectorView(APIView):
         if request.query_params.get('dictionary_id') and request.query_params.get('message_id'):
             dictionary_id = int(request.query_params.get('dictionary_id'))
             message_id = int(request.query_params.get('message_id'))
+
             try:
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 message = corpus_models.Message.objects.get(id=message_id)
@@ -160,13 +175,17 @@ class UserFeatureView(APIView):
 
     def get(self, request, format=None):
 
-        #return fake data for now
+        if self.request.user is not None:
+            user = self.request.user
+            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                participant = User.objects.get(id=self.request.user.id)
 
-        test_features = []
-        test_features[0] = { "id": 123, "tokens": ["rumor", "has", "it"]}
-        test_features[1] = { "id": 456, "tokens": ["fake"]}
+            features = map(lambda x: x.feature, participant.feature_assignments.filter(valid=True).all())
 
-        return Response(test_features, status=status.HTTP_200_OK)
+            output = serializers.FeatureSerializer(features, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        return Response("Please log in first", status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, format=None):
 
@@ -176,7 +195,7 @@ class UserFeatureView(APIView):
 
             dictionary = data["dictionary"]
             token_list = data["token_list"]
-            feature = dictionary.add_a_feature(token_list, source='U')
+            feature = dictionary.add_feature(token_list, source='U')
 
             if self.request.user is not None:
                 user = self.request.user

@@ -68,9 +68,6 @@ class FeatureSerializer(serializers.ModelSerializer):
         fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', )
         read_only_fields = ('id', 'index', 'text', 'document_frequency', )
 
-    def to_representation(self, instance):
-        return instance.text
-
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:

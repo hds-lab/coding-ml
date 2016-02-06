@@ -160,7 +160,7 @@
 
         $scope.getter = {
             'vector': function(feature){
-                return $scope.vector.feature_vector[feature.word_index];
+                return $scope.vector.feature_vector[feature.feature_index];
             }
         };
 
