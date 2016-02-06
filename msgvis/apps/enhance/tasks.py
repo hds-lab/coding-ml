@@ -1,6 +1,10 @@
 import logging
 
+<<<<<<< HEAD
 from models import Dictionary, Feature, MessageFeature, TweetWord, TweetWordMessageConnection
+=======
+from models import Dictionary, MessageWord, Word, MessageTopic, TweetWord, TweetWordMessageConnection
+>>>>>>> master
 from msgvis.apps.corpus.models import Dataset, Message
 import codecs
 import re
@@ -282,7 +286,7 @@ class LambdaWordFilter(object):
     def __contains__(self, item):
         return self.fn(item)
 
-def standard_features_pipeline(context, name, dataset_id):
+def standard_features_pipeline(context, dataset_id):
     dictionary = context.find_dictionary()
     if dictionary is None:
         dictionary = context.build_dictionary(dataset_id=dataset_id)

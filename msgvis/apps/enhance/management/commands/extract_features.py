@@ -22,5 +22,6 @@ class Command(BaseCommand):
 
         from msgvis.apps.enhance.tasks import default_feature_context, standard_features_pipeline
 
-        context = default_feature_context(name=name, dataset_id=dataset_id)
-        standard_features_pipeline(context=context, name=name, dataset_id=dataset_id)
+        context = default_topic_context(name=name, dataset_id=dataset_id)
+        standard_features_pipeline(context=context, dataset_id=dataset_id)
+
