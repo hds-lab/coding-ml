@@ -80,25 +80,42 @@
         <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
             <div class="no-padding" id="left-pane">
                 <div class="box full-height" id="feature-pane">
-                    <div class="box-header">user features ({$ features.user.length $})</div>
-                    <div class="feature-sort noselect">
+                    <div class="box-header" ng-show="features != null && features.user != null && features.user.length > 0">user features ({$ features.user.length $})</div>
+                    <div class="feature-sort noselect" ng-show="features != null && features.user != null && features.user.length > 0">
                         <div class="feature-sort-label">sort by:</div>
-                        <div class="feature-sort-block" ng-click="sortUserFeatures('word')" ng-class="{ 'selected': userFeatureSortKey == 'word'}">
-                            w<span class="caret" ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
-                        <div class="feature-sort-block" ng-click="sortUserFeatures('count')" ng-class="{ 'selected': userFeatureSortKey == 'count'}">
-                            #<span class="caret" ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
+                        <div class="feature-sort-block" ng-click="sortFeatures('user', 'word')" ng-class="{ 'selected': featureSortKey['user'] == 'word'}">
+                            w<span class="caret" ng-class="{'rotate': featureSortOption['user'] == 1}"></span></div>
+                        <div class="feature-sort-block" ng-click="sortFeatures('user', 'count')" ng-class="{ 'selected': featureSortKey['user'] == 'count'}">
+                            #<span class="caret" ng-class="{'rotate': featureSortOption['user'] == 1}"></span></div>
                         <div class="feature-sort-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)"
-                            ng-click="sortUserFeatures(code.text)" ng-class="{ 'selected': userFeatureSortKey == code.text}">
-                            {$ code.index $}<span class="caret"  ng-class="{'rotate': userFeatureSortOption == 1}"></span></div>
+                            ng-click="sortFeatures('user', code.text)" ng-class="{ 'selected': featureSortKey['user'] == code.text}">
+                            {$ code.index $}<span class="caret"  ng-class="{'rotate': featureSortOption['user'] == 1}"></span></div>
                     </div>
                     <div class="feature-item" ng-repeat="feature in features.user">
-                        <div class="feature-item-word">{$ feature.word $} ({$ feature.count $})</div>
+                        <div class="feature-item-word">{$ feature.feature $} ({$ feature.count $})</div>
+                        <div class="feature-item-block" ng-repeat="code in codes"
+                             ng-style="codeStyle(code.index, feature.codes[code.text])">{$ code.index $}</div>
+                    </div>
+
+                    <div class="box-header" ng-show="features != null && features.system != null && features.system.length > 0">system features ({$ features.system.length $})</div>
+                    <div class="feature-sort noselect" ng-show="features != null && features.system != null && features.system.length > 0">
+                        <div class="feature-sort-label">sort by:</div>
+                        <div class="feature-sort-block" ng-click="sortFeatures('system', 'word')" ng-class="{ 'selected': featureSortKey['system'] == 'word'}">
+                            w<span class="caret" ng-class="{'rotate': featureSortOption['system'] == 1}"></span></div>
+                        <div class="feature-sort-block" ng-click="sortFeatures('system', 'count')" ng-class="{ 'selected': featureSortKey['system'] == 'count'}">
+                            #<span class="caret" ng-class="{'rotate': featureSortOption['system'] == 1}"></span></div>
+                        <div class="feature-sort-block" ng-repeat="code in codes" ng-style="codeStyle(code.index, null)"
+                            ng-click="sortFeatures('system', code.text)" ng-class="{ 'selected': featureSortKey['system'] == code.text}">
+                            {$ code.index $}<span class="caret"  ng-class="{'rotate': featureSortOption['system'] == 1}"></span></div>
+                    </div>
+                    <div class="feature-item" ng-repeat="feature in features.system" ng-mouseover="onFeatureMouseOver(feature)" ng-mouseleave="onFeatureMouseLeave(feature)">
+                        <div class="feature-item-word">{$ feature.feature $} ({$ feature.count $})</div>
                         <div class="feature-item-block" ng-repeat="code in codes"
                              ng-style="codeStyle(code.index, feature.codes[code.text])">{$ code.index $}</div>
                     </div>
                 </div>
             </div>
-            <div class="no-padding" id="right-pane">
+            <div class="no-padding" id="right-pane" ng-show="showReview.visible == false">
                 <div class="box" id="label-pane">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="box-header">new label</div>
@@ -140,11 +157,11 @@
                     </div>
                     <input placeholder="search for text" class="input-sm form-control" type="search"/>
                     <div id="labels">
-                        <div ng-repeat="label in filteredLabels" class="label-item">
-                            <div class="label-item-text">{$ label.text $}</div>
+                        <div ng-repeat="item in filteredLabels" class="label-item">
+                            <div class="label-item-text">{$ item.text $}</div>
                             <div style="float:right">
-                                <div class="label-item-label label-split" ng-show="label.partner" ng-style="labelStyle(label.partner)">?</div>
-                                <div class="label-item-label" ng-class="{'label-split': label.partner != null }"ng-style="labelStyle(label.mine)">?</div>
+                                <div class="label-item-label label-split" ng-show="item.prediction != null" ng-style="labelStyle(item.prediction)">?</div>
+                                <div class="label-item-label" ng-class="{'label-split': item.prediction != null }" ng-style="labelStyle(item.label)">?</div>
                             </div>
                         </div>
                     </div>
@@ -154,6 +171,34 @@
                     <div tweet-items ng-if="codes" codes="codes" data="submittedLabels" box-color="boxColor"></div>
                 </div>
             </div>
+            <div class="no-padding" id="review-pane-viz" ng-show="showReview.visible == true">
+                <div class="box" id="scatter-box">
+                    <div class="box-header">overview</div>
+                    <div scatter-box ng-if="codes" codes="codes" data="submittedLabels" box-color="boxColor" feature-callbacks="featureCallbacks"></div>
+                </div>
+                <div class="box" id="confusion-box">
+                    <div class="box-header">confusion</div>
+                    <div confusion-box ng-if="codes" codes="codes" data="submittedLabels" select-cells="selectCells"></div>
+                </div>
+            </div>
+            <div class="no-padding" id="review-pane-items" ng-show="showReview.visible == true">
+                <div class="box" style="height:100%">
+                    <div class="box-header">submitted labels</div>
+                    <span us-spinner="spinnerOptions" spinner-key="table-spinner"></span>
+                    <div id="labels">
+                        <div ng-repeat="item in filteredReviewLabels" class="label-item">
+                            <div class="label-item-text">{$ item.text $}</div>
+                            <div style="float:right">
+                                <div class="label-item-label label-split" ng-show="item.prediction != null" ng-style="labelStyle(item.prediction)">?</div>
+                                <div class="label-item-label" ng-class="{'label-split': item.prediction != null }" ng-style="labelStyle(item.label)">?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div id="show-review" class="checkbox" style="display: inline-block; margin-left:20px">
+                 <input type="checkbox" name="show-review" ng-model="showReview.visible"> Show Review
+             </div>
         </div>
 </div>
 

@@ -61,6 +61,11 @@ th:hover{
     margin: 10px;
     height: ~'calc(100% - 75px)';
 }
+#show-review {
+    position:absolute;
+    top: 45px;
+    left: 30px;
+}
 #left-pane {
     width:330px;
     position:absolute;
@@ -78,6 +83,27 @@ th:hover{
     top:60px;
     bottom: 5px;
     overflow-y:hidden;
+}
+#review-pane-viz {
+    position:absolute;
+    padding: 5px;
+    left: 360px;
+    width: 500px;
+    top:60px;
+    bottom: 5px;
+    overflow-y:hidden;
+}
+#scatter-box, #confusion-box {
+    height: 300px;
+}
+#review-pane-items {
+    position:absolute;
+    padding: 0 5px 5px 0;
+    left: 860px;
+    right: 20px;
+    overflow-y:hidden;
+    top:65px;
+    bottom:20px;
 }
 #label-pane {
     height:213px;
@@ -277,6 +303,8 @@ th:hover{
     font-weight:300;
     height: 45px;
     display: inline-block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .feature-item .feature-item-block {
     width: 30px;
@@ -321,4 +349,30 @@ th:hover{
   -ms-user-select: none;       /* IE/Edge */
   user-select: none;           /* non-prefixed version, currently
                                   not supported by any browser */
+}
+
+#confusion-box text {
+    cursor: pointer;
+    color: #333333;
+    fill: #333333;
+}
+#confusion-box text.selected {
+    color: #fecc5c;
+    fill: #fecc5c;
+}
+#confusion-box text:hover, #confusion-box text.selected:hover {
+    font-weight: 700;
+}
+
+#confusion-box .cell {
+    cursor: pointer;
+    stroke: #333333;
+    stroke-width: 0;
+}
+#confusion-box .cell.selected {
+    stroke: #fecc5c;
+    stroke-width: 1px;
+}
+#confusion-box .cell:hover, #confusion-box .cell.selected:hover {
+    stroke-width: 2px;
 }
