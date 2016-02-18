@@ -32,6 +32,7 @@ from msgvis.apps.api import serializers
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.experiment import models as experiment_models
+from msgvis.apps.coding import models as coding_models
 import json
 import logging
 
@@ -202,7 +203,7 @@ class UserFeatureView(APIView):
                 if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
                     participant = User.objects.get(id=self.request.user.id)
 
-                    assignment, created = experiment_models.FeatureAssignment.objects.get_or_create(user=participant, feature=feature, valid=True)
+                    assignment, created = coding_models.FeatureAssignment.objects.get_or_create(user=participant, feature=feature, valid=True)
 
 
             output = serializers.FeatureSerializer(feature)

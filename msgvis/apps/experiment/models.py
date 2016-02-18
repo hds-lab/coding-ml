@@ -1,9 +1,10 @@
 from django.db import models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
+from msgvis.apps.coding import models as coding_models
 from django.contrib.auth.models import User
 from random import shuffle
-from msgvis.apps.experiment import utils as experiment_utils
+from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
 
 def create_a_pair(output, default_stage):
@@ -114,7 +115,7 @@ class Experiment(models.Model):
         pair_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = experiment_utils.create_a_pair(output, default_stage=golden_stage)
+            pair = coding_utils.create_a_pair(output, default_stage=golden_stage)
             pair_list.append(pair)
 
         print >>output, "Assignment list"
@@ -165,10 +166,10 @@ class Experiment(models.Model):
         model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, user.username, stage.order)
         check_or_create_dir(model_save_path)
 
-        X, y, code_map_inverse = experiment_utils.get_formatted_data(user=user, messages=messages, features=features)
-        lin_clf = experiment_utils.train_model(X, y, model_save_path=model_save_path)
+        X, y, code_map_inverse = coding_utils.get_formatted_data(user=user, messages=messages, features=features)
+        lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
 
-        svm_model = SVMModel(user=user, source_stage=stage, saved_path=model_save_path)
+        svm_model = coding_models.SVMModel(user=user, source_stage=stage, saved_path=model_save_path)
         svm_model.save()
 
         weights = []
@@ -176,26 +177,26 @@ class Experiment(models.Model):
             for feature_index, feature in enumerate(features):
                 weight = lin_clf.coef_[code_index][feature_index]
 
-                model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
+                model_weight = coding_models.SVMModelWeight(svm_model=svm_model, code_id=code_id,
                                               feature=feature, weight=weight)
 
                 weights.append(weights)
 
-        SVMModelWeight.objects.bulk_create(weights)
+        coding_models.SVMModelWeight.objects.bulk_create(weights)
 
         next_stage = stage.get_next_stage()
         next_message_set = next_stage.messages.all()
         next_message_num = next_message_set.count()
 
         code_assignments = []
-        next_X = experiment_utils.get_formatted_X(messages=next_message_set, features=features)
-        predict_y, prob = experiment_utils.get_prediction(lin_clf, next_X)
+        next_X = coding_utils.get_formatted_X(messages=next_message_set, features=features)
+        predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
         for idx in range(next_message_num):
             code_id = code_map_inverse[predict_y[idx]]
             probability = prob[idx]
-            code_assignment = CodeAssignment(user=user, code_id=code_id, is_user_label=False, probability=probability)
+            code_assignment = coding_models.CodeAssignment(user=user, code_id=code_id, is_user_label=False, probability=probability)
             code_assignments.append(code_assignment)
-        CodeAssignment.objects.bulk_create(code_assignments)
+        coding_models.CodeAssignment.objects.bulk_create(code_assignments)
 
 
 
@@ -241,6 +242,8 @@ class Stage(models.Model):
     """The condition created time"""
 
     messages = models.ManyToManyField(corpus_models.Message, related_name="stages", through="MessageSelection")
+    svm_models = models.ManyToManyField(coding_models.SVMModel, related_name="source_stage")
+    feature_assignment = models.ManyToManyField(coding_models.FeatureAssignment, related_name="source_stage")
 
     @property
     def message_count(self):
@@ -290,44 +293,6 @@ class MessageSelection(models.Model):
     # TODO: add a field to subselect messages
 
 
-class CodeAssignment(models.Model):
-    """
-    A model for recording code assignment
-    """
-    user = models.ForeignKey(User, related_name="code_assignments")
-    message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
-    code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
-
-    is_user_labeled = models.BooleanField(default=True)
-    """Whether this code assignment is user given. Otherwise it is from the user's model"""
-    probability = models.FloatField(default=1.0)
-    """How confident the code is; It will be 1.0 if this is user labeled"""
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
-
-    valid = models.BooleanField(default=True)
-    """ Whether this code is valid (False indicate the code to the message has been removed) """
-
-class FeatureAssignment(models.Model):
-    """
-    A model for recording feature assignment
-    """
-    user = models.ForeignKey(User, related_name="feature_assignments")
-    feature = models.ForeignKey(enhance_models.Feature, related_name="feature_assignments")
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
-
-    valid = models.BooleanField(default=True)
-    """ Whether this code is valid (False indicate the code to the message has been removed) """
-
 class Progress(models.Model):
     """
     A model for recording a user's current stage
@@ -341,35 +306,3 @@ class Progress(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
 
-
-class SVMModel(models.Model):
-    """
-    A model for svm model
-    """
-    user = models.ForeignKey(User, related_name="svm_models", unique=True)
-    source_stage = models.ForeignKey(Stage, related_name="svm_models")
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
-
-    saved_path = models.FilePathField(default=None, blank=True, null=True)
-    """scikit-learn model will be saved in the given path"""
-
-
-class SVMModelWeight(models.Model):
-    """
-    A model for svm model weight
-    """
-    svm_model = models.ForeignKey(SVMModel, related_name="weights")
-    code = models.ForeignKey(corpus_models.Code, related_name="weights")
-    feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
-    weight = models.FloatField(default=0)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
