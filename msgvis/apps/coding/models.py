@@ -52,10 +52,10 @@ class SVMModel(models.Model):
     user = models.ForeignKey(User, related_name="svm_models", unique=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
+    """The svm model created time"""
 
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
+    """The svm model updated time"""
 
     saved_path = models.FilePathField(default=None, blank=True, null=True)
     """scikit-learn model will be saved in the given path"""
@@ -75,3 +75,22 @@ class SVMModelWeight(models.Model):
 
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
+
+class CodeDefinition(models.Model):
+    """
+    A model for code definition
+    """
+    code = models.ForeignKey(corpus_models.Code, related_name="definitions")
+    source = models.ForeignKey(User, related_name="definitions")
+    definition = models.TextField(null=True, blank=True, default="")
+    examples = models.ManyToManyField(corpus_models.Message, through="CodeDefinitionExample", related_name="definitions")
+
+class CodeDefinitionExample(models.Model):
+    """
+    An intermediate model for code definition examples
+    """
+    definition = models.ForeignKey(CodeDefinition, related_name="definition_examples")
+    example = models.ForeignKey(corpus_models.Message, related_name="definition_examples")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    """The example created time"""
