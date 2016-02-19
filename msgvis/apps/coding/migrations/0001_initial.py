@@ -2,15 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-from django.conf import settings
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enhance', '0009_auto_20160202_1034'),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('corpus', '0002_message_has_golden_code'),
+        ('corpus', '0003_auto_20160219_0743'),
     ]
 
     operations = [
@@ -23,9 +20,18 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(auto_now=True, auto_now_add=True)),
                 ('valid', models.BooleanField(default=True)),
-                ('code', models.ForeignKey(related_name='code_assignments', to='corpus.Code')),
-                ('message', models.ForeignKey(related_name='code_assignments', to='corpus.Message')),
-                ('user', models.ForeignKey(related_name='code_assignments', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='CodeDefinition',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('text', models.TextField(default=b'', null=True, blank=True)),
+                ('valid', models.BooleanField(default=True)),
+                ('created_at', models.DateTimeField(default=None, auto_now_add=True)),
             ],
             options={
             },
@@ -38,8 +44,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(auto_now=True, auto_now_add=True)),
                 ('valid', models.BooleanField(default=True)),
-                ('feature', models.ForeignKey(related_name='feature_assignments', to='enhance.Feature')),
-                ('user', models.ForeignKey(related_name='feature_assignments', to=settings.AUTH_USER_MODEL)),
             ],
             options={
             },
@@ -52,7 +56,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(auto_now=True, auto_now_add=True)),
                 ('saved_path', models.FilePathField(default=None, null=True, blank=True)),
-                ('user', models.ForeignKey(related_name='svm_models', to=settings.AUTH_USER_MODEL, unique=True)),
             ],
             options={
             },
@@ -66,8 +69,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(auto_now=True, auto_now_add=True)),
                 ('code', models.ForeignKey(related_name='weights', to='corpus.Code')),
-                ('feature', models.ForeignKey(related_name='weights', to='enhance.Feature')),
-                ('svm_model', models.ForeignKey(related_name='weights', to='coding.SVMModel')),
             ],
             options={
             },

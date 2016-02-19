@@ -51,6 +51,14 @@ class MessageSerializer(serializers.ModelSerializer):
         model = corpus_models.Message
         fields = ('id', 'dataset', 'text', )
 
+class UserSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return instance.username
+    class Meta:
+        model = User
+        fields = ('username', )
+
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     tokens = serializers.ListField()
@@ -86,3 +94,10 @@ class DictionarySerializer(serializers.ModelSerializer):
         model = enhance_models.Dictionary
         fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
         read_only_fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
+
+
+class CodeDefinitionSerializer(serializers.Serializer):
+    code_id = serializers.IntegerField()
+    source = UserSerializer()
+    text = serializers.CharField()
+    examples = MessageSerializer(many=True)

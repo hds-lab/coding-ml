@@ -47,15 +47,20 @@ class Code(models.Model):
     text = base_models.Utf8CharField(max_length=200, db_index=True)
     """The text of the code"""
 
+    def get_definition(self, source):
+        definition = self.definitions.get(source=source, valid=True)
+        return {
+            "code_id": self.id,
+            "source": source,
+            "text": definition.text,
+            "examples": definition.examples.all()
+        }
+
 
 class Message(models.Model):
     """
     The Message is the central data entity for the dataset.
     """
-    class Meta:
-        index_together = (
-            ('dataset', 'ref_id'),  # used by importer
-        )
             
     dataset = models.ForeignKey(Dataset)
     """Which :class:`Dataset` the message belongs to"""

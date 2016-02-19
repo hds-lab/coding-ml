@@ -7,9 +7,12 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enhance', '0002_auto_20160128_0112'),
-        ('enhance', '0003_tweetword_messages'),
+        ('corpus', '0002_message_has_golden_code'),
     ]
 
     operations = [
+        migrations.AlterIndexTogether(
+            name='message',
+            index_together=set([]),
+        ),
     ]

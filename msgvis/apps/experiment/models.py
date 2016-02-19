@@ -115,7 +115,7 @@ class Experiment(models.Model):
         pair_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = coding_utils.create_a_pair(output, default_stage=golden_stage)
+            pair = create_a_pair(output, default_stage=golden_stage)
             pair_list.append(pair)
 
         print >>output, "Assignment list"

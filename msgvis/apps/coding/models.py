@@ -82,15 +82,10 @@ class CodeDefinition(models.Model):
     """
     code = models.ForeignKey(corpus_models.Code, related_name="definitions")
     source = models.ForeignKey(User, related_name="definitions")
-    definition = models.TextField(null=True, blank=True, default="")
-    examples = models.ManyToManyField(corpus_models.Message, through="CodeDefinitionExample", related_name="definitions")
+    text = models.TextField(null=True, blank=True, default="")
+    examples = models.ManyToManyField(corpus_models.Message, related_name="definitions")
 
-class CodeDefinitionExample(models.Model):
-    """
-    An intermediate model for code definition examples
-    """
-    definition = models.ForeignKey(CodeDefinition, related_name="definition_examples")
-    example = models.ForeignKey(corpus_models.Message, related_name="definition_examples")
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The example created time"""
+    valid = models.BooleanField(default=True)
+    """ Whether this code definition is valid (False indicate the code to the message has been removed) """
+    created_at = models.DateTimeField(auto_now_add=True, default=None)
+    """The code definition created time"""
