@@ -33,7 +33,7 @@
 
     var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
 
-        $scope.showReview = { visible: true };
+        $scope.state = 'none'; // options are 'none', 'code', 'review'
 
         var sortOption_None = 0;
         var sortOption_Descending = 1;
@@ -493,21 +493,46 @@
             }
         };
 
+        $scope.getStageInfo = function(){
+            // TODO: Which stage am I in? Coding or review?
+            var coding = Math.random() > 0.5;
+
+            usSpinnerService.spin('page-spinner');
+            setTimeout(function(){
+                    usSpinnerService.stop('page-spinner');
+                $scope.state = coding ? 'code' : 'review';
+                $scope.$apply();
+            }, 1000);
+        };
+
         // Watchers
         $scope.$watch('currentMessageId', function(newVal, oldVal) {
-            if (newVal) {
+            if (newVal != oldVal && newVal) {
                 $scope.getMessageDetail(newVal);
             }
         });
 
         $scope.$watch('selectedCode', function(newVal, oldVal) {
-            if (newVal) {
+            if (newVal != oldVal && newVal) {
                 $scope.getCodeDetail(newVal);
             }
         });
 
-        $scope.getMessage();
-        $scope.getMasterCodes();
+        $scope.$watch('state', function(newVal, oldVal) {
+            if (newVal != oldVal && newVal) {
+                switch (newVal) {
+                    case 'code':
+                        $scope.getMessage();
+                        $scope.getMasterCodes();
+                        break;
+                    case 'review':
+                        break;
+                }
+            }
+        });
+
+        // Initialize
+        $scope.getStageInfo();
     };
 
     ViewController.$inject = [
