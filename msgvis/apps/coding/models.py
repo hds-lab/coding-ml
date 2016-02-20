@@ -89,3 +89,9 @@ class CodeDefinition(models.Model):
     """ Whether this code definition is valid (False indicate the code to the message has been removed) """
     created_at = models.DateTimeField(auto_now_add=True, default=None)
     """The code definition created time"""
+
+    def __repr__(self):
+        return "%s | %s | %s" % (self.code.text, self.source.username, self.text)
+
+    def __unicode__(self):
+        return self.__repr__()

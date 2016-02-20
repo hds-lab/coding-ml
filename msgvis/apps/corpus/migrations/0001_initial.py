@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='Code',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('text', msgvis.apps.base.models.Utf8CharField(max_length=200, db_index=True)),
+                ('text', msgvis.apps.base.models.Utf8CharField(max_length=200)),
             ],
             options={
             },

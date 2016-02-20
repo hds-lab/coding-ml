@@ -226,7 +226,39 @@ class UserFeatureView(APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class CodeDefinitionView(APIView):
+    """
+    Get the definition of a code
 
+    **Request:** ``GET /definition/code_id?source=master``
+    """
+
+
+    def get(self, request, code_id, format=None):
+
+
+        code = corpus_models.Code.objects.get(id=code_id)
+        sources = request.query_params.get('source', "master").split(" ")
+
+        try:
+            code_definitions = []
+            for source in sources:
+                source_user = User.objects.get(username=source)
+                code_definition = code.get_definition(source_user)
+                code_definitions.append(code_definition)
+
+            output = serializers.CodeDefinitionSerializer(code_definitions, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Code definition not exist", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response("Please specify code id", status=status.HTTP_400_BAD_REQUEST)
 
 
 

@@ -44,8 +44,14 @@ class Dataset(models.Model):
 class Code(models.Model):
     """A code of a message"""
 
-    text = base_models.Utf8CharField(max_length=200, db_index=True)
+    text = base_models.Utf8CharField(max_length=200)
     """The text of the code"""
+
+    def __repr__(self):
+        return self.text
+
+    def __unicode__(self):
+        return self.__repr__()
 
     def get_definition(self, source):
         definition = self.definitions.get(source=source, valid=True)
