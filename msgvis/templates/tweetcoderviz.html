@@ -78,8 +78,10 @@
 
     </div>
     <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
+        <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
         <div id="top-area">
             <div class="row" id="labeling">
+                <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                 <div class="col-md-9 tweet-main">
                         <span ng-repeat="char in currentMessage.characters track by $index"
                            ng-style="char.style">{$char.char$}</span>
@@ -144,9 +146,10 @@
                             <li ng-click="selectFilter('Saved')">Saved</li>
                             <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
                         </ul>
+                    <label>Search: <input ng-model="searchText"></label>
                     </div>
                 </div>
-                <div ng-repeat="item in code.filteredItems" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                <div ng-repeat="item in code.items | filter:filterTweets(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
                     <div>
                         <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
                         <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
