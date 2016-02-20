@@ -59,6 +59,9 @@
         $scope.currentMessage = undefined;
         $scope.codes = undefined;
 
+        // Tweets
+        $scope.selectedFilter = 'All';
+
         var tweetItem = function(messageData) {
             var text = messageData.message.text;
             var characters = text.split("");
@@ -183,6 +186,7 @@
                         code.definitionMine = code.text + " My Definition This tweet affirms, supports, and functions to pass along the story. Blah Blah";
                         code.example = code.text + "Blah Blah @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege. Blah Blah";
                         code.items = tweetItems[code.index];
+                        code.filteredItems = code.items;
 
                         return code;
                     });
@@ -205,6 +209,29 @@
 
         $scope.selectLabel = function(label){
             $scope.currentMessage.label = label;
+        };
+
+        $scope.selectFilter = function(filter){
+            $scope.selectedFilter = filter;
+
+            $scope.codes.forEach(function(code){
+                code.filteredItems = code.items.filter(function(item){
+                    switch (filter){
+                        case 'All':
+                            return true;
+                        case 'Gold':
+                            return item.gold;
+                        case 'Example':
+                            return item.example;
+                        case 'Saved':
+                            return item.saved;
+                        case 'Ambiguous':
+                            return item.ambiguous;
+                        default:
+                            return true;
+                    }
+                });
+            })
         };
 
         $scope.submitLabel = function(){
