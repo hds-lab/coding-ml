@@ -67,8 +67,11 @@
         $scope.searchText = undefined;
 
         $scope.allItems = undefined;
+        $scope.hoveredItem = undefined;
         $scope.confusionPairs = undefined;
+        $scope.distribution = undefined;
         $scope.selectedConfusion = undefined;
+        $scope.featureList = [];
 
         var tweetItem = function(messageData) {
             var text = messageData.message.text;
@@ -136,6 +139,8 @@
                 id: messageData.message.id,
                 text: text,
                 characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
+                charToToken: charToToken,
+                tokens: tokenItems,
                 charStyle: charStyle,
                 ambiguous: messageData.ambiguous,
                 saved: messageData.saved,
@@ -686,44 +691,287 @@
 
         $scope.getAllMessages = function() {
             // TODO: Fake data
-            $scope.allItems = [];
-            $scope.confusionPairs = [];
+            var request = FeatureVector.load(123);
+            if (request) {
+                usSpinnerService.spin('label-spinner');
+                request.then(function () {
+                    usSpinnerService.stop('label-spinner');
+                    $scope.allItems = [];
+                    $scope.confusionPairs = [];
 
-            for (var i = 0; i < 200; i++) {
-                var myLabel = Math.floor(Math.random() * $scope.codes.length);
-                var partnerLabel = Math.floor(Math.random() * $scope.codes.length);
-                var ambiguous = Math.random() < 0.5;
-                var example = Math.random() < 0.5;
-                var saved = Math.random() < 0.5;
-                var text = i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
+                    for (var i = 0; i < 200; i++) {
+                        var prototype = tweetItem(FeatureVector.data);
 
-                var item = {
-                    "id": i,
-                    "text": text,
-                    "label": $scope.codes[myLabel].code_text,
-                    "partner": $scope.codes[partnerLabel].code_text,
-                    "ambiguous": ambiguous,
-                    "example": example,
-                    "saved": saved,
-                    "gold": false,
-                    "analysis": myLabel != partnerLabel ? "Who's right?" : undefined
-                };
+                        var myLabel = Math.floor(Math.random() * $scope.codes.length);
+                        var partnerLabel = Math.floor(Math.random() * $scope.codes.length);
 
-                $scope.allItems.push(item);
+                        // Update all message items
+                        prototype.characters = prototype.text.split("");
+                        prototype.label = $scope.codes[myLabel].code_text;
+                        prototype.partner = $scope.codes[partnerLabel].code_text;
+                        prototype.ambiguous = Math.random() < 0.5;
+                        prototype.example = Math.random() < 0.5;
+                        prototype.saved = Math.random() < 0.5;
+                        prototype.gold = false;
+                        prototype.id = i;
+                        prototype.analysis = myLabel != partnerLabel ? "Who's right?" : undefined;
 
-                var pairKey = myLabel + "_" + partnerLabel;
+                        // Interaction states
+                        prototype.hoveredCharStart = -1;
+                        prototype.hoveredCharEnd = -1;
+                        prototype.clickStartTokenItem = undefined;
+                        prototype.selectedTokens = undefined;
+                        prototype.selectedTokenIndices = new Map();
 
-                var confusionPair = $scope.confusionPairs[pairKey];
-                if (confusionPair == undefined) {
-                    confusionPair = [];
-                    confusionPair.key = pairKey;
-                    confusionPair.label = $scope.codes[myLabel].code_text;
-                    confusionPair.partner = $scope.codes[partnerLabel].code_text;
-                    $scope.confusionPairs[pairKey] = confusionPair;
-                    $scope.confusionPairs.push(confusionPair);
+                        $scope.allItems.push(prototype);
+
+                        // Update confusion pair
+                        var pairKey = myLabel + "_" + partnerLabel;
+
+                        var confusionPair = $scope.confusionPairs[pairKey];
+                        if (confusionPair == undefined) {
+                            confusionPair = [];
+                            confusionPair.key = pairKey;
+                            confusionPair.label = $scope.codes[myLabel].code_text;
+                            confusionPair.partner = $scope.codes[partnerLabel].code_text;
+                            $scope.confusionPairs[pairKey] = confusionPair;
+                            $scope.confusionPairs.push(confusionPair);
+                        }
+
+                        $scope.confusionPairs[pairKey].push(prototype);
+                    }
+                });
+            }
+        };
+
+        // Feature selection logic and states
+
+        var updateSelection = function(item, startIndex, endIndex, isSelected, shouldClear) {
+            if (shouldClear) {
+                item.selectedTokenIndices.clear();
+            }
+
+            for (var i = startIndex; i <= endIndex; i++) {
+                var existing = item.selectedTokenIndices.get(i);
+                if (existing == i && !isSelected) {
+                    item.selectedTokenIndices.delete(i);
+                }
+                else if (existing != i && isSelected) {
+                    item.selectedTokenIndices.set(i, i);
+                }
+            }
+        };
+
+        var isTokenSelectedAtCharIndex = function (item, charIndex){
+            if (item) {
+                var tokenIndex = item.charToToken[charIndex];
+                if (tokenIndex != undefined && item.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $scope.onCharMouseEnter = function(item, charIndex){
+            //console.log("onCharMouseEnter:" + charIndex);
+
+            if (item){
+                var tokenIndex = item.charToToken[charIndex];
+
+                if (tokenIndex != undefined && item.tokens[tokenIndex] != undefined) {
+                    var tokenItem = item.tokens[tokenIndex];
+                    item.hoveredCharStart = tokenItem.startIndex;
+                    item.hoveredCharEnd = tokenItem.endIndex;
+
+                    // If we're in the middle of selection, update selected char indices
+                    if (item.clickStartTokenItem != undefined) {
+
+                        var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                        if (tokenIndex < item.clickStartTokenItem.index) {
+                            updateSelection(item, tokenIndex, item.clickStartTokenItem.index, true, !ctrlClick);
+                        }
+                        else if (tokenIndex > item.clickStartTokenItem.index) {
+                            updateSelection(item, item.clickStartTokenItem.index, tokenIndex, true, !ctrlClick);
+                        }
+                    }
+                }
+                else {
+                    item.hoveredCharStart = -1;
+                    item.hoveredCharEnd = -1;
+                }
+            }
+        };
+
+        $scope.onCharMouseLeave = function(item, charIndex){
+            //console.log("onCharMouseLeave:" + charIndex);
+
+            item.hoveredCharStart = -1;
+            item.hoveredCharEnd = -1;
+        };
+
+        $scope.onCharMouseDown = function(item, charIndex, event){
+            //console.log("onCharMouseDown:" + charIndex);
+
+            if (item) {
+
+                var tokenIndex = item.charToToken[charIndex];
+
+                if (tokenIndex != undefined && item.tokens[tokenIndex] != undefined) {
+
+                    var tokenItem = item.tokens[tokenIndex];
+
+                    var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                    // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
+                    // clear the selection on this token index
+                    if (item.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
+                        item.clickStartTokenItem = undefined;
+                        updateSelection(item, tokenIndex, tokenIndex, false, false);
+                    }
+                    else {
+                        item.clickStartTokenItem = tokenItem;
+                        updateSelection(item, tokenIndex, tokenIndex, true, !ctrlClick);
+                    }
+                }
+                else {
+                    item.clickStartTokenItem = undefined;
+                    item.selectedTokenIndices.clear();
+                }
+            }
+        };
+
+        $scope.onCharMouseUp = function(item, charIndex) {
+            item.clickStartTokenItem = undefined;
+            item.selectedTokens = undefined;
+
+            if (item.selectedTokenIndices.size > 0) {
+                if (item) {
+
+                    // Get sorted list of selected token indices
+                    var indices = [];
+                    item.selectedTokenIndices.forEach(function (val) {
+                        indices.push(val);
+                    });
+                    indices.sort(function (a, b) {
+                        return a - b;
+                    });
+
+                    var tokens = [];
+                    var currentTokenIndex = -1;
+                    for (var i = 0; i < indices.length; i++) {
+                        var tokenIndex = indices[i];
+
+                        if (tokenIndex != currentTokenIndex) {
+                            tokens.push(item.tokens[tokenIndex].text);
+                            currentTokenIndex = tokenIndex;
+                        }
+                    }
+
+                    item.selectedTokens = tokens;
+                }
+            }
+        };
+
+        $scope.onItemHover = function(item){
+            if ($scope.hoveredItem && $scope.hoveredItem != item) {
+                $scope.hoveredItem.selectedTokens = undefined;
+                $scope.hoveredItem.selectedTokenIndices.clear();
+            }
+
+            $scope.hoveredItem = item;
+
+            if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
+                item.submittedTokenIndices.forEach(function(tokenIndex){
+                    updateSelection(item, tokenIndex, tokenIndex, true, false);
+                });
+            }
+        };
+
+        $scope.onItemLeave = function(item){
+        };
+
+        $scope.charStyle = function(item, charIndex) {
+            var style = {};
+            if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
+                style["background"] = "#eee";
+            }
+
+            if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
+                style["background"] = $scope.codeColorLight($scope.codes[item.label]);
+            }
+            return style;
+        };
+
+        $scope.addFeature = function(item){
+            if (item && item.selectedTokens && item.selectedTokens.length > 0){
+                var tokens = item.selectedTokens;
+                var key = tokens.join(" ");
+                console.log("addFeature for: " + key);
+
+                // check if it already exists
+                var existingTokens = $scope.featureList[key];
+
+                if (!existingTokens) {
+                    //var request = UserFeatures.add(tokens);
+                    //if (request) {
+                    //    usSpinnerService.spin('vector-spinner');
+                    //    request.then(function() {
+                    //        usSpinnerService.stop('vector-spinner');
+                    //        var featureId = UserFeatures.data;
+                    //        $scope.featureList[key] = {
+                    //            id: featureId,
+                    //            tokens: tokens,
+                    //            source: item
+                    //        };
+                    //    });
+                    //}
+                    $scope.featureList[key] = {
+                        id: Math.floor(Math.random() * 1000),
+                        tokens: tokens,
+                        source: item
+                    };
+
+                    var newMap = {};
+
+                    item.submittedTokenIndices = new Map();
+                    item.selectedTokenIndices.forEach(function(val, key){
+                        item.submittedTokenIndices.set(key, val);
+                    });
+                }
+                else {
+                    console.log("feature already exists: " + key);
                 }
 
-                $scope.confusionPairs[pairKey].push(item);
+                item.clickStartTokenItem = undefined;
+            }
+        };
+
+        $scope.removeFeature = function(feature){
+            if (feature){
+                var key = feature.tokens.join(" ");
+                console.log("removeFeature for: " + key);
+
+                // check if it already exists
+                var existingTokens = $scope.featureList[key];
+
+                if (existingTokens) {
+
+                    //var request = UserFeatures.remove(feature.id);
+                    //if (request) {
+                    //    usSpinnerService.spin('vector-spinner');
+                    //    request.then(function() {
+                    //        usSpinnerService.stop('vector-spinner');
+                    //        delete $scope.featureList[key];
+                    //    });
+                    //}
+
+                    delete $scope.featureList[key];
+                }
+                else {
+                    console.log("feature does not exist: " + key);
+                }
             }
         };
 

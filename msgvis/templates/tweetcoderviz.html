@@ -214,26 +214,37 @@
                     <div>
                         <label>Search: <input ng-model="searchText"></label>
                     </div>
-                    <div ng-repeat="item in allItems | filter:filterTweetsConfusion(selectedConfusion, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(codes[item.label]) }" ng-mouseover="item.hovered=true" ng-mouseleave="item.hovered=false">
-                        <div ng-show="item.hovered">
-                            <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="updateItem(item, !item.saved, item.example, item.ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="updateItem(item, item.saved, !item.example, item.ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="updateItem(item, item.saved, item.example, !item.ambiguous)"><span>?</span></div>
-                            <span ng-show="item.analysis">Analysis: </span>
-                            <div class="dropdown inline" ng-show="item.analysis">
-                                <button class="btn btn-default dropdown-toggle" type="button" id="analysisMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                    {$ item.analysis $}
-                                    <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="analysisMenu">
-                                    <li ng-click="updateAnalysis(item,'I am right')">I am right</li>
-                                    <li ng-click="updateAnalysis(item,'I am wrong')">I am wrong</li>
-                                    <li ng-click="updateAnalysis(item,'We are both right')">We are both right</li>
-                                </ul>
+                    <div ng-repeat="item in allItems | filter:filterTweetsConfusion(selectedConfusion, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(codes[item.label]) }" ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)">
+                        <div ng-if="hoveredItem==item">
+                            <div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="updateItem(item, !item.saved, item.example, item.ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="updateItem(item, item.saved, !item.example, item.ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="updateItem(item, item.saved, item.example, !item.ambiguous)"><span>?</span></div>
+                                <span ng-show="item.analysis">Analysis: </span>
+                                <div class="dropdown inline" ng-show="item.analysis">
+                                    <button class="btn btn-default dropdown-toggle" type="button" id="analysisMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                        {$ item.analysis $}
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="analysisMenu">
+                                        <li ng-click="updateAnalysis(item,'I am right')">I am right</li>
+                                        <li ng-click="updateAnalysis(item,'I am wrong')">I am wrong</li>
+                                        <li ng-click="updateAnalysis(item,'We are both right')">We are both right</li>
+                                    </ul>
+                                </div>
                             </div>
+                            <div class="tweet-selectable"><span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
+                                   ng-mouseenter="onCharMouseEnter(item, $index)"
+                                   ng-mouseleave="onCharMouseLeave(item, $index)"
+                                   ng-mousedown="onCharMouseDown(item, $index, $event)"
+                                   ng-mouseup="onCharMouseUp(item, $index, $event)"
+                                   ng-style="charStyle(item, $index)">{$ char $}</span>
+                            </div>
+                            <button class="btn btn-default" ng-click="addFeature(item)">Add Feature</button>
                         </div>
-                        <div>{$ item.text $}</div>
+
+                        <div ng-hide="hoveredItem==item">{$ item.text $}</div>
                     </div>
                 </div>
             </div>
