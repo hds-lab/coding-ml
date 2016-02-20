@@ -71,7 +71,7 @@
         $scope.confusionPairs = undefined;
         $scope.distribution = undefined;
         $scope.selectedConfusion = undefined;
-        $scope.featureList = [];
+        $scope.featureList = {};
 
         var tweetItem = function(messageData) {
             var text = messageData.message.text;
@@ -968,6 +968,7 @@
                     //}
 
                     delete $scope.featureList[key];
+                    feature.source.submittedTokenIndices.clear();
                 }
                 else {
                     console.log("feature does not exist: " + key);

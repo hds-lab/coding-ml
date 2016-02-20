@@ -200,6 +200,11 @@
             <div id="bottom-area">
                 <div class="col-md-4 scroll-y">
                     <h2>Code distribution</h2>
+                    <h2>User features</h2>
+                    <div ng-repeat="(key, feature) in featureList track by key" class="user-feature">
+                        <span>{$ feature.tokens.join(" ") $}</span>
+                        <button class="btn btn-default" ng-click="removeFeature(feature)">Remove</button>
+                    </div>
                 </div>
                 <div class="col-md-2 scroll-y">
                     <h2>Comparison</h2>
