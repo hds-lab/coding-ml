@@ -56,10 +56,13 @@
         };
 
         // Top pane
+        $scope.currentMessageId = undefined;
         $scope.currentMessage = undefined;
         $scope.codes = undefined;
+        $scope.selectedCode = undefined;
 
         // Tweets
+        $scope.codeItems = undefined;
         $scope.selectedFilter = 'All';
         $scope.searchText = undefined;
 
@@ -139,77 +142,9 @@
             };
         };
 
-        // TODO: Need to get all labeled items (message text, id, label, all existing flags)
-        var load = function(){
-            var request = SVMResult.load(Dictionary.id);
-            usSpinnerService.spin('page-spinner');
-
-            if (request) {
-                request.then(function() {
-                    //usSpinnerService.stop('page-spinner');
-                    var modelData = SVMResult.data.results;
-                    var messages = SVMResult.data.messages;
-
-                    $scope.codes = modelData.codes;
-
-                    // Map message id to model output
-                    var modelOutputMap = new Map();
-                    for (var i = 0; i < modelData.train_id.length; i++){
-                        modelOutputMap.set(modelData.train_id[i], {
-                            prediction: modelData.predictions[i],
-                            probabilities: modelData.probabilities[i],
-                            label: modelData.labels[i]
-                        });
-                    }
-
-                    var tweetItems = {};
-
-                    // Merge training result with messages
-                    for (var i = 0; i < messages.length; i++) {
-                        var message = messages[i];
-                        var modelOutput = modelOutputMap.get(message.message.id);
-
-                        if (modelOutput) {
-                            var item = tweetItem(message);
-                            item.prediction = modelOutput.prediction;
-                            item.probabilities = modelOutput.probabilities;
-                            item.label = modelOutput.label;
-
-                            if (tweetItems[item.label] == undefined){
-                                tweetItems[item.label] = [];
-                            }
-                            tweetItems[item.label].push(item);
-                        }
-                    }
-
-                    // TODO: Make up definition and examples
-                    $scope.codes = modelData.codes.map(function (code) {
-                        code.definitionMaster = code.text + " Master Blah This tweet affirms, supports, and functions to pass along the story. Blah Blah";
-                        code.definitionMine = code.text + " My Definition This tweet affirms, supports, and functions to pass along the story. Blah Blah";
-                        code.example = code.text + "Blah Blah @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege. Blah Blah";
-                        code.items = tweetItems[code.index];
-
-                        return code;
-                    });
-
-                    $scope.getMessage();
-                });
-            }
-        };
-
-        $scope.getMessage = function(){
-            var request = FeatureVector.load(128);
-            if (request) {
-            usSpinnerService.spin('label-spinner');
-                request.then(function() {
-                    usSpinnerService.stop('label-spinner');
-                    $scope.currentMessage = tweetItem(FeatureVector.data);
-                });
-            }
-        };
-
-        $scope.selectLabel = function(label){
-            $scope.currentMessage.label = label;
+        $scope.selectLabel = function(code){
+            $scope.currentMessage.label = code.code_text;
+            $scope.selectedCode = code;
         };
 
         $scope.selectFilter = function(filter){
@@ -241,25 +176,21 @@
             }
         };
 
-        $scope.submitLabel = function(){
-            $scope.getMessage();
-        };
-
         $scope.codeColor = function(code){
-            var colorIndex = code.index;
+            var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
             return color;
         };
 
         $scope.codeColorLight = function(code){
-            var colorIndex = code.index;
+            var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
             return color;
         };
 
         $scope.buttonStyle = function(code){
 
-            var colorIndex = code.index;
+            var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
 
             var css = {
@@ -267,7 +198,7 @@
                 width: 'calc(' + (100 / $scope.codes.length) + '% - 10px)'
             };
 
-            if ($scope.currentMessage && code.text == $scope.currentMessage.label){
+            if ($scope.currentMessage && code.code_text == $scope.currentMessage.label){
                 css['background-color'] = color;
             }
             else {
@@ -280,7 +211,7 @@
 
         $scope.panelStyle = function(code){
 
-            var colorIndex = code.index;
+            var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
 
             var css = {
@@ -289,8 +220,295 @@
             return css;
         };
 
-        // load the svm results
-        load();
+        // Service call methods
+        $scope.getMessage = function() {
+            var id = Math.floor((Math.random() * 200));
+            //var request = FeatureVector.load(id);
+            //if (request) {
+            //usSpinnerService.spin('label-spinner');
+            //    request.then(function() {
+            //        usSpinnerService.stop('label-spinner');
+            //        $scope.currentMessageId = id;
+            //    });
+            //}
+
+            usSpinnerService.spin('label-spinner');
+            setTimeout(function () {
+                usSpinnerService.stop('label-spinner');
+                $scope.currentMessageId = id;
+                $scope.$digest(); // manually update since this is timeout callback
+            }, 1000);
+        };
+
+        $scope.submitLabel = function(){
+            // Append item to the example list
+            $scope.codeItems[$scope.currentMessage.label].user_ex.push($scope.currentMessage);
+
+            // TODO: Make service call to submit
+            // var request = submit label request
+            //if (request) {
+            usSpinnerService.spin('label-spinner');
+            //    request.then(function() {
+            //        usSpinnerService.stop('label-spinner');
+            //        $scope.getMessage();
+            //    });
+            //}
+
+            setTimeout($scope.getMessage, 1000);
+        };
+
+        $scope.getMasterCodes = function(){
+            //GET /definition/?source=master
+            //[
+            //{
+            //    "code_id": code.id,
+            //    "source": "master",
+            //    "text": "master_def",
+            //    "examples": [messages...]
+            //},
+            //{
+            //    "code_id": code.id,
+            //    "source": "user1",
+            //    "text": "user1_def",
+            //    "examples": [messages...]
+            //}
+            //]
+
+            // var request = get definition request
+            //if (request) {
+            usSpinnerService.spin('code-spinner');
+                //request.then(function() {
+            setTimeout(function() {
+                usSpinnerService.stop('code-spinner');
+
+                // TODO : Make up definitions
+                var sourceData = [
+                    {
+                        "code_id": 1,
+                        "code_text": "Unrelated",
+                        "source": "master",
+                        "text": "This tweet is unrelated to the event we’re interested in.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 2,
+                        "code_text": "Affirm",
+                        "source": "master",
+                        "text": "This tweet affirms, supports, and functions to pass along the story.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 3,
+                        "code_text": "Deny",
+                        "source": "master",
+                        "text": "This tweet denies or questions all or part of the story.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 0,
+                        "code_text": "Uncodable",
+                        "source": "master",
+                        "text": "This tweet is not codable because the content is in a language that is not understandable.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 4,
+                        "code_text": "Neutral",
+                        "source": "master",
+                        "text": "The tweet is exactly neutral (use sparingly). Be careful not to conflate with an implicit affirmation.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    }
+                ];
+
+                // Take all codes with source = master
+                var codes = sourceData.filter(function (c) {
+                    return c.source == "master";
+                });
+
+                $scope.codes = codes;
+                codes.forEach(function(code){
+                    $scope.codes[code.code_text] = code;
+                })
+
+            }, 1000);
+            //}
+        };
+
+        $scope.getCodeDetail = function(code){
+            if ($scope.codeItems){
+                return;
+            }
+
+            //GET /definition/?source=user
+            //[
+            //{
+            //    "code_id": code.id,
+            //    "source": "master",
+            //    "text": "master_def",
+            //    "examples": [messages...]
+            //},
+            //{
+            //    "code_id": code.id,
+            //    "source": "user1",
+            //    "text": "user1_def",
+            //    "examples": [messages...]
+            //}
+            //]
+
+            // var request = get definition request
+            //if (request) {
+            usSpinnerService.spin('bottom-spinner');
+                //request.then(function() {
+            setTimeout(function() {
+                usSpinnerService.stop('bottom-spinner');
+
+                // TODO : Make up definitions
+                var sourceData = [
+                    {
+                        "code_id": 1,
+                        "code_text": "Unrelated",
+                        "source": "user",
+                        "text": "user def: This tweet is unrelated to the event we’re interested in.",
+                        "examples": [
+                            {
+                                "id": 501,
+                                "text": "Unrelated: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 2,
+                        "code_text": "Affirm",
+                        "source": "user",
+                        "text": "user def: This tweet affirms, supports, and functions to pass along the story.",
+                        "examples": [
+                            {
+                                "id": 502,
+                                "text": "Affirm: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 3,
+                        "code_text": "Deny",
+                        "source": "user",
+                        "text": "user def: This tweet denies or questions all or part of the story.",
+                        "examples": [
+                            {
+                                "id": 503,
+                                "text": "Deny: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 0,
+                        "code_text": "Uncodable",
+                        "source": "user",
+                        "text": "user def: This tweet is not codable because the content is in a language that is not understandable.",
+                        "examples": [
+                            {
+                                "id": 500,
+                                "text": "Uncodable: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 4,
+                        "code_text": "Neutral",
+                        "source": "user",
+                        "text": "user def: The tweet is exactly neutral (use sparingly). Be careful not to conflate with an implicit affirmation.",
+                        "examples": [
+                            {
+                                "id": 504,
+                                "text": "Neutral: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    }
+                ];
+
+                // Merge with master codes
+                $scope.codeItems = [];
+                sourceData.forEach(function(code) {
+                    var masterCode = $scope.codes[code.code_text];
+                    var codeItem = {
+                        "code_id": masterCode.code_id,
+                        "code_text": masterCode.code_text,
+                        "master_def": masterCode.text,
+                        "master_ex": masterCode.examples,
+                        "user_def": code.text,
+                        "user_ex": code.examples
+                    };
+
+                    $scope.codeItems.push(codeItem);
+
+                    $scope.codeItems[codeItem.code_text] = codeItem;
+                });
+
+                $scope.$apply();
+            }, 1000);
+            //}
+        };
+
+        $scope.updateItem = function(id, saved, example, ambiguous){
+            // TODO: Need service call
+        };
+
+        $scope.getMessageDetail = function(id){
+            var request = FeatureVector.load(id);
+            if (request) {
+                usSpinnerService.spin('label-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('label-spinner');
+                    $scope.currentMessage = tweetItem(FeatureVector.data);
+                });
+            }
+        };
+
+        // Watchers
+        $scope.$watch('currentMessageId', function(newVal, oldVal) {
+            if (newVal) {
+                $scope.getMessageDetail(newVal);
+            }
+        });
+
+        $scope.$watch('selectedCode', function(newVal, oldVal) {
+            if (newVal) {
+                $scope.getCodeDetail(newVal);
+            }
+        });
+
+        $scope.getMessage();
+        $scope.getMasterCodes();
     };
 
     ViewController.$inject = [

@@ -107,25 +107,27 @@
                 </div>
             </div>
             <div class="row" id="codes" data-toggle="buttons">
+                <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                 <div class="btn btn-default" ng-repeat="code in codes"
-                           ng-click="selectLabel(code.text)"
-                           ng-class="{'active': code.text == currentMessage.label}"
+                           ng-click="selectLabel(code)"
+                           ng-class="{'active': code.code_text == currentMessage.label}"
                            ng-style="buttonStyle(code)">
-                    <div class="code-name">{$ code.text $}</div>
+                    <div class="code-name">{$ code.code_text $}</div>
                     <div class="code-definition scroll-y">
-                        <p><strong>definition: </strong>{$ code.definitionMaster $}</p>
-                        <p><strong>example: </strong>{$ code.example $}</p>
+                        <p><strong>definition: </strong>{$ code.text $}</p>
+                        <p><strong>example: </strong>{$ code.examples[0] $}</p>
                     </div>
                 </div>
             </div>
         </div>
         <div id="bottom-area">
-            <div class="row" id="panel" ng-repeat="code in codes" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.text == currentMessage.label">
+            <span us-spinner="spinnerOptions" spinner-key="bottom-spinner"></span>
+            <div class="row" id="panel" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == currentMessage.label">
             <div class="col-md-3 scroll-y">
-                <div class="heading">Master Definition for '{$ code.text $}'</div>
-                <p>{$ code.definitionMaster $}</p>
-                <div class="heading">My Definition for '{$ code.text $}'</div>
-                <p>{$ code.definitionMine $}</p>
+                <div class="heading">Master Definition for '{$ code.code_text $}'</div>
+                <p>{$ code.master_def $}</p>
+                <div class="heading">My Definition for '{$ code.code_text $}'</div>
+                <p>{$ code.user_def $}</p>
             </div>
             <div class="col-md-3 scroll-y">
                 <div class="heading">My Keywords</div>
@@ -149,7 +151,7 @@
                     <label>Search: <input ng-model="searchText"></label>
                     </div>
                 </div>
-                <div ng-repeat="item in code.items | filter:filterTweets(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                <div ng-repeat="item in code.user_ex | filter:filterTweets(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
                     <div>
                         <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
                         <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
