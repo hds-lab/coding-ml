@@ -63,9 +63,12 @@
 
         // Tweets
         $scope.codeItems = undefined;
-        $scope.allItems = undefined;
         $scope.selectedFilter = 'All';
         $scope.searchText = undefined;
+
+        $scope.allItems = undefined;
+        $scope.confusionPairs = undefined;
+        $scope.selectedConfusion = undefined;
 
         var tweetItem = function(messageData) {
             var text = messageData.message.text;
@@ -153,7 +156,16 @@
             $scope.selectedFilter = filter;
         };
 
-        $scope.filterTweets = function(filter, searchText) {
+        $scope.selectConfusion = function(pair){
+            if ($scope.selectedConfusion == pair){
+                $scope.selectedConfusion = undefined;
+            }
+            else {
+                $scope.selectedConfusion = pair;
+            }
+        };
+
+        $scope.filterTweetsFlag = function(filter, searchText) {
             return function(item) {
                 var flagged = false;
                 switch (filter) {
@@ -177,6 +189,14 @@
                 return (!searchText || searchText.length == 0 || item.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
             }
         };
+
+        $scope.filterTweetsConfusion = function(confusion, searchText) {
+            return function(item) {
+                var flagged = !confusion || (item.label == confusion.label && item.partner == confusion.partner);
+                return (!searchText || searchText.length == 0 || item.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
+            }
+        };
+
 
         $scope.codeColor = function(code){
             var colorIndex = code.code_id;
@@ -630,10 +650,9 @@
 
         $scope.updateAnalysis = function(item, analysis){
             // TODO: Need service call
-            item.analysis = analysis
+            item.analysis = analysis;
             console.log("Item analyzed: " + item.analysis);
         };
-
 
         $scope.getMessageDetail = function(id){
             var request = FeatureVector.load(id);
@@ -668,7 +687,9 @@
         $scope.getAllMessages = function() {
             // TODO: Fake data
             $scope.allItems = [];
-            for (var i = 0; i < 100; i++) {
+            $scope.confusionPairs = [];
+
+            for (var i = 0; i < 200; i++) {
                 var myLabel = Math.floor(Math.random() * $scope.codes.length);
                 var partnerLabel = Math.floor(Math.random() * $scope.codes.length);
                 var ambiguous = Math.random() < 0.5;
@@ -676,7 +697,7 @@
                 var saved = Math.random() < 0.5;
                 var text = i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
 
-                $scope.allItems.push({
+                var item = {
                     "id": i,
                     "text": text,
                     "label": $scope.codes[myLabel].code_text,
@@ -686,7 +707,23 @@
                     "saved": saved,
                     "gold": false,
                     "analysis": myLabel != partnerLabel ? "Who's right?" : undefined
-                });
+                };
+
+                $scope.allItems.push(item);
+
+                var pairKey = myLabel + "_" + partnerLabel;
+
+                var confusionPair = $scope.confusionPairs[pairKey];
+                if (confusionPair == undefined) {
+                    confusionPair = [];
+                    confusionPair.key = pairKey;
+                    confusionPair.label = $scope.codes[myLabel].code_text;
+                    confusionPair.partner = $scope.codes[partnerLabel].code_text;
+                    $scope.confusionPairs[pairKey] = confusionPair;
+                    $scope.confusionPairs.push(confusionPair);
+                }
+
+                $scope.confusionPairs[pairKey].push(item);
             }
         };
 
