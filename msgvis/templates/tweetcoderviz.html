@@ -122,7 +122,7 @@
                 </div>
             </div>
             <div id="bottom-area">
-                <span us-spinner="spinnerOptions" spinner-key="bottom-spinner"></span>
+                <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                 <div class="row" id="panel" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == currentMessage.label">
                 <div class="col-md-3 scroll-y">
                     <div class="heading">Master Definition for '{$ code.code_text $}'</div>
@@ -167,7 +167,32 @@
         </div>
 
         <div id="reviewing" ng-show="state=='review'">
-            Reviewing
+            <div id="codes">
+                <div class="row" data-toggle="buttons">
+                <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
+                    <div class="btn btn-default" ng-repeat="code in codes"
+                               ng-click="selectLabel(code)"
+                               ng-class="{'active': code==selectedCode}"
+                               ng-style="buttonStyle(code)">
+                        <div class="code-name">{$ code.code_text $}</div>
+                    </div>
+                </div>
+                <div class="row" id="definitions" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_id == selectedCode.code_id">
+                    <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
+                    <div class="col-md-4 scroll-y">
+                        <div class="heading">Master Definition</div>
+                        <p class="code-definition">{$ code.master_def $}</p>
+                    </div>
+                    <div class="col-md-4 scroll-y">
+                        <div class="heading">Partner Definition</div>
+                        <p class="code-definition">{$ code.partner_def $}</p>
+                    </div>
+                    <div class="col-md-4 scroll-y">
+                        <div class="heading">My Definition</div>
+                        <textarea class="code-definition" ng-model="code.user_def" ng-change="saveDefinition(code)"></textarea>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -142,7 +142,9 @@
         };
 
         $scope.selectLabel = function(code){
-            $scope.currentMessage.label = code.code_text;
+            if ($scope.state == 'code'){
+                $scope.currentMessage.label = code.code_text;
+            }
             $scope.selectedCode = code;
         };
 
@@ -197,7 +199,7 @@
                 width: 'calc(' + (100 / $scope.codes.length) + '% - 10px)'
             };
 
-            if ($scope.currentMessage && code.code_text == $scope.currentMessage.label){
+            if ($scope.selectedCode == code){
                 css['background-color'] = color;
             }
             else {
@@ -352,18 +354,19 @@
                 $scope.codes = codes;
                 codes.forEach(function(code){
                     $scope.codes[code.code_text] = code;
-                })
+                });
+                $scope.$apply();
 
             }, 1000);
             //}
         };
 
-        $scope.getCodeDetail = function(code){
+        $scope.getCodeDetail = function(){
             if ($scope.codeItems){
                 return;
             }
 
-            //GET /definition/?source=user
+            //GET /definition/?source=all
             //[
             //{
             //    "code_id": code.id,
@@ -381,13 +384,73 @@
 
             // var request = get definition request
             //if (request) {
-            usSpinnerService.spin('bottom-spinner');
+            usSpinnerService.spin('code-detail-spinner');
                 //request.then(function() {
             setTimeout(function() {
-                usSpinnerService.stop('bottom-spinner');
+                usSpinnerService.stop('code-detail-spinner');
 
                 // TODO : Make up definitions
                 var sourceData = [
+                    {
+                        "code_id": 1,
+                        "code_text": "Unrelated",
+                        "source": "master",
+                        "text": "This tweet is unrelated to the event we’re interested in.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 2,
+                        "code_text": "Affirm",
+                        "source": "master",
+                        "text": "This tweet affirms, supports, and functions to pass along the story.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 3,
+                        "code_text": "Deny",
+                        "source": "master",
+                        "text": "This tweet denies or questions all or part of the story.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 0,
+                        "code_text": "Uncodable",
+                        "source": "master",
+                        "text": "This tweet is not codable because the content is in a language that is not understandable.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 4,
+                        "code_text": "Neutral",
+                        "source": "master",
+                        "text": "The tweet is exactly neutral (use sparingly). Be careful not to conflate with an implicit affirmation.",
+                        "examples": [
+                            {
+                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "gold": true
+                            }
+                        ]
+                    },
                     {
                         "code_id": 1,
                         "code_text": "Unrelated",
@@ -452,25 +515,102 @@
                                 "example": true
                             }
                         ]
+                    },
+                    {
+                        "code_id": 1,
+                        "code_text": "Unrelated",
+                        "source": "partner",
+                        "text": "partner def: This tweet is unrelated to the event we’re interested in.",
+                        "examples": [
+                            {
+                                "id": 501,
+                                "text": "Unrelated: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 2,
+                        "code_text": "Affirm",
+                        "source": "partner",
+                        "text": "partner def: This tweet affirms, supports, and functions to pass along the story.",
+                        "examples": [
+                            {
+                                "id": 502,
+                                "text": "Affirm: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 3,
+                        "code_text": "Deny",
+                        "source": "partner",
+                        "text": "partner def: This tweet denies or questions all or part of the story.",
+                        "examples": [
+                            {
+                                "id": 503,
+                                "text": "Deny: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 0,
+                        "code_text": "Uncodable",
+                        "source": "partner",
+                        "text": "partner def: This tweet is not codable because the content is in a language that is not understandable.",
+                        "examples": [
+                            {
+                                "id": 500,
+                                "text": "Uncodable: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
+                    },
+                    {
+                        "code_id": 4,
+                        "code_text": "Neutral",
+                        "source": "partner",
+                        "text": "partner def: The tweet is exactly neutral (use sparingly). Be careful not to conflate with an implicit affirmation.",
+                        "examples": [
+                            {
+                                "id": 504,
+                                "text": "Neutral: @KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
+                                "example": true
+                            }
+                        ]
                     }
                 ];
 
-                // Merge with master codes
+                // Group by code
                 $scope.codeItems = [];
                 sourceData.forEach(function(code) {
-                    var masterCode = $scope.codes[code.code_text];
-                    var codeItem = {
-                        "code_id": masterCode.code_id,
-                        "code_text": masterCode.code_text,
-                        "master_def": masterCode.text,
-                        "master_ex": masterCode.examples,
-                        "user_def": code.text,
-                        "user_ex": code.examples
-                    };
+                    var codeItem = $scope.codeItems[code.code_text];
+                    if (!codeItem){
+                        codeItem = {
+                        "code_id": code.code_id,
+                        "code_text": code.code_text
+                        };
 
-                    $scope.codeItems.push(codeItem);
+                        $scope.codeItems[code.code_text] = codeItem;
+                        $scope.codeItems.push(codeItem);
+                    }
 
-                    $scope.codeItems[codeItem.code_text] = codeItem;
+                    switch (code.source){
+                        case "master":
+                            codeItem.master_def = code.text;
+                            codeItem.master_ex = code.examples;
+                            break;
+                        case "user":
+                            codeItem.user_def = code.text;
+                            codeItem.user_ex = code.examples;
+                            break;
+                        case "partner":
+                            codeItem.partner_def = code.text;
+                            codeItem.partner_ex = code.examples;
+                            break;
+                    }
                 });
 
                 $scope.$apply();
@@ -500,9 +640,16 @@
             usSpinnerService.spin('page-spinner');
             setTimeout(function(){
                     usSpinnerService.stop('page-spinner');
-                $scope.state = coding ? 'code' : 'review';
+                //$scope.state = coding ? 'code' : 'review';
+                $scope.state = 'review';
                 $scope.$apply();
             }, 1000);
+        };
+
+        $scope.saveDefinition = function(code){
+            // TODO: call service on every character change?? on focus out?
+            console.log("saving definition for " + code.code_text);
+            console.log("saving definition for " + code.user_def);
         };
 
         // Watchers
@@ -514,7 +661,7 @@
 
         $scope.$watch('selectedCode', function(newVal, oldVal) {
             if (newVal != oldVal && newVal) {
-                $scope.getCodeDetail(newVal);
+                $scope.getCodeDetail();
             }
         });
 
@@ -526,7 +673,16 @@
                         $scope.getMasterCodes();
                         break;
                     case 'review':
+                        $scope.getMasterCodes();
                         break;
+                }
+            }
+        });
+
+        $scope.$watch('codes', function(newVal, oldVal) {
+            if (newVal != oldVal && newVal) {
+                if ($scope.state == 'review'){
+                    $scope.selectedCode = $scope.codes[0];
                 }
             }
         });
