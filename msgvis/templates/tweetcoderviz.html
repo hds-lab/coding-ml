@@ -81,6 +81,7 @@
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
         <div id="coding" ng-show="state=='code'">
             <div id="top-area">
+                <h2>New Label</h2>
                 <div class="row" id="labeling">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="col-md-9 tweet-main">
@@ -111,7 +112,7 @@
                     <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
                                ng-click="selectLabel(code)"
-                               ng-class="{'active': code.code_text == currentMessage.label}"
+                               ng-class="{'active': code == selectedCode}"
                                ng-style="buttonStyle(code)">
                         <div class="code-name">{$ code.code_text $}</div>
                         <div class="code-definition scroll-y">
@@ -122,19 +123,20 @@
                 </div>
             </div>
             <div id="bottom-area">
+                <h2 ng-show="currentMessage.label">Submitted Labels</h2>
                 <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                 <div class="row" id="panel" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == currentMessage.label">
                 <div class="col-md-3 scroll-y">
-                    <div class="heading">Master Definition for '{$ code.code_text $}'</div>
+                    <h3>Master Definition for '{$ code.code_text $}'</h3>
                     <p>{$ code.master_def $}</p>
-                    <div class="heading">My Definition for '{$ code.code_text $}'</div>
+                    <h3>My Definition for '{$ code.code_text $}'</h3>
                     <p>{$ code.user_def $}</p>
                 </div>
                 <div class="col-md-3 scroll-y">
-                    <div class="heading">My Keywords</div>
+                    <h3>My Keywords</h3>
                 </div>
                 <div class="col-md-6 scroll-y">
-                    <div class="heading">My Tweets</div>
+                    <h3>My Tweets</h3>
                     <div>
                         <span>Show: </span>
                         <div class="dropdown item-filter">
@@ -168,6 +170,7 @@
 
         <div id="reviewing" ng-show="state=='review'">
             <div id="codes">
+                <h2>Review Code Definitions</h2>
                 <div class="row" data-toggle="buttons">
                 <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
@@ -180,15 +183,15 @@
                 <div class="row" id="definitions" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_id == selectedCode.code_id">
                     <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                     <div class="col-md-4 scroll-y">
-                        <div class="heading">Master Definition</div>
+                        <h3>Master Definition</h3>
                         <p class="code-definition">{$ code.master_def $}</p>
                     </div>
                     <div class="col-md-4 scroll-y">
-                        <div class="heading">Partner Definition</div>
+                        <h3>Partner Definition</h3>
                         <p class="code-definition">{$ code.partner_def $}</p>
                     </div>
                     <div class="col-md-4 scroll-y">
-                        <div class="heading">My Definition</div>
+                        <h3>My Definition</h3>
                         <textarea class="code-definition" ng-model="code.user_def" ng-change="saveDefinition(code)"></textarea>
                     </div>
                 </div>

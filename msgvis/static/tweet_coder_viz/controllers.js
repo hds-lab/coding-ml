@@ -237,6 +237,7 @@
             setTimeout(function () {
                 usSpinnerService.stop('label-spinner');
                 $scope.currentMessageId = id;
+                $scope.selectedCode = undefined;
                 $scope.$digest(); // manually update since this is timeout callback
             }, 1000);
         };
@@ -640,8 +641,8 @@
             usSpinnerService.spin('page-spinner');
             setTimeout(function(){
                     usSpinnerService.stop('page-spinner');
-                //$scope.state = coding ? 'code' : 'review';
-                $scope.state = 'review';
+                $scope.state = coding ? 'code' : 'review';
+                //$scope.state = 'review';
                 $scope.$apply();
             }, 1000);
         };
