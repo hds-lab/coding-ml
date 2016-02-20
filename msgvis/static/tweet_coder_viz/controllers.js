@@ -63,6 +63,7 @@
 
         // Tweets
         $scope.codeItems = undefined;
+        $scope.allItems = undefined;
         $scope.selectedFilter = 'All';
         $scope.searchText = undefined;
 
@@ -619,9 +620,20 @@
             //}
         };
 
-        $scope.updateItem = function(id, saved, example, ambiguous){
+        $scope.updateItem = function(item, saved, example, ambiguous){
             // TODO: Need service call
+            item.saved = saved;
+            item.example = example;
+            item.ambiguous = ambiguous;
+            console.log("Item updated: " + JSON.stringify(item));
         };
+
+        $scope.updateAnalysis = function(item, analysis){
+            // TODO: Need service call
+            item.analysis = analysis
+            console.log("Item analyzed: " + item.analysis);
+        };
+
 
         $scope.getMessageDetail = function(id){
             var request = FeatureVector.load(id);
@@ -641,8 +653,8 @@
             usSpinnerService.spin('page-spinner');
             setTimeout(function(){
                     usSpinnerService.stop('page-spinner');
-                $scope.state = coding ? 'code' : 'review';
-                //$scope.state = 'review';
+                //$scope.state = coding ? 'code' : 'review';
+                $scope.state = 'review';
                 $scope.$apply();
             }, 1000);
         };
@@ -651,6 +663,31 @@
             // TODO: call service on every character change?? on focus out?
             console.log("saving definition for " + code.code_text);
             console.log("saving definition for " + code.user_def);
+        };
+
+        $scope.getAllMessages = function() {
+            // TODO: Fake data
+            $scope.allItems = [];
+            for (var i = 0; i < 100; i++) {
+                var myLabel = Math.floor(Math.random() * $scope.codes.length);
+                var partnerLabel = Math.floor(Math.random() * $scope.codes.length);
+                var ambiguous = Math.random() < 0.5;
+                var example = Math.random() < 0.5;
+                var saved = Math.random() < 0.5;
+                var text = i + "@HopeForBoston: R.I.P. to the 8 year-old girl who died in Bostons explosions, while running for the Sandy @PeytonsHead RT for spam please";
+
+                $scope.allItems.push({
+                    "id": i,
+                    "text": text,
+                    "label": $scope.codes[myLabel].code_text,
+                    "partner": $scope.codes[partnerLabel].code_text,
+                    "ambiguous": ambiguous,
+                    "example": example,
+                    "saved": saved,
+                    "gold": false,
+                    "analysis": myLabel != partnerLabel ? "Who's right?" : undefined
+                });
+            }
         };
 
         // Watchers
@@ -684,6 +721,8 @@
             if (newVal != oldVal && newVal) {
                 if ($scope.state == 'review'){
                     $scope.selectedCode = $scope.codes[0];
+
+                    $scope.getAllMessages();
                 }
             }
         });

@@ -61,12 +61,26 @@ th:hover{
     height: ~'calc(100% - 75px)';
 }
 
-#top-area {
+#coding {
+    height: 100%;
+}
+#coding #top-area {
     height: 300px;
 }
 
-#bottom-area{
+#coding #bottom-area{
     height: ~'calc(100% - 300px)';
+}
+
+#reviewing{
+    height: 100%;
+}
+#reviewing #top-area {
+    height: 220px;
+}
+
+#reviewing #bottom-area{
+    height: ~'calc(100% - 220px)';
 }
 
 #labeling .tweet-main {
@@ -150,6 +164,12 @@ th:hover{
     width: 100%;
     background: transparent;
 }
+
+#reviewing .label-item {
+    border: solid 1px transparent;
+    padding: 5px;
+    margin: 5px;
+}
 .btn-toggle {
     width:24px;
     height:24px;
@@ -191,4 +211,8 @@ h3 {
     font-weight: 600;
     font-size: 14px;
     margin: 0;
+}
+
+.inline {
+    display: inline;
 }

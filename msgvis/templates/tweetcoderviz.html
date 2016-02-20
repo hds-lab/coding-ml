@@ -126,52 +126,52 @@
                 <h2 ng-show="currentMessage.label">Submitted Labels</h2>
                 <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                 <div class="row" id="panel" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == currentMessage.label">
-                <div class="col-md-3 scroll-y">
-                    <h3>Master Definition for '{$ code.code_text $}'</h3>
-                    <p>{$ code.master_def $}</p>
-                    <h3>My Definition for '{$ code.code_text $}'</h3>
-                    <p>{$ code.user_def $}</p>
-                </div>
-                <div class="col-md-3 scroll-y">
-                    <h3>My Keywords</h3>
-                </div>
-                <div class="col-md-6 scroll-y">
-                    <h3>My Tweets</h3>
-                    <div>
-                        <span>Show: </span>
-                        <div class="dropdown item-filter">
-                            <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                {$ selectedFilter $}
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="filterMenu">
-                                <li ng-click="selectFilter('All')">All</li>
-                                <li ng-click="selectFilter('Gold')">Gold</li>
-                                <li ng-click="selectFilter('Example')">Example</li>
-                                <li ng-click="selectFilter('Saved')">Saved</li>
-                                <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
-                            </ul>
-                        <label>Search: <input ng-model="searchText"></label>
-                        </div>
+                    <div class="col-md-3 scroll-y">
+                        <h3>Master Definition for '{$ code.code_text $}'</h3>
+                        <p>{$ code.master_def $}</p>
+                        <h3>My Definition for '{$ code.code_text $}'</h3>
+                        <p>{$ code.user_def $}</p>
                     </div>
-                    <div ng-repeat="item in code.user_ex | filter:filterTweets(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                    <div class="col-md-3 scroll-y">
+                        <h3>My Keywords</h3>
+                    </div>
+                    <div class="col-md-6 scroll-y">
+                        <h3>My Tweets</h3>
                         <div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="item.example=!item.example"><span class="glyphicon glyphicon-star"></span></div>
-                            <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="item.ambiguous=!item.ambiguous"><span>?</span></div>
+                            <span>Show: </span>
+                            <div class="dropdown item-filter">
+                                <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                    {$ selectedFilter $}
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="filterMenu">
+                                    <li ng-click="selectFilter('All')">All</li>
+                                    <li ng-click="selectFilter('Gold')">Gold</li>
+                                    <li ng-click="selectFilter('Example')">Example</li>
+                                    <li ng-click="selectFilter('Saved')">Saved</li>
+                                    <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
+                                </ul>
+                            </div>
+                            <label>Search: <input ng-model="searchText"></label>
                         </div>
-                        <div>{$ item.text $}</div>
+                        <div ng-repeat="item in code.user_ex | filter:filterTweets(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                            <div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="item.example=!item.example"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="item.ambiguous=!item.ambiguous"><span>?</span></div>
+                            </div>
+                            <div>{$ item.text $}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </div>
 
         <div id="reviewing" ng-show="state=='review'">
-            <div id="codes">
+            <div id="top-area">
                 <h2>Review Code Definitions</h2>
-                <div class="row" data-toggle="buttons">
+                <div class="row" data-toggle="buttons" id="codes">
                 <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
                                ng-click="selectLabel(code)"
@@ -193,6 +193,42 @@
                     <div class="col-md-4 scroll-y">
                         <h3>My Definition</h3>
                         <textarea class="code-definition" ng-model="code.user_def" ng-change="saveDefinition(code)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bottom-area">
+                <div class="col-md-3 scroll-y">
+                    <h2>Code distribution</h2>
+                </div>
+                <div class="col-md-3 scroll-y">
+                    <h2>Comparison</h2>
+                </div>
+                <div class="col-md-6 scroll-y">
+                    <h2>Submitted labels</h2>
+                    <div>
+                        <label>Search: <input ng-model="searchText"></label>
+                    </div>
+                    <div ng-repeat="item in allItems | filter:filterTweets('All', searchText)" class="label-item" ng-style="{ 'border-color': codeColor(codes[item.label]) }" ng-mouseover="item.hovered=true" ng-mouseleave="item.hovered=false">
+                        <div ng-show="item.hovered">
+                            <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
+                            <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="updateItem(item, !item.saved, item.example, item.ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
+                            <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="updateItem(item, item.saved, !item.example, item.ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
+                            <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="updateItem(item, item.saved, item.example, !item.ambiguous)"><span>?</span></div>
+                            <span ng-show="item.analysis">Analysis: </span>
+                            <div class="dropdown inline" ng-show="item.analysis">
+                                <button class="btn btn-default dropdown-toggle" type="button" id="analysisMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                    {$ item.analysis $}
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="analysisMenu">
+                                    <li ng-click="updateAnalysis(item,'I am right')">I am right</li>
+                                    <li ng-click="updateAnalysis(item,'I am wrong')">I am wrong</li>
+                                    <li ng-click="updateAnalysis(item,'We are both right')">We are both right</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>{$ item.text $}</div>
                     </div>
                 </div>
             </div>
