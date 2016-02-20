@@ -117,11 +117,10 @@
                 for (var i = 0; i < features.length; i++) {
                     var feature = features[i];
                     if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
-                        var color = $scope.colors[feature.codeIndex % $scope.colors.length];
+                        var color = $scope.colorsLight[feature.codeIndex % $scope.colors.length];
 
                         var css = {
-                            'border': 'solid 1px transparent',
-                            'border-bottom-color': color
+                            'background': color
                         };
 
                         return css;
