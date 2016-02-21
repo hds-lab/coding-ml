@@ -650,13 +650,13 @@
             item.saved = saved;
             item.example = example;
             item.ambiguous = ambiguous;
-            console.log("Item updated: " + JSON.stringify(item));
+            //console.log("Item updated: " + JSON.stringify(item));
         };
 
         $scope.updateAnalysis = function(item, analysis){
             // TODO: Need service call
             item.analysis = analysis;
-            console.log("Item analyzed: " + item.analysis);
+            //console.log("Item analyzed: " + item.analysis);
         };
 
         $scope.getMessageDetail = function(id){
