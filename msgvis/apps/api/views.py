@@ -218,7 +218,7 @@ class UserFeatureView(APIView):
                 participant = User.objects.get(id=self.request.user.id)
 
                 feature = enhance_models.Feature.objects.get(id=feature_id)
-                assignment = experiment_models.FeatureAssignment.objects.get(user=participant, feature=feature, valid=True)
+                assignment = coding_models.FeatureAssignment.objects.get(user=participant, feature=feature, valid=True)
                 assignment.valid = False
                 assignment.save()
                 return Response(status=status.HTTP_200_OK)
@@ -233,9 +233,7 @@ class CodeDefinitionView(APIView):
     **Request:** ``GET /definition/code_id?source=master``
     """
 
-
     def get(self, request, code_id, format=None):
-
 
         code = corpus_models.Code.objects.get(id=code_id)
         sources = request.query_params.get('source', "master").split(" ")
@@ -258,9 +256,63 @@ class CodeDefinitionView(APIView):
 
             return Response("Code definition not exist", status=status.HTTP_400_BAD_REQUEST)
 
-        return Response("Please specify code id", status=status.HTTP_400_BAD_REQUEST)
 
+class CodeAssignmentView(APIView):
+    """
+    Assign a code to a message
 
+    **Request:** ``POST /assignment/``
+    """
+
+    def post(self, request, format=None):
+
+        input = serializers.CodeAssignmentSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+            message = data['message']
+            code = data['code']
+
+            if self.request.user is not None:
+                user_dict = self.request.user
+                if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
+                    user = User.objects.get(id=self.request.user.id)
+
+                    code_assignment, created = coding_models.CodeAssignment.objects.get_or_create(
+                                                                    user=user, message=message, code=code)
+                    code_assignment.is_example=data['is_example']
+                    code_assignment.is_saved=data['is_saved']
+                    code_assignment.is_ambiguous=data['is_ambiguous']
+
+                    output = serializers.CodeAssignmentSerializer(code_assignment)
+                    return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, format=None):
+
+        input = serializers.CodeAssignmentSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+            message = data['message']
+            code = data['code']
+
+            if self.request.user is not None:
+                user_dict = self.request.user
+                if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
+                    user = User.objects.get(id=self.request.user.id)
+
+                    code_assignment = coding_models.CodeAssignment.objects.get(
+                                                                    user=user, message=message, code=code, valid=True)
+                    code_assignment.is_example=data['is_example']
+                    code_assignment.is_saved=data['is_saved']
+                    code_assignment.is_ambiguous=data['is_ambiguous']
+
+                    code_assignment.save()
+
+                    output = serializers.CodeAssignmentSerializer(code_assignment)
+                    return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class APIRoot(APIView):

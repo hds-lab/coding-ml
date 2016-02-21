@@ -16,6 +16,7 @@ from rest_framework import serializers, pagination
 
 import msgvis.apps.corpus.models as corpus_models
 import msgvis.apps.enhance.models as enhance_models
+import msgvis.apps.coding.models as coding_models
 from django.contrib.auth.models import User
 
 # A simple string field that looks up dimensions on deserialization
@@ -81,6 +82,7 @@ class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:
         object_serializer_class = MessageSerializer
 
+
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
         model = corpus_models.Dataset
@@ -94,6 +96,13 @@ class DictionarySerializer(serializers.ModelSerializer):
         model = enhance_models.Dictionary
         fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
         read_only_fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
+
+
+class CodeAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = coding_models.CodeAssignment
+        fields = ('id', 'user', 'message', 'code', 'is_example', 'is_ambiguous', 'is_saved', )
+        read_only_fields = ('id', 'user', )
 
 
 class CodeDefinitionSerializer(serializers.Serializer):

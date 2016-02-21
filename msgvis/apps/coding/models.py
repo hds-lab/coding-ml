@@ -15,6 +15,10 @@ class CodeAssignment(models.Model):
     message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
     code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
 
+    is_saved = models.BooleanField(default=False)
+    is_ambiguous = models.BooleanField(default=False)
+    is_example = models.BooleanField(default=False)
+
     is_user_labeled = models.BooleanField(default=True)
     """Whether this code assignment is user given. Otherwise it is from the user's model"""
     probability = models.FloatField(default=1.0)
@@ -90,6 +94,9 @@ class CodeDefinition(models.Model):
     """ Whether this code definition is valid (False indicate the code to the message has been removed) """
     created_at = models.DateTimeField(auto_now_add=True, default=None)
     """The code definition created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True, default=None)
+    """The code definition updated time"""
 
     def __repr__(self):
         return "%s | %s | %s" % (self.code.text, self.source.username, self.text)
