@@ -677,8 +677,8 @@
             usSpinnerService.spin('page-spinner');
             setTimeout(function(){
                     usSpinnerService.stop('page-spinner');
-                //$scope.state = coding ? 'code' : 'review';
-                $scope.state = 'review';
+                $scope.state = coding ? 'code' : 'review';
+                //$scope.state = 'review';
                 $scope.$apply();
             }, 1000);
         };
