@@ -76,6 +76,7 @@ class SVMModelWeight(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
 
+
 class CodeDefinition(models.Model):
     """
     A model for code definition
@@ -92,6 +93,36 @@ class CodeDefinition(models.Model):
 
     def __repr__(self):
         return "%s | %s | %s" % (self.code.text, self.source.username, self.text)
+
+    def __unicode__(self):
+        return self.__repr__()
+
+
+class DisagreementIndicator(models.Model):
+    """
+    A model for indicating the type of disagreement
+    """
+    message = models.ForeignKey(corpus_models.Message, related_name="disagreement_indicators")
+    user_assignment = models.ForeignKey(CodeAssignment, related_name="user_disagreement_indicators")
+    partner_assignment = models.ForeignKey(CodeAssignment, related_name="partner_disagreement_indicators")
+    TYPE_CHOICES = (
+        ('N', 'Not specified'),
+        ('U', 'I am correct'),
+        ('D', 'My partner and I disagree'),
+        ('P', 'My partner is correct'),
+    )
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='N')
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code definition is valid (False indicate the code to the message has been removed) """
+    created_at = models.DateTimeField(auto_now_add=True, default=None)
+    """The code definition created time"""
+
+    def __repr__(self):
+        return "Message: %s\nCode: %s vs %s | Type: %s" % (self.message.text,
+                                                           self.user_assignment.code.text,
+                                                           self.partner_assignment.code.text,
+                                                           self.type)
 
     def __unicode__(self):
         return self.__repr__()
