@@ -760,6 +760,10 @@
                     item.selectedTokenIndices.set(i, i);
                 }
             }
+
+            //var values = [];
+            //item.selectedTokenIndices.forEach(function(key){ values.push(key);});
+            //console.log("updateSelection: " + JSON.stringify(values));
         };
 
         var isTokenSelectedAtCharIndex = function (item, charIndex){
@@ -880,12 +884,14 @@
                 $scope.hoveredItem.selectedTokenIndices.clear();
             }
 
-            $scope.hoveredItem = item;
-
-            if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
-                item.submittedTokenIndices.forEach(function(tokenIndex){
-                    updateSelection(item, tokenIndex, tokenIndex, true, false);
-                });
+            if ($scope.hoveredItem != item) {
+                $scope.hoveredItem = item;
+                //console.log("onItemHover");
+                if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
+                    item.submittedTokenIndices.forEach(function (tokenIndex) {
+                        updateSelection(item, tokenIndex, tokenIndex, true, false);
+                    });
+                }
             }
         };
 
@@ -905,44 +911,43 @@
         };
 
         $scope.addFeature = function(item){
-            if (item && item.selectedTokens && item.selectedTokens.length > 0){
+            if (item && item.selectedTokens && item.selectedTokens.length > 0) {
                 var tokens = item.selectedTokens;
-                var key = tokens.join(" ");
+                var key = item.id;
                 console.log("addFeature for: " + key);
 
                 // check if it already exists
                 var existingTokens = $scope.featureList[key];
 
-                if (!existingTokens) {
-                    //var request = UserFeatures.add(tokens);
-                    //if (request) {
-                    //    usSpinnerService.spin('vector-spinner');
-                    //    request.then(function() {
-                    //        usSpinnerService.stop('vector-spinner');
-                    //        var featureId = UserFeatures.data;
-                    //        $scope.featureList[key] = {
-                    //            id: featureId,
-                    //            tokens: tokens,
-                    //            source: item
-                    //        };
-                    //    });
-                    //}
-                    $scope.featureList[key] = {
-                        id: Math.floor(Math.random() * 1000),
-                        tokens: tokens,
-                        source: item
-                    };
-
-                    var newMap = {};
-
-                    item.submittedTokenIndices = new Map();
-                    item.selectedTokenIndices.forEach(function(val, key){
-                        item.submittedTokenIndices.set(key, val);
-                    });
+                if (existingTokens) {
+                    delete $scope.featureList[key];
                 }
-                else {
-                    console.log("feature already exists: " + key);
-                }
+
+                //var request = UserFeatures.add(tokens);
+                //if (request) {
+                //    usSpinnerService.spin('vector-spinner');
+                //    request.then(function() {
+                //        usSpinnerService.stop('vector-spinner');
+                //        var featureId = UserFeatures.data;
+                //        $scope.featureList[key] = {
+                //            id: featureId,
+                //            tokens: tokens,
+                //            source: item
+                //        };
+                //    });
+                //}
+                $scope.featureList[key] = {
+                    id: Math.floor(Math.random() * 1000),
+                    tokens: tokens,
+                    source: item
+                };
+
+                var newMap = {};
+
+                item.submittedTokenIndices = new Map();
+                item.selectedTokenIndices.forEach(function (val, key) {
+                    item.submittedTokenIndices.set(key, val);
+                });
 
                 item.clickStartTokenItem = undefined;
             }
@@ -950,7 +955,7 @@
 
         $scope.removeFeature = function(feature){
             if (feature){
-                var key = feature.tokens.join(" ");
+                var key = feature.source.id;
                 console.log("removeFeature for: " + key);
 
                 // check if it already exists
