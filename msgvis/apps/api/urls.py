@@ -13,6 +13,7 @@ api_root_urls = {
     'feature': url(r'^feature/(?P<feature_id>[0-9]+)/$', csrf_exempt(views.UserFeatureView.as_view()), name='feature'),
     'assignment': url(r'^assignment/$', csrf_exempt(views.CodeAssignmentView.as_view()), name='assignment'),
     'definition': url(r'^definition/(?P<code_id>[0-9]+)$', csrf_exempt(views.CodeDefinitionView.as_view()), name='definition'),
+    'code_messages': url(r'^code_messages/$', csrf_exempt(views.CodeMessageView.as_view()), name='code_messages'),
 }
 
 urlpatterns = api_root_urls.values() + [
