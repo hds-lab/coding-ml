@@ -112,10 +112,10 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
 
 
 class CodeDefinitionSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    source = UserSerializer()
+    code = serializers.CharField(required=False)
+    source = UserSerializer(required=False)
     text = serializers.CharField()
-    examples = MessageSerializer(many=True)
+    examples = MessageSerializer(many=True, required=False)
 
 class CodeMessageSerializer(serializers.Serializer):
     code = serializers.CharField()

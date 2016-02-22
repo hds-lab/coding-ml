@@ -54,6 +54,9 @@ class Code(models.Model):
         return self.__repr__()
 
     def get_definition(self, source):
+        if not self.definitions.filter(source=source).exists():
+            return None
+
         definition = self.definitions.get(source=source, valid=True)
         return {
             "code": self.text,

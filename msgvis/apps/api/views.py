@@ -292,16 +292,22 @@ class CodeDefinitionView(APIView):
 
     def get(self, request, code_id, format=None):
 
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
         code_id = int(code_id)
         code = corpus_models.Code.objects.get(id=code_id)
-        sources = request.query_params.get('source', "master").split(" ")
+        sources = request.query_params.get('source', user.username).split(" ")
 
         try:
             code_definitions = []
             for source in sources:
                 source_user = User.objects.get(username=source)
                 code_definition = code.get_definition(source_user)
-                code_definitions.append(code_definition)
+                if code_definition:
+                    code_definitions.append(code_definition)
 
             output = serializers.CodeDefinitionSerializer(code_definitions, many=True)
 
@@ -314,6 +320,53 @@ class CodeDefinitionView(APIView):
 
             return Response("Code definition not exist", status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request, code_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        code_id = int(code_id)
+        code = corpus_models.Code.objects.get(id=code_id)
+
+        input = serializers.CodeDefinitionSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+            text = data['text']
+
+            definition, created = coding_models.CodeDefinition.objects.get_or_create(code=code, source=user)
+            definition.text = text
+            definition.save()
+
+            output = serializers.CodeDefinitionSerializer(definition)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, code_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        code_id = int(code_id)
+        code = corpus_models.Code.objects.get(id=code_id)
+
+        input = serializers.CodeDefinitionSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+            text = data['text']
+
+            definition = coding_models.CodeDefinition.objects.get(code=code, source=user)
+            definition.text = text
+            definition.save()
+
+            output = serializers.CodeDefinitionSerializer(definition)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CodeAssignmentView(APIView):
     """
