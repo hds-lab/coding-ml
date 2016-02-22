@@ -129,3 +129,8 @@ class DisagreementIndicatorSerializer(serializers.ModelSerializer):
         model = coding_models.DisagreementIndicator
         fields = ('id', 'message', 'user_assignment', 'partner_assignment', 'type', )
         read_only_fields = ('id', 'message', 'user_assignment', 'partner_assignment', )
+
+class PairwiseSerializer(serializers.Serializer):
+    user_code = serializers.CharField()
+    partner_code = serializers.CharField()
+    count = serializers.IntegerField()

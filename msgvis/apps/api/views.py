@@ -471,7 +471,7 @@ class CodeMessageView(APIView):
                 if corpus_models.Code.objects.filter(text=code).exists():
                     code_obj = corpus_models.Code.objects.get(text=code)
                     if stage:
-                        messages = stage.get_messages(source, code_obj)
+                        messages = stage.get_messages_by_code(source, code_obj)
                     else:
                         messages = corpus_models.Message.objects.filter(code_assignments__valid=True,
                                                                         code_assignments__source=source,
@@ -570,6 +570,67 @@ class DisagreementIndicatorView(APIView):
     def put(self, request, message_id, format=None):
 
         return self.post(request, message_id, format)
+
+class PairwiseConfusionMatrixView(APIView):
+    """
+    Get the pairwise confusion matrix
+
+    **Request:** ``GET /pairwise&stage=current``
+    (Whatever value is given to stage will make this query only get current stage.)
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user)
+
+        stage = None
+        if request.query_params.get('stage'):
+            stage = user.progress.current_stage
+
+        try:
+            pairwise_count = {}
+            codes = corpus_models.Code.objects.all()
+            for user_code in codes:
+                for partner_code in codes:
+                    pairwise_count[(user_code.text, partner_code.text)] = 0
+
+            if stage:
+                messages = stage.messages.all()
+            else:
+                messages = corpus_models.Message.objects.all()
+
+            messages = messages.filter(code_assignments__valid=True,
+                                       code_assignments__source=user).all()
+            messages = messages.filter(code_assignments__valid=True,
+                                       code_assignments__source=partner).all()
+
+            for msg in messages:
+                user_assignment = msg.code_assignments.get(source=user, valid=True)
+                partner_assignment = msg.code_assignments.get(source=partner, valid=True)
+                pairwise_count[(user_assignment.code.text, partner_assignment.code.text)] += 1
+
+            pairwise = []
+            for key, value in pairwise_count.iteritems():
+                pairwise.append({"user_code": key[0],
+                                 "partner_code": key[1],
+                                 "count": value
+                                 })
+
+            output = serializers.PairwiseSerializer(pairwise, many=True)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class APIRoot(APIView):
     """

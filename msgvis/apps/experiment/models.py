@@ -260,7 +260,7 @@ class Stage(models.Model):
     def get_next_stage(self):
         return self.experiment.stages.filter(order__gt=self.order).first()
 
-    def get_messages(self, source, code):
+    def get_messages_by_code(self, source, code):
         messages = self.messages.filter(message_selection__is_selected=True,
                                         code_assignments__valid=True,
                                         code_assignments__user=source,
