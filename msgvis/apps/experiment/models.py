@@ -79,7 +79,7 @@ class Experiment(models.Model):
 
     def initialize_experiment(self, num_conditions, num_stages, num_pairs, output):
 
-        print >>output, "Initializing the experiment with %d conditions." %num_conditions
+        print >>output, "Initializing the experiment with %d conditions." % num_conditions
 
         # create a list for saving conditions
         condition_list = []
@@ -159,17 +159,17 @@ class Experiment(models.Model):
             selection.append(item)
         MessageSelection.objects.bulk_create(selection)
 
-    def process_stage(self, stage, user, use_tfidf=False):
+    def process_stage(self, stage, source, use_tfidf=False):
         features = list(self.dictionary.features.filter(source='S').all())
-        features += list(user.feature_assignments.filter(valid=True).all())
+        features += list(source.feature_assignments.filter(valid=True).all())
         messages = stage.messages.all()
-        model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, user.username, stage.order)
+        model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, source.username, stage.order)
         check_or_create_dir(model_save_path)
 
-        X, y, code_map_inverse = coding_utils.get_formatted_data(user=user, messages=messages, features=features)
+        X, y, code_map_inverse = coding_utils.get_formatted_data(source=source, messages=messages, features=features)
         lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
 
-        svm_model = coding_models.SVMModel(user=user, source_stage=stage, saved_path=model_save_path)
+        svm_model = coding_models.SVMModel(user=source, source_stage=stage, saved_path=model_save_path)
         svm_model.save()
 
         weights = []
@@ -194,7 +194,7 @@ class Experiment(models.Model):
         for idx in range(next_message_num):
             code_id = code_map_inverse[predict_y[idx]]
             probability = prob[idx]
-            code_assignment = coding_models.CodeAssignment(user=user, code_id=code_id, is_user_label=False, probability=probability)
+            code_assignment = coding_models.CodeAssignment(source=source, code_id=code_id, is_user_label=False, probability=probability)
             code_assignments.append(code_assignment)
         coding_models.CodeAssignment.objects.bulk_create(code_assignments)
 
@@ -258,6 +258,14 @@ class Stage(models.Model):
     def get_next_stage(self):
         return self.experiment.stages.filter(order__gt=self.order).first()
 
+    def get_messages(self, source, code):
+        messages = self.messages.filter(message_selection__is_selected=True,
+                                        code_assignments__valid=True,
+                                        code_assignments__user=source,
+                                        code_assignments__code=code).all()
+
+        return messages
+
     class Meta:
         ordering = ['order']
 
@@ -284,8 +292,9 @@ class MessageSelection(models.Model):
     A model for saving message order in a stage
     """
     stage = models.ForeignKey(Stage)
-    message = models.ForeignKey(corpus_models.Message)
+    message = models.ForeignKey(corpus_models.Message, related_name="message_selection")
     order = models.IntegerField()
+    is_selected = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["order"]

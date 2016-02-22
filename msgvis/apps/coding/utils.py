@@ -16,7 +16,7 @@ def get_formatted_X(messages, features, use_tfidf=False):
 
     return X
 
-def get_formatted_y(user, messages):
+def get_formatted_y(source, messages):
 
     code_num = 0
     code_map = {}
@@ -24,7 +24,7 @@ def get_formatted_y(user, messages):
 
     y = []
     for idx, msg in enumerate(messages):
-        code_id = msg.code_assignments.get(user=user, valid=True, is_user_labeled=True).code.id
+        code_id = msg.code_assignments.get(source=source, valid=True, is_user_labeled=True).code.id
         code_index = code_map.get(code_id)
         if code_index is None:
             code_index = code_num
@@ -36,9 +36,9 @@ def get_formatted_y(user, messages):
 
     return y, code_map_inverse
 
-def get_formatted_data(user, messages, features, use_tfidf=False):
+def get_formatted_data(source, messages, features, use_tfidf=False):
     X = get_formatted_X(messages, features)
-    y, code_map_inverse = get_formatted_y(user, messages)
+    y, code_map_inverse = get_formatted_y(source, messages)
 
     return X, y, code_map_inverse
 

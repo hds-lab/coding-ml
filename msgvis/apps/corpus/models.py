@@ -56,7 +56,7 @@ class Code(models.Model):
     def get_definition(self, source):
         definition = self.definitions.get(source=source, valid=True)
         return {
-            "code_id": self.id,
+            "code": self.text,
             "source": source,
             "text": definition.text,
             "examples": definition.examples.all()

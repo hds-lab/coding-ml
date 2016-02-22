@@ -11,7 +11,7 @@ class CodeAssignment(models.Model):
     """
     A model for recording code assignment
     """
-    user = models.ForeignKey(User, related_name="code_assignments")
+    source = models.ForeignKey(User, related_name="code_assignments")
     message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
     code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
 
@@ -37,7 +37,7 @@ class FeatureAssignment(models.Model):
     """
     A model for recording feature assignment
     """
-    user = models.ForeignKey(User, related_name="feature_assignments")
+    source = models.ForeignKey(User, related_name="feature_assignments")
     feature = models.ForeignKey(enhance_models.Feature, related_name="feature_assignments")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,7 +53,7 @@ class SVMModel(models.Model):
     """
     A model for svm model
     """
-    user = models.ForeignKey(User, related_name="svm_models", unique=True)
+    source = models.ForeignKey(User, related_name="svm_models", unique=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The svm model created time"""

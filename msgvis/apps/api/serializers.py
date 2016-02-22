@@ -101,12 +101,17 @@ class DictionarySerializer(serializers.ModelSerializer):
 class CodeAssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = coding_models.CodeAssignment
-        fields = ('id', 'user', 'message', 'code', 'is_example', 'is_ambiguous', 'is_saved', )
-        read_only_fields = ('id', 'user', )
+        fields = ('id', 'source', 'message', 'code', 'is_example', 'is_ambiguous', 'is_saved', )
+        read_only_fields = ('id', 'source', )
 
 
 class CodeDefinitionSerializer(serializers.Serializer):
-    code_id = serializers.IntegerField()
+    code = serializers.CharField()
     source = UserSerializer()
     text = serializers.CharField()
     examples = MessageSerializer(many=True)
+
+class CodeMessageSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    source = UserSerializer()
+    messages = MessageSerializer(many=True)

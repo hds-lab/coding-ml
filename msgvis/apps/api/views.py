@@ -235,6 +235,7 @@ class CodeDefinitionView(APIView):
 
     def get(self, request, code_id, format=None):
 
+        code_id = int(code_id)
         code = corpus_models.Code.objects.get(id=code_id)
         sources = request.query_params.get('source', "master").split(" ")
 
@@ -314,6 +315,58 @@ class CodeAssignmentView(APIView):
 
         return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class CodeMessageView(APIView):
+    """
+    Get the messages of a code
+
+    **Request:** ``GET /code_messages/code=code1+code2...&source=master&stage=current``
+    (Whatever value is given to stage will make this query only get current stage.)
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        stage = None
+        if request.query_params.get('stage'):
+            stage = user.progress.current_stage
+
+        try:
+            codes = request.query_params.get('code', "").split(" ")
+            source = user
+            if request.query_params.get('source'):
+                source_username = request.query_params.get('source')
+                source = User.objects.get(username=source_username)
+
+            code_messages = []
+            for code in codes:
+                if corpus_models.Code.objects.filter(text=code).exists():
+                    code_obj = corpus_models.Code.objects.get(text=code)
+                    if stage:
+                        messages = stage.get_messages(source, code_obj)
+                    else:
+                        messages = corpus_models.Message.objects.filter(code_assignments__valid=True,
+                                                                        code_assignments__source=source,
+                                                                        code_assignments__code=code_obj).all()
+                    code_messages.append({
+                        "code": code,
+                        "source": source,
+                        "messages": messages,
+                    })
+
+            output = serializers.CodeMessageSerializer(code_messages, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
 
 class APIRoot(APIView):
     """
