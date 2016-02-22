@@ -19,7 +19,14 @@ import msgvis.apps.enhance.models as enhance_models
 import msgvis.apps.coding.models as coding_models
 from django.contrib.auth.models import User
 
-# A simple string field that looks up dimensions on deserialization
+
+class PersonSerializer(serializers.ModelSerializer):
+    profile_image_processed_url = serializers.CharField()
+    class Meta:
+        model = corpus_models.Person
+        fields = ('id', 'dataset', 'original_id', 'username', 'full_name', 'profile_image_processed_url', )
+
+
 class MessageSerializer(serializers.ModelSerializer):
     """
     JSON representation of :class:`.Message`
@@ -47,10 +54,14 @@ class MessageSerializer(serializers.ModelSerializer):
     Additional fields may be added later.
     """
 
+    sender = PersonSerializer()
+    embedded_html = serializers.CharField()
+    media_url = serializers.CharField()
 
     class Meta:
         model = corpus_models.Message
-        fields = ('id', 'dataset', 'text', )
+        fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html', 'media_url', )
+
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -60,17 +71,19 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', )
 
+
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     tokens = serializers.ListField()
     feature_vector = serializers.ListField()
 
+
 class SVMResultSerializer(serializers.Serializer):
     results = serializers.DictField()
     messages = serializers.ListField(child=FeatureVectorSerializer(), required=True)
 
-class FeatureSerializer(serializers.ModelSerializer):
 
+class FeatureSerializer(serializers.ModelSerializer):
     token_list = serializers.ListField(child=serializers.CharField(), required=False)
     class Meta:
         model = enhance_models.Feature
@@ -110,6 +123,7 @@ class CodeDefinitionSerializer(serializers.Serializer):
     source = UserSerializer()
     text = serializers.CharField()
     examples = MessageSerializer(many=True)
+
 
 class CodeMessageSerializer(serializers.Serializer):
     code = serializers.CharField()

@@ -59,6 +59,24 @@ class DatasetView(APIView):
 
         return Response("Please specify dataset id", status=status.HTTP_400_BAD_REQUEST)
 
+class MessageView(APIView):
+    """
+    Get details of a message
+
+    **Request:** ``GET /api/message/1``
+    """
+
+    def get(self, request, message_id, format=None):
+
+        message_id = int(message_id)
+        try:
+            message = corpus_models.Message.objects.get(id=message_id)
+            output = serializers.MessageSerializer(message)
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
+
+
 class DictionaryView(APIView):
     """
     Get details of a dataset
@@ -236,7 +254,7 @@ class CodeDefinitionView(APIView):
     def get(self, request, code_id, format=None):
 
         code_id = int(code_id)
-        code = corpus_models.Code.objects.get(id=code_id)
+        code = coding_models.Code.objects.get(id=code_id)
         sources = request.query_params.get('source', "master").split(" ")
 
         try:
@@ -343,8 +361,8 @@ class CodeMessageView(APIView):
 
             code_messages = []
             for code in codes:
-                if corpus_models.Code.objects.filter(text=code).exists():
-                    code_obj = corpus_models.Code.objects.get(text=code)
+                if coding_models.Code.objects.filter(text=code).exists():
+                    code_obj = coding_models.Code.objects.get(text=code)
                     if stage:
                         messages = stage.get_messages(source, code_obj)
                     else:

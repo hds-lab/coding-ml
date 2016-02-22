@@ -7,13 +7,34 @@ from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
 
 
+class Code(models.Model):
+    """A code of a message"""
+
+    text = base_models.Utf8CharField(max_length=200)
+    """The text of the code"""
+
+    def __repr__(self):
+        return self.text
+
+    def __unicode__(self):
+        return self.__repr__()
+
+    def get_definition(self, source):
+        definition = self.definitions.get(source=source, valid=True)
+        return {
+            "code": self.text,
+            "source": source,
+            "text": definition.text,
+            "examples": definition.examples.all()
+        }
+
 class CodeAssignment(models.Model):
     """
     A model for recording code assignment
     """
     source = models.ForeignKey(User, related_name="code_assignments")
     message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
-    code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
+    code = models.ForeignKey(Code, related_name="code_assignments")
 
     is_saved = models.BooleanField(default=False)
     is_ambiguous = models.BooleanField(default=False)
@@ -70,7 +91,7 @@ class SVMModelWeight(models.Model):
     A model for svm model weight
     """
     svm_model = models.ForeignKey(SVMModel, related_name="weights")
-    code = models.ForeignKey(corpus_models.Code, related_name="weights")
+    code = models.ForeignKey(Code, related_name="weights")
     feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
     weight = models.FloatField(default=0)
 
@@ -85,7 +106,7 @@ class CodeDefinition(models.Model):
     """
     A model for code definition
     """
-    code = models.ForeignKey(corpus_models.Code, related_name="definitions")
+    code = models.ForeignKey(Code, related_name="definitions")
     source = models.ForeignKey(User, related_name="definitions")
     text = models.TextField(null=True, blank=True, default="")
     examples = models.ManyToManyField(corpus_models.Message, related_name="definitions")

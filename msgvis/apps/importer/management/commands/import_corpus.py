@@ -1,14 +1,14 @@
 from django.core.management.base import BaseCommand, CommandError
+from msgvis.apps.importer.models import create_an_instance_from_json
 from optparse import make_option
 
-from msgvis.apps.corpus.models import Dataset, Message, Code
+from msgvis.apps.corpus.models import Dataset
 from django.db import transaction
 import traceback
 import sys
 import path
 from time import time
 from django.conf import settings
-import csv
 
 class Command(BaseCommand):
     """
@@ -57,13 +57,28 @@ class Command(BaseCommand):
                 else:
                     print "Reading file %s" % corpus_filename
 
-                csvreader = csv.reader(fp, delimiter=',', quotechar='"')
-                importer = Importer(csvreader, dataset_obj)
-                importer.import_codes()
+                importer = Importer(fp, dataset_obj)
                 importer.run()
 
+                min_time, max_time = importer.get_time_range()
+
+                if min_time is not None and \
+                    (dataset_obj.start_time is None
+                     or dataset_obj.start_time > min_time):
+                    dataset_obj.start_time = min_time
+
+                if max_time is not None and \
+                    (dataset_obj.end_time is None
+                     or dataset_obj.end_time < max_time):
+                    dataset_obj.end_time = max_time
 
         dataset_obj.save()
+
+        print "Dataset '%s' (%d) contains %d messages spanning %s, from %s to %s" % (
+            dataset_obj.name, dataset_obj.id, dataset_obj.message_set.count(),
+            dataset_obj.end_time - dataset_obj.start_time,
+            dataset_obj.start_time, dataset_obj.end_time
+        )
         
         print "Time: %.2fs" % (time() - start)
 
@@ -72,24 +87,30 @@ class Importer(object):
     commit_every = 100
     print_every = 1000
 
-    def __init__(self, csvreader, dataset):
-        self.csvreader = csvreader
+    def __init__(self, fp, dataset):
+        self.fp = fp
         self.dataset = dataset
         self.line = 0
         self.imported = 0
         self.not_tweets = 0
         self.errors = 0
-        self.codes = []
+        self.min_time = None
+        self.max_time = None
 
-    def _import_group(self, rows):
+    def _import_group(self, lines):
         with transaction.atomic(savepoint=False):
-            for cols in rows:
+            for json_str in lines:
 
-                if len(cols) > 0:
+                if len(json_str) > 0:
                     try:
-                        message = self.create_an_instance_from_csv_cols(cols)
+                        message = create_an_instance_from_json(json_str, self.dataset)
                         if message:
                             self.imported += 1
+
+                            if self.min_time is None or self.min_time > message.time:
+                                self.min_time = message.time
+                            if self.max_time is None or self.max_time < message.time:
+                                self.max_time = message.time
                         else:
                             self.not_tweets += 1
                     except:
@@ -102,33 +123,16 @@ class Importer(object):
         #    from django.db import connection
         #    connection.queries = []
 
-    def import_codes(self):
-        header = self.csvreader.next()
-        for i in range(2, len(header)):
-            code, created = Code.objects.get_or_create(text=header[i])
-            self.codes.append(code)
-
-    def create_an_instance_from_csv_cols(self, cols):
-        try:
-            message = Message(dataset=self.dataset, ref_id=int(cols[0]), text=cols[1])
-            message.save()
-            for i in range(2, len(cols)):
-                if cols[i] == 'x':
-                    message.code = self.codes[i - 2]
-            message.save()
-            return True
-        except:
-            return False
 
     def run(self):
         transaction_group = []
 
         start = time()
 
-        for cols in self.csvreader:
+        for json_str in self.fp:
             self.line += 1
-
-            transaction_group.append(cols)
+            json_str = json_str.strip()
+            transaction_group.append(json_str)
 
             if len(transaction_group) >= self.commit_every:
                 self._import_group(transaction_group)
@@ -143,3 +147,6 @@ class Importer(object):
 
         print "%6.2fs | Finished %d lines. Imported: %d; Non-tweets: %d; Errors: %d" % (
         time() - start, self.line, self.imported, self.not_tweets, self.errors)
+
+    def get_time_range(self):
+        return self.min_time, self.max_time
