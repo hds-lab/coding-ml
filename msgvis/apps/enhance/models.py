@@ -1,19 +1,18 @@
 import random
 import math
 import re
+import numpy
+
 from operator import itemgetter
 
 from django.db import models
 from django.conf import settings
-import numpy
+from django.contrib.auth.models import User
 
 from fields import PositiveBigIntegerField
 from msgvis.apps.corpus.models import Message, Dataset
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
-
-
-# Create your models here.
 
 
 
@@ -37,12 +36,12 @@ class Dictionary(models.Model):
 
     @property
     def feature_count(self):
-        return self.features.filter(source='S').count()
+        return self.features.filter(source__isnull=True).count()
 
     def get_user_feature_count(self, source):
         feature_num = 0
         if source is not None:
-            feature_num += source.feature_assignments.filter(valid=True, feature__source='U').distinct().count()
+            feature_num += source.features.filter(valid=True).all()
         return feature_num
 
     @property
@@ -224,9 +223,9 @@ class Dictionary(models.Model):
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
-        features = list(self.features.filter(source='S').all())
+        features = list(self.features.filter(source__isnull=True).all())
         if source is not None:
-            features += map(lambda x: x.feature, source.feature_assignments.filter(valid=True, feature__source='U').distinct())
+            features += source.features.filter(valid=True).all()
         features.sort(key=lambda x: x.index)
         feature_num = self.features.order_by('index').last().index + 1 
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()
@@ -262,9 +261,8 @@ class Dictionary(models.Model):
         for idx, msg in enumerate(training_data):
             code_id = msg.code.id if msg.code else 0
             for feature_score in msg.feature_scores.filter(dictionary=self).all():
-                if (feature_score.feature.source == 'S') \
-                   or (( source is not None ) and (feature_score.feature.source == 'U' and
-                         feature_score.feature.feature_assignments.filter(source=source, valid=True))):
+                if (feature_score.feature.source is None) \
+                   or (( source is not None ) and (feature_score.feature.filter(source=source, valid=True))):
                    data['training']['X'][idx, feature_score.feature_index] = feature_score.tfidf if use_tfidf else feature_score.count
             data['training']['group_by_codes'][code_id - 1].append(data['training']['X'][idx])
 
@@ -274,9 +272,8 @@ class Dictionary(models.Model):
         for idx, msg in enumerate(testing_data):
             code_id = msg.code.id if msg.code else 0
             for feature_score in msg.feature_scores.filter(dictionary=self).all():
-                if (feature_score.feature.source == 'S') \
-                    or (( source is not None ) and (feature_score.feature.source == 'U' and
-                         feature_score.feature.feature_assignments.filter(source=source, valid=True))):
+                if (feature_score.feature.source is None) \
+                   or (( source is not None ) and (feature_score.feature.filter(source=source, valid=True))):
                     data['testing']['X'][idx, feature_score.feature_index] = feature_score.tfidf if use_tfidf else feature_score.count
 
             data['testing']['group_by_codes'][code_id - 1].append(data['testing']['X'][idx])
@@ -304,7 +301,7 @@ class Dictionary(models.Model):
 
         return data
 
-    def do_training(self, user=None):
+    def do_training(self, source=None):
         data = self.load_to_scikit_learn_format(training_portion=0.50, use_tfidf=False, source=source)
 
         from sklearn import svm
@@ -385,7 +382,7 @@ class Dictionary(models.Model):
 
         return results
 
-    def add_feature(self, token_list, source='S'):
+    def add_feature(self, token_list, source=None):
 
         clean_token_list = []
         for f in token_list:
@@ -480,12 +477,16 @@ class Feature(models.Model):
     document_frequency = models.IntegerField()
 
     messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
+    source = models.ForeignKey(User, related_name="features", default=None)
 
-    SOURCE_CHOICES = (
-        ('S', 'System'),
-        ('U', 'User'),
-    )
-    source = models.CharField(max_length=1, choices=SOURCE_CHOICES, default='S')
+    created_at = models.DateTimeField(auto_now_add=True, default=None)
+    """The code created time"""
+
+    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True, default=None)
+    """The code updated time"""
+
+    valid = models.BooleanField(default=True)
+    """ Whether this code is valid (False indicate the feature has been removed) """
 
     def __repr__(self):
         return self.text

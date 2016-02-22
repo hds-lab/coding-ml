@@ -160,8 +160,8 @@ class Experiment(models.Model):
         MessageSelection.objects.bulk_create(selection)
 
     def process_stage(self, stage, source, use_tfidf=False):
-        features = list(self.dictionary.features.filter(source='S').all())
-        features += list(source.feature_assignments.filter(valid=True).all())
+        features = list(self.dictionary.features.filter(source__isnull=True).all())
+        features += list(source.features.filter(valid=True).all())
         messages = stage.messages.all()
         model_save_path = "%s/%s_stage%d/" % (self.saved_path_root, source.username, stage.order)
         check_or_create_dir(model_save_path)
@@ -243,7 +243,7 @@ class Stage(models.Model):
 
     messages = models.ManyToManyField(corpus_models.Message, related_name="stages", through="MessageSelection")
     svm_models = models.ManyToManyField(coding_models.SVMModel, related_name="source_stage")
-    feature_assignment = models.ManyToManyField(coding_models.FeatureAssignment, related_name="source_stage")
+    features = models.ManyToManyField(enhance_models.Feature, related_name="source_stage")
 
     @property
     def message_count(self):

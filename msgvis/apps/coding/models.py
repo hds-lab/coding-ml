@@ -33,21 +33,6 @@ class CodeAssignment(models.Model):
     valid = models.BooleanField(default=True)
     """ Whether this code is valid (False indicate the code to the message has been removed) """
 
-class FeatureAssignment(models.Model):
-    """
-    A model for recording feature assignment
-    """
-    source = models.ForeignKey(User, related_name="feature_assignments")
-    feature = models.ForeignKey(enhance_models.Feature, related_name="feature_assignments")
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
-
-    valid = models.BooleanField(default=True)
-    """ Whether this code is valid (False indicate the code to the message has been removed) """
 
 class SVMModel(models.Model):
     """

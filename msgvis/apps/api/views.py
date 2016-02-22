@@ -97,7 +97,7 @@ class DictionaryView(APIView):
                     participant = None
                     if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
                         participant = User.objects.get(id=self.request.user.id)
-                    user_feature_count = dictionary.get_user_feature_count(user=participant)
+                    user_feature_count = dictionary.get_user_feature_count(source=participant)
                     final_output['feature_count'] += user_feature_count
 
                 return Response(final_output, status=status.HTTP_200_OK)
@@ -154,33 +154,37 @@ class FeatureVectorView(APIView):
     """
     Get svm result of a dictionary
 
-    **Request:** ``GET /api/vector?dictionary_id=1&message_id=1``
+    **Request:** ``GET /api/vector/(?P<message_id>[0-9]+)``
     """
 
 
-    def get(self, request, format=None):
-        if request.query_params.get('dictionary_id') and request.query_params.get('message_id'):
-            dictionary_id = int(request.query_params.get('dictionary_id'))
-            message_id = int(request.query_params.get('message_id'))
+    def get(self, request, message_id, format=None):
 
-            try:
-                dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
-                message = corpus_models.Message.objects.get(id=message_id)
-                feature_vector = message.get_feature_vector(dictionary=dictionary)
-                tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
-                # TODO: make sure to better communicate the fact we lemmatize words
-                output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
-                return Response(output.data, status=status.HTTP_200_OK)
-            except:
-                import traceback
-                traceback.print_exc()
-                import pdb
-                pdb.set_trace()
+        user = User.objects.get(id=self.request.user.id)
+        dictionary = user.pairA.assignment.experiment.dictionary
+        message_id = int(message_id)
 
-                return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
+        try:
 
-        return Response("Please specify dictionary id", status=status.HTTP_400_BAD_REQUEST)
+            message = corpus_models.Message.objects.get(id=message_id)
+            feature_vector = message.get_feature_vector(dictionary=dictionary)
+            tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
+            # TODO: make sure to better communicate the fact we lemmatize words
+            output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
@@ -194,19 +198,24 @@ class UserFeatureView(APIView):
 
     def get(self, request, format=None):
 
-        if self.request.user is not None:
-            user = self.request.user
-            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
-                participant = User.objects.get(id=self.request.user.id)
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
-            features = map(lambda x: x.feature, participant.feature_assignments.filter(valid=True).all())
+        user = User.objects.get(id=self.request.user.id)
 
-            output = serializers.FeatureSerializer(features, many=True)
+        features = user.features.filter(valid=True).all()
 
-            return Response(output.data, status=status.HTTP_200_OK)
-        return Response("Please log in first", status=status.HTTP_400_BAD_REQUEST)
+        output = serializers.FeatureSerializer(features, many=True)
+
+        return Response(output.data, status=status.HTTP_200_OK)
+
 
     def post(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
 
         input = serializers.FeatureSerializer(data=request.data)
         if input.is_valid():
@@ -214,15 +223,7 @@ class UserFeatureView(APIView):
 
             dictionary = data["dictionary"]
             token_list = data["token_list"]
-            feature = dictionary.add_feature(token_list, source='U')
-
-            if self.request.user is not None:
-                user = self.request.user
-                if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
-                    participant = User.objects.get(id=self.request.user.id)
-
-                    assignment, created = coding_models.FeatureAssignment.objects.get_or_create(user=participant, feature=feature, valid=True)
-
+            feature = dictionary.add_feature(token_list, source=user)
 
             output = serializers.FeatureSerializer(feature)
             return Response(output.data, status=status.HTTP_200_OK)
@@ -230,18 +231,17 @@ class UserFeatureView(APIView):
         return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, feature_id, format=None):
-        if self.request.user is not None:
-            user = self.request.user
-            if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
-                participant = User.objects.get(id=self.request.user.id)
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
-                feature = enhance_models.Feature.objects.get(id=feature_id)
-                assignment = coding_models.FeatureAssignment.objects.get(user=participant, feature=feature, valid=True)
-                assignment.valid = False
-                assignment.save()
-                return Response(status=status.HTTP_200_OK)
+        user = User.objects.get(id=self.request.user.id)
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        feature = enhance_models.Feature.objects.get(id=feature_id, source=user)
+        feature.valid = False
+        feature.save()
+        return Response(status=status.HTTP_200_OK)
+
+
 
 
 class CodeDefinitionView(APIView):
