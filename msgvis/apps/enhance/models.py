@@ -41,7 +41,7 @@ class Dictionary(models.Model):
     def get_user_feature_count(self, source):
         feature_num = 0
         if source is not None:
-            feature_num += source.features.filter(valid=True).all()
+            feature_num += source.features.filter(valid=True).count()
         return feature_num
 
     @property
@@ -225,7 +225,7 @@ class Dictionary(models.Model):
         testing_data_num = count - training_data_num
         features = list(self.features.filter(source__isnull=True).all())
         if source is not None:
-            features += source.features.filter(valid=True).all()
+            features += list(source.features.filter(valid=True).all())
         features.sort(key=lambda x: x.index)
         feature_num = self.features.order_by('index').last().index + 1 
         codes = self.dataset.message_set.select_related('code').values('code_id', 'code__text').distinct()

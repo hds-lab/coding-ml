@@ -87,11 +87,15 @@ class Message(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def get_feature_vector(self, dictionary):
-        features = self.feature_scores.filter(dictionary=dictionary).all()
-        vector = numpy.zeros(dictionary.features.count())
-        for feature in features:
-            vector[feature.feature_index] = feature.count
-        return vector.tolist()
+    def get_feature_vector(self, dictionary, source=None):
+        feature_scores = list(self.feature_scores.filter(feature__source__isnull=True).all())
+        if source is not None:
+            feature_scores += list(self.feature_scores.filter(feature__source=source, feature__valid=True).all())
+        vector = []
+        for feature_score in feature_scores:
+            vector.append({"text": feature_score.feature.text,
+                           "feature_index": feature_score.feature_index,
+                           "count": feature_score.count})
+        return vector
 
 

@@ -63,7 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     tokens = serializers.ListField()
-    feature_vector = serializers.ListField()
+    feature_vector = serializers.ListField(child=serializers.DictField())
 
 class SVMResultSerializer(serializers.Serializer):
     results = serializers.DictField()
