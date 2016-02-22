@@ -16,6 +16,7 @@ api_root_urls = {
     'assignment': url(r'^assignment/$', csrf_exempt(views.CodeAssignmentView.as_view()), name='assignment'),
     'definition': url(r'^definition/(?P<code_id>[0-9]+)$', csrf_exempt(views.CodeDefinitionView.as_view()), name='definition'),
     'code_messages': url(r'^code_messages/$', csrf_exempt(views.CodeMessageView.as_view()), name='code_messages'),
+    'disagreement': url(r'^disagreement/(?P<message_id>[0-9]+)$', csrf_exempt(views.DisagreementIndicatorView.as_view()), name='disagreement'),
 
 }
 

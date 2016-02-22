@@ -29,8 +29,10 @@ def create_a_pair(output, default_stage):
     # set the user to the default stage
     Progress.objects.get_or_create(user=user2, current_stage=default_stage)
 
-    pair = Pair(user1=user1, user2=user2)
+    pair = Pair()
     pair.save()
+    pair.users.add(user1)
+    pair.users.add(user2)
 
     print >> output, "Pair #%d" %(pair.id)
     print >> output, "username: %s | password: %s" %(username1, password1)
@@ -274,8 +276,12 @@ class Pair(models.Model):
     """
     A model for assigning users to a pair
     """
-    user1 = models.OneToOneField(User, related_name="pairA")
-    user2 = models.OneToOneField(User, related_name="pairB")
+    users = models.ManyToManyField(User, related_name="pair")
+
+    def get_partner(self, current_user):
+        for user in self.users.all():
+            if user != current_user:
+                return user
 
 
 class Assignment(models.Model):

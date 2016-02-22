@@ -164,7 +164,7 @@ class FeatureVectorView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        dictionary = user.pairA.assignment.experiment.dictionary
+        dictionary = user.pair.first().assignment.experiment.dictionary
         message_id = int(message_id)
 
         try:
@@ -213,7 +213,7 @@ class UserFeatureView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        dictionary = user.pairA.assignment.experiment.dictionary
+        dictionary = user.pair.first().assignment.experiment.dictionary
 
         input = serializers.FeatureSerializer(data=request.data)
         if input.is_valid():
@@ -252,8 +252,8 @@ class FeatureCodeDistributionView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pairA.user2
-        dictionary = user.pairA.assignment.experiment.dictionary
+        partner = user.pair.first().get_partner(user)
+        dictionary = user.pair.first().assignment.experiment.dictionary
         feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
 
         features = []
@@ -335,7 +335,12 @@ class CodeDefinitionView(APIView):
             data = input.validated_data
             text = data['text']
 
-            definition, created = coding_models.CodeDefinition.objects.get_or_create(code=code, source=user)
+            definition, created = coding_models.CodeDefinition.objects.get_or_create(code=code, source=user, valid=True)
+            if not created:
+                definition.valid = False
+                definition.save()
+                definition = coding_models.CodeDefinition(code=code, source=user)
+
             definition.text = text
             definition.save()
 
@@ -359,8 +364,11 @@ class CodeDefinitionView(APIView):
             data = input.validated_data
             text = data['text']
 
-            definition = coding_models.CodeDefinition.objects.get(code=code, source=user)
-            definition.text = text
+            definition = coding_models.CodeDefinition.objects.get(code=code, source=user, valid=True)
+            definition.valid = False
+            definition.save()
+
+            definition = coding_models.CodeDefinition(code=code, source=user, text=text)
             definition.save()
 
             output = serializers.CodeDefinitionSerializer(definition)
@@ -387,9 +395,16 @@ class CodeAssignmentView(APIView):
                 user_dict = self.request.user
                 if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
                     user = User.objects.get(id=self.request.user.id)
+                    assignments = coding_models.CodeAssignment.objects.filter(user=user, message=message, valid=True)
+                    if assignments.exists():
+                        for assignment in assignments.all():
+                            if assignment.code != code:
+                                assignment.valid = False
+                                assignment.save()
 
                     code_assignment, created = coding_models.CodeAssignment.objects.get_or_create(
-                                                                    user=user, message=message, code=code)
+                                                                    user=user, message=message, code=code, valid=True)
+
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
                     code_assignment.is_ambiguous=data['is_ambiguous']
@@ -477,6 +492,84 @@ class CodeMessageView(APIView):
             pdb.set_trace()
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
+
+class DisagreementIndicatorView(APIView):
+    """
+    Get the disagreement indicator of a message
+
+    **Request:** ``GET /disagreement/message_id``
+    """
+
+    def get(self, request, message_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user)
+
+        message_id = int(message_id)
+        message = corpus_models.Message.objects.get(id=message_id)
+        try:
+            indicator = coding_models.DisagreementIndicator.objects.filter(message=message,
+                                                                        user_assignment__source=user,
+                                                                        partner_assignment__source=partner,
+                                                                        valid=True)
+            if not indicator.exists():
+                return Response("Disagreement indicator not exist", status=status.HTTP_400_BAD_REQUEST)
+
+            output = serializers.DisagreementIndicatorSerializer(indicator.first())
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Disagreement indicator not exist", status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, message_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user)
+
+        message_id = int(message_id)
+        message = corpus_models.Message.objects.get(id=message_id)
+
+        input = serializers.DisagreementIndicatorSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+            type = data['type']
+
+            user_assignment = coding_models.CodeAssignment.objects.get(source=user, message=message)
+            partner_assignment = coding_models.CodeAssignment.objects.get(source=partner, message=message)
+
+            indicator = coding_models.DisagreementIndicator.objects.filter(message=message,
+                                                                        user_assignment=user_assignment,
+                                                                        partner_assignment=partner_assignment,
+                                                                        valid=True)
+            if indicator.exists():
+                indicator.update(valid=False)
+
+            indicator = coding_models.DisagreementIndicator(message=message,
+                                                            user_assignment=user_assignment,
+                                                            partner_assignment=partner_assignment,
+                                                            type=type,
+                                                            valid=True)
+            indicator.save()
+
+            output = serializers.DisagreementIndicatorSerializer(indicator)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, message_id, format=None):
+
+        return self.post(request, message_id, format)
 
 class APIRoot(APIView):
     """

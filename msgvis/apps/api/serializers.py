@@ -121,3 +121,11 @@ class CodeMessageSerializer(serializers.Serializer):
     code = serializers.CharField()
     source = UserSerializer()
     messages = MessageSerializer(many=True)
+
+class DisagreementIndicatorSerializer(serializers.ModelSerializer):
+    user_assignment = CodeAssignmentSerializer(required=False)
+    partner_assignment = CodeAssignmentSerializer(required=False)
+    class Meta:
+        model = coding_models.DisagreementIndicator
+        fields = ('id', 'message', 'user_assignment', 'partner_assignment', 'type', )
+        read_only_fields = ('id', 'message', 'user_assignment', 'partner_assignment', )

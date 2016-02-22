@@ -106,9 +106,9 @@ class DisagreementIndicator(models.Model):
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='N')
 
     valid = models.BooleanField(default=True)
-    """ Whether this code definition is valid (False indicate the code to the message has been removed) """
+    """ Whether this disagreement indicator is valide """
     created_at = models.DateTimeField(auto_now_add=True, default=None)
-    """The code definition created time"""
+    """The disagreement indicator created time"""
 
     def __repr__(self):
         return "Message: %s\nCode: %s vs %s | Type: %s" % (self.message.text,
