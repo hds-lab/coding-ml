@@ -59,6 +59,24 @@ class DatasetView(APIView):
 
         return Response("Please specify dataset id", status=status.HTTP_400_BAD_REQUEST)
 
+
+class MessageView(APIView):
+    """
+    Get details of a message
+
+    **Request:** ``GET /api/message/1``
+    """
+
+    def get(self, request, message_id, format=None):
+
+        message_id = int(message_id)
+        try:
+            message = corpus_models.Message.objects.get(id=message_id)
+            output = serializers.MessageSerializer(message)
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
+
 class DictionaryView(APIView):
     """
     Get details of a dataset
