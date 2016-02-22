@@ -185,9 +185,6 @@ class FeatureVectorView(APIView):
             return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
 class UserFeatureView(APIView):
     """
     Get or set user features
@@ -216,12 +213,12 @@ class UserFeatureView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
+        dictionary = user.pairA.assignment.experiment.dictionary
 
         input = serializers.FeatureSerializer(data=request.data)
         if input.is_valid():
             data = input.validated_data
 
-            dictionary = data["dictionary"]
             token_list = data["token_list"]
             feature = dictionary.add_feature(token_list, source=user)
 
@@ -241,6 +238,48 @@ class UserFeatureView(APIView):
         feature.save()
         return Response(status=status.HTTP_200_OK)
 
+
+class FeatureCodeDistributionView(APIView):
+    """
+    Get the distribution of features across codes
+
+    **Request:** ``GET /distribution?feature_source=system+user+partner``
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        partner = user.pairA.user2
+        dictionary = user.pairA.assignment.experiment.dictionary
+        feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
+
+        features = []
+        for feature_source in feature_sources:
+            if feature_source == "system":
+                features += dictionary.get_feature_list(source=None)
+            elif feature_source == "user":
+                features += dictionary.get_feature_list(source=user)
+            elif feature_source == "partner":
+                features += dictionary.get_feature_list(source=partner)
+
+        distributions = []
+        try:
+            for feature in features:
+                distributions.append(feature.get_distribution(code_source=user))
+
+            output = serializers.FeatureCodeDistributionSerializer(distributions, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 

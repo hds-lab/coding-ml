@@ -8,9 +8,10 @@ from operator import itemgetter
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db.models import Count
 
 from fields import PositiveBigIntegerField
-from msgvis.apps.corpus.models import Message, Dataset
+from msgvis.apps.corpus.models import Message, Dataset, Code
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
@@ -43,6 +44,14 @@ class Dictionary(models.Model):
         if source is not None:
             feature_num += source.features.filter(valid=True).count()
         return feature_num
+
+    def get_feature_list(self, source=None):
+        features = []
+        if source is None:
+            features = list(self.features.filter(source__isnull=True).all())
+        else:
+            features = list(source.features.filter(valid=True).all())
+        return features
 
     @property
     def gensim_dictionary(self):
@@ -493,6 +502,21 @@ class Feature(models.Model):
 
     def __unicode__(self):
         return self.__repr__()
+
+    def get_distribution(self, code_source=None):
+
+        codes = Code.objects.all()
+        distribution = []
+        for code in codes:
+            count = self.messages.filter(code_assignments__code=code, code_assignments__source=code_source, code_assignments__valid=True).count()
+            distribution.append({"code_id": code.id,
+                           "code_text": code.text,
+                           "count": count})
+
+        return {"feature_index": self.index,
+                "feature_text": self.text,
+                "distribution": distribution}
+
 
 
 class MessageFeature(models.Model):

@@ -12,9 +12,11 @@ api_root_urls = {
     'vector': url(r'^vector/(?P<message_id>[0-9]+)$', csrf_exempt(views.FeatureVectorView.as_view()), name='vector'),
     'feature_list': url(r'^feature/$', csrf_exempt(views.UserFeatureView.as_view()), name='feature_list'),
     'feature': url(r'^feature/(?P<feature_id>[0-9]+)/$', csrf_exempt(views.UserFeatureView.as_view()), name='feature'),
+    'distribution': url(r'^distribution/$', csrf_exempt(views.FeatureCodeDistributionView.as_view()), name='distribution'),
     'assignment': url(r'^assignment/$', csrf_exempt(views.CodeAssignmentView.as_view()), name='assignment'),
     'definition': url(r'^definition/(?P<code_id>[0-9]+)$', csrf_exempt(views.CodeDefinitionView.as_view()), name='definition'),
     'code_messages': url(r'^code_messages/$', csrf_exempt(views.CodeMessageView.as_view()), name='code_messages'),
+
 }
 
 urlpatterns = api_root_urls.values() + [

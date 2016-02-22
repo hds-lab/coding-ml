@@ -65,6 +65,12 @@ class FeatureVectorSerializer(serializers.Serializer):
     tokens = serializers.ListField()
     feature_vector = serializers.ListField(child=serializers.DictField())
 
+class FeatureCodeDistributionSerializer(serializers.Serializer):
+    feature_index = serializers.IntegerField()
+    feature_text = serializers.CharField()
+    distribution = serializers.ListField(child=serializers.DictField())
+
+
 class SVMResultSerializer(serializers.Serializer):
     results = serializers.DictField()
     messages = serializers.ListField(child=FeatureVectorSerializer(), required=True)
@@ -75,7 +81,7 @@ class FeatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = enhance_models.Feature
         fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', )
-        read_only_fields = ('id', 'index', 'text', 'document_frequency', )
+        read_only_fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', )
 
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
