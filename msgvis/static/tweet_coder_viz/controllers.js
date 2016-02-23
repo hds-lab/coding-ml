@@ -31,7 +31,7 @@
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, SVMResult, FeatureVector, Coding, usSpinnerService) {
 
         $scope.state = 'none'; // options are 'none', 'code', 'review'
 
@@ -107,8 +107,8 @@
             }
 
             // TODO: Integrate with service. Make up some user feature data
-            var featureCount = Math.floor((Math.random() * $scope.codes.length));
-            var features = [];
+            var features = messageData.feature_vector;
+            var featureCount = features.length;
             for (var i = 0; i < featureCount; i++){
                 var tokenIndex = Math.floor((Math.random() * (tokenItems.length - 1)) + 1);
                 var codeIndex = Math.floor((Math.random() * ($scope.codes.length - 1)));
@@ -142,9 +142,9 @@
                 charToToken: charToToken,
                 tokens: tokenItems,
                 charStyle: charStyle,
-                ambiguous: messageData.ambiguous,
-                saved: messageData.saved,
-                example: messageData.example,
+                ambiguous: messageData.ambiguous || false,
+                saved: messageData.saved || false,
+                example: messageData.example || false,
                 gold: messageData.gold,
                 label: messageData.label
             };
@@ -273,16 +273,16 @@
             $scope.codeItems[$scope.currentMessage.label].user_ex.push($scope.currentMessage);
 
             // TODO: Make service call to submit
-            // var request = submit label request
-            //if (request) {
+            var request = Coding.submit($scope.currentMessage, $scope.selectedCode.code_id);
+            if (request) {
             usSpinnerService.spin('label-spinner');
-            //    request.then(function() {
-            //        usSpinnerService.stop('label-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('label-spinner');
             //        $scope.getMessage();
-            //    });
-            //}
+                });
+            }
 
-            setTimeout($scope.getMessage, 1000);
+            //setTimeout($scope.getMessage, 1000);
         };
 
         $scope.getMasterCodes = function(){
@@ -315,7 +315,7 @@
                         "code_id": 1,
                         "code_text": "Unrelated",
                         "source": "master",
-                        "text": "This tweet is unrelated to the event we’re interested in.",
+                        "text": "This tweet is unrelated to the event we are interested in.",
                         "examples": [
                             {
                                 "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
@@ -422,7 +422,7 @@
                         "code_id": 1,
                         "code_text": "Unrelated",
                         "source": "master",
-                        "text": "This tweet is unrelated to the event we’re interested in.",
+                        "text": "This tweet is unrelated to the event we interested in.",
                         "examples": [
                             {
                                 "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
@@ -482,7 +482,7 @@
                         "code_id": 1,
                         "code_text": "Unrelated",
                         "source": "user",
-                        "text": "user def: This tweet is unrelated to the event we’re interested in.",
+                        "text": "user def: This tweet is unrelated to the event we interested in.",
                         "examples": [
                             {
                                 "id": 501,
@@ -547,7 +547,7 @@
                         "code_id": 1,
                         "code_text": "Unrelated",
                         "source": "partner",
-                        "text": "partner def: This tweet is unrelated to the event we’re interested in.",
+                        "text": "partner def: This tweet is unrelated to the event we interested in.",
                         "examples": [
                             {
                                 "id": 501,
@@ -677,8 +677,8 @@
             usSpinnerService.spin('page-spinner');
             setTimeout(function(){
                     usSpinnerService.stop('page-spinner');
-                $scope.state = coding ? 'code' : 'review';
-                //$scope.state = 'review';
+                //$scope.state = coding ? 'code' : 'review';
+                $scope.state = 'code';
                 $scope.$apply();
             }, 1000);
         };
@@ -1028,6 +1028,7 @@
         'TweetCoderViz.services.Dictionary',
         'TweetCoderViz.services.SVMResult',
         'TweetCoderViz.services.FeatureVector',
+        'TweetCoderViz.services.Coding',
         'usSpinnerService'
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);

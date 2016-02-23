@@ -383,27 +383,24 @@ class CodeAssignmentView(APIView):
     **Request:** ``POST /assignment/``
     """
 
-    def post(self, request, format=None):
+    def post(self, request, message_id, format=None):
 
         input = serializers.CodeAssignmentSerializer(data=request.data)
         if input.is_valid():
             data = input.validated_data
-            message = data['message']
+            message = corpus_models.Message.objects.get(id=message_id)
             code = data['code']
 
             if self.request.user is not None:
                 user_dict = self.request.user
                 if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
                     user = User.objects.get(id=self.request.user.id)
-                    assignments = coding_models.CodeAssignment.objects.filter(user=user, message=message, valid=True)
+                    assignments = coding_models.CodeAssignment.objects.filter(source=user, message=message, valid=True)
                     if assignments.exists():
-                        for assignment in assignments.all():
-                            if assignment.code != code:
-                                assignment.valid = False
-                                assignment.save()
+                        assignments.update(valid=False)
 
                     code_assignment, created = coding_models.CodeAssignment.objects.get_or_create(
-                                                                    user=user, message=message, code=code, valid=True)
+                                                                    source=user, message=message, code=code, valid=True)
 
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
@@ -428,7 +425,7 @@ class CodeAssignmentView(APIView):
                     user = User.objects.get(id=self.request.user.id)
 
                     code_assignment = coding_models.CodeAssignment.objects.get(
-                                                                    user=user, message=message, code=code, valid=True)
+                                                                    source=user, message=message, code=code, valid=True)
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
                     code_assignment.is_ambiguous=data['is_ambiguous']
@@ -471,15 +468,19 @@ class CodeMessageView(APIView):
                 if corpus_models.Code.objects.filter(text=code).exists():
                     code_obj = corpus_models.Code.objects.get(text=code)
                     if stage:
-                        messages = stage.get_messages_by_code(source, code_obj)
+                        #messages = stage.get_messages_by_code(source, code_obj)
+                        assignments = coding_models.CodeAssignment.objects.filter(source=source,
+                                                                                  code=code_obj,
+                                                                                  message__message_selection__stage=stage,
+                                                                                  valid=True).all()
                     else:
-                        messages = corpus_models.Message.objects.filter(code_assignments__valid=True,
-                                                                        code_assignments__source=source,
-                                                                        code_assignments__code=code_obj).all()
+                        assignments = coding_models.CodeAssignment.objects.filter(source=source,
+                                                                                  code=code_obj,
+                                                                                  valid=True).all()
                     code_messages.append({
                         "code": code,
                         "source": source,
-                        "messages": messages,
+                        "assignments": assignments,
                     })
 
             output = serializers.CodeMessageSerializer(code_messages, many=True)

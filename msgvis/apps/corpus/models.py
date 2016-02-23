@@ -91,14 +91,18 @@ class Message(models.Model):
         return self.__repr__()
 
     def get_feature_vector(self, dictionary, source=None):
-        feature_scores = list(self.feature_scores.filter(feature__source__isnull=True).all())
-        if source is not None:
-            feature_scores += list(self.feature_scores.filter(feature__source=source, feature__valid=True).all())
         vector = []
-        for feature_score in feature_scores:
+        for feature_score in self.feature_scores.filter(feature__source__isnull=True).all():
             vector.append({"text": feature_score.feature.text,
                            "feature_index": feature_score.feature_index,
-                           "count": feature_score.count})
+                           "count": feature_score.count,
+                           "source": "system"})
+        if source is not None:
+            for feature_score in self.feature_scores.filter(feature__source=source, feature__valid=True).all():
+                vector.append({"text": feature_score.feature.text,
+                               "feature_index": feature_score.feature_index,
+                               "count": feature_score.count,
+                               "source": feature_score.feature.source }) #TODO: fix source = None problem
         return vector
 
 

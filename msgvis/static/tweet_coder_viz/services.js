@@ -89,7 +89,7 @@
         '$http', 'djangoUrl', 'TweetCoderViz.services.Dictionary',
         function scriptFactory($http, djangoUrl, Dictionary) {
 
-            var apiUrl = djangoUrl.reverse('vector');
+
 
             var FeatureVector = function () {
                 var self = this;
@@ -101,11 +101,11 @@
                     var self = this;
 
                     var request = {
-                        params: {
-                            dictionary_id: Dictionary.id,
-                            message_id: message_id
-                        }
+                        message_id: message_id
                     };
+
+                    var apiUrl = djangoUrl.reverse('vector', request);
+
                     return $http.get(apiUrl, request)
                         .success(function (data) {
                             self.data = data;
@@ -135,25 +135,18 @@
                     var self = this;
 
                     var request = {
-                        params: {
-                        }
+                        params: {}
                     };
                     return $http.get(listApiUrl, request)
                         .success(function (data) {
                             self.data = data;
                         });
-
-                }
-            });
-
-            angular.extend(UserFeatures.prototype, {
+                },
                 add: function (tokens) {
                     var self = this;
 
                     var request = {
-                        params: {
-                        },
-                        data: tokens
+                        token_list: tokens
                     };
 
                     return $http.post(listApiUrl, request)
@@ -161,20 +154,51 @@
                             self.data = data;
                         });
 
-                }
-            });
-
-            angular.extend(UserFeatures.prototype, {
+                },
                 remove: function (id) {
                     var self = this;
 
                     var request = {
-                        params: {
-                        }
+
                     };
 
-                    var itemApiUrl = djangoUrl.reverse('feature', { 'id' : id });
+                    var itemApiUrl = djangoUrl.reverse('feature', {feature_id: id});
                     return $http.delete(itemApiUrl, request)
+                        .success(function (data) {
+                            self.data = data;
+                        });
+                }
+            });
+
+            return new UserFeatures();
+        }
+    ]);
+
+    //A service for user defined features.
+    module.factory('TweetCoderViz.services.Coding', [
+        '$http', 'djangoUrl',
+        function codingFactory($http, djangoUrl) {
+
+
+
+            var Coding = function () {
+                var self = this;
+            };
+
+            angular.extend(Coding.prototype, {
+                submit: function (message, code_id) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message.id});
+
+                    var request = {
+                        code: code_id,
+                        is_example: message.example,
+                        is_ambiguous: message.ambiguous,
+                        is_saved: message.saved
+                    };
+
+
+                    return $http.post(apiUrl, request)
                         .success(function (data) {
                             self.data = data;
                         });
@@ -182,7 +206,7 @@
                 }
             });
 
-            return new UserFeatures();
+            return new Coding();
         }
     ]);
 

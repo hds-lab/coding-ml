@@ -80,8 +80,8 @@ class FeatureSerializer(serializers.ModelSerializer):
     token_list = serializers.ListField(child=serializers.CharField(), required=False)
     class Meta:
         model = enhance_models.Feature
-        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', )
-        read_only_fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', )
+        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', 'source', )
+        read_only_fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'source', )
 
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
@@ -105,17 +105,18 @@ class DictionarySerializer(serializers.ModelSerializer):
 
 
 class CodeAssignmentSerializer(serializers.ModelSerializer):
+    message = MessageSerializer(required=False)
     class Meta:
         model = coding_models.CodeAssignment
         fields = ('id', 'source', 'message', 'code', 'is_example', 'is_ambiguous', 'is_saved', )
-        read_only_fields = ('id', 'source', )
+        read_only_fields = ('id', 'source', 'message', )
 
 
 class CodeDefinitionSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     source = UserSerializer(required=False)
     text = serializers.CharField()
-    examples = MessageSerializer(many=True, required=False)
+    assignments = CodeAssignmentSerializer(many=True, required=False)
 
 class CodeMessageSerializer(serializers.Serializer):
     code = serializers.CharField()
