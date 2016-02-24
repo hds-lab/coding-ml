@@ -203,6 +203,24 @@
                             self.data = data;
                         });
 
+                },
+                get_definitions: function (code_id) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message.id});
+
+                    var request = {
+                        code: code_id,
+                        is_example: message.example,
+                        is_ambiguous: message.ambiguous,
+                        is_saved: message.saved
+                    };
+
+
+                    return $http.post(apiUrl, request)
+                        .success(function (data) {
+                            self.data = data;
+                        });
+
                 }
             });
 

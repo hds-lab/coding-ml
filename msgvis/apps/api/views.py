@@ -287,27 +287,32 @@ class CodeDefinitionView(APIView):
     """
     Get the definition of a code
 
-    **Request:** ``GET /definition/code_id?source=master``
+    **Request:** ``GET /definition?source=master+user+partner``
     """
 
-    def get(self, request, code_id, format=None):
+    def get(self, request, format=None):
 
         if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user)
 
-        code_id = int(code_id)
-        code = corpus_models.Code.objects.get(id=code_id)
         sources = request.query_params.get('source', user.username).split(" ")
 
         try:
             code_definitions = []
             for source in sources:
-                source_user = User.objects.get(username=source)
-                code_definition = code.get_definition(source_user)
-                if code_definition:
-                    code_definitions.append(code_definition)
+                if source == "user":
+                    source_user = user
+                elif source == "partner":
+                    source_user = partner
+                else:
+                    source_user = User.objects.get(username=source)
+                for code in corpus_models.Code.objects.all():
+                    code_definition = code.get_definition(source_user)
+                    if code_definition:
+                        code_definitions.append(code_definition)
 
             output = serializers.CodeDefinitionSerializer(code_definitions, many=True)
 

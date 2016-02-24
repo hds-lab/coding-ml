@@ -60,7 +60,8 @@
         .constant('patterns', {% load_djng_urls %});
 
     angular.module('TweetCoderViz.bootstrap')
-        .constant('TweetCoderViz.bootstrap.dictionary', {{ object.pk }});
+        .constant('TweetCoderViz.bootstrap.experiment', {{ object.pk }})
+        .constant('TweetCoderViz.bootstrap.dictionary', {{ object.dictionary.pk }});
 </script>
 
 {% endblock %}
