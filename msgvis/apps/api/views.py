@@ -77,6 +77,7 @@ class MessageView(APIView):
         except:
             return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
 
+
 class DictionaryView(APIView):
     """
     Get details of a dataset
@@ -470,8 +471,8 @@ class CodeMessageView(APIView):
 
             code_messages = []
             for code in codes:
-                if corpus_models.Code.objects.filter(text=code).exists():
-                    code_obj = corpus_models.Code.objects.get(text=code)
+                if coding_models.Code.objects.filter(text=code).exists():
+                    code_obj = coding_models.Code.objects.get(text=code)
                     if stage:
                         #messages = stage.get_messages_by_code(source, code_obj)
                         assignments = coding_models.CodeAssignment.objects.filter(source=source,

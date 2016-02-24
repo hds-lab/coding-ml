@@ -2,9 +2,8 @@ from django.db import models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from django.contrib.auth.models import User
-from random import shuffle
-from msgvis.apps.coding import utils as coding_utils
-from msgvis.apps.base.utils import check_or_create_dir
+from msgvis.apps.base import models as base_models
+
 
 
 class CodeAssignment(models.Model):
@@ -13,7 +12,7 @@ class CodeAssignment(models.Model):
     """
     source = models.ForeignKey(User, related_name="code_assignments")
     message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
-    code = models.ForeignKey(corpus_models.Code, related_name="code_assignments")
+    code = models.ForeignKey(enhance_models.Code, related_name="code_assignments")
 
     is_saved = models.BooleanField(default=False)
     is_ambiguous = models.BooleanField(default=False)
@@ -55,7 +54,7 @@ class SVMModelWeight(models.Model):
     A model for svm model weight
     """
     svm_model = models.ForeignKey(SVMModel, related_name="weights")
-    code = models.ForeignKey(corpus_models.Code, related_name="weights")
+    code = models.ForeignKey(enhance_models.Code, related_name="weights")
     feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
     weight = models.FloatField(default=0)
 
@@ -70,7 +69,7 @@ class CodeDefinition(models.Model):
     """
     A model for code definition
     """
-    code = models.ForeignKey(corpus_models.Code, related_name="definitions")
+    code = models.ForeignKey(enhance_models.Code, related_name="definitions")
     source = models.ForeignKey(User, related_name="definitions")
     text = models.TextField(null=True, blank=True, default="")
     examples = models.ManyToManyField(corpus_models.Message, related_name="definitions")
