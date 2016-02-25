@@ -33,38 +33,6 @@ class CodeAssignment(models.Model):
     """ Whether this code is valid (False indicate the code to the message has been removed) """
 
 
-class SVMModel(models.Model):
-    """
-    A model for svm model
-    """
-    source = models.ForeignKey(User, related_name="svm_models", unique=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The svm model created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The svm model updated time"""
-
-    saved_path = models.FilePathField(default=None, blank=True, null=True)
-    """scikit-learn model will be saved in the given path"""
-
-
-class SVMModelWeight(models.Model):
-    """
-    A model for svm model weight
-    """
-    svm_model = models.ForeignKey(SVMModel, related_name="weights")
-    code = models.ForeignKey(enhance_models.Code, related_name="weights")
-    feature = models.ForeignKey(enhance_models.Feature, related_name="weights")
-    weight = models.FloatField(default=0)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    """The code created time"""
-
-    last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
-    """The code updated time"""
-
-
 class CodeDefinition(models.Model):
     """
     A model for code definition

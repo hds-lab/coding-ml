@@ -302,90 +302,20 @@
             //}
             //]
 
-            // var request = get definition request
-            //if (request) {
-            usSpinnerService.spin('code-spinner');
-                //request.then(function() {
-            setTimeout(function() {
-                usSpinnerService.stop('code-spinner');
+            var request = Coding.load_definitions("master");
+            if (request) {
+                usSpinnerService.spin('code-spinner');
+                request.then(function() {
 
-                // TODO : Make up definitions
-                var sourceData = [
-                    {
-                        "code_id": 1,
-                        "code_text": "Unrelated",
-                        "source": "master",
-                        "text": "This tweet is unrelated to the event we are interested in.",
-                        "examples": [
-                            {
-                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
-                                "gold": true
-                            }
-                        ]
-                    },
-                    {
-                        "code_id": 2,
-                        "code_text": "Affirm",
-                        "source": "master",
-                        "text": "This tweet affirms, supports, and functions to pass along the story.",
-                        "examples": [
-                            {
-                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
-                                "gold": true
-                            }
-                        ]
-                    },
-                    {
-                        "code_id": 3,
-                        "code_text": "Deny",
-                        "source": "master",
-                        "text": "This tweet denies or questions all or part of the story.",
-                        "examples": [
-                            {
-                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
-                                "gold": true
-                            }
-                        ]
-                    },
-                    {
-                        "code_id": 0,
-                        "code_text": "Uncodable",
-                        "source": "master",
-                        "text": "This tweet is not codable because the content is in a language that is not understandable.",
-                        "examples": [
-                            {
-                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
-                                "gold": true
-                            }
-                        ]
-                    },
-                    {
-                        "code_id": 4,
-                        "code_text": "Neutral",
-                        "source": "master",
-                        "text": "The tweet is exactly neutral (use sparingly). Be careful not to conflate with an implicit affirmation.",
-                        "examples": [
-                            {
-                                "text": "@KevinZZ The hostage-taker has a bomb in his backpack. #Sydney #SydneySiege",
-                                "gold": true
-                            }
-                        ]
-                    }
-                ];
+                    var codes = Coding.get_definitions('master');
+                    $scope.codes = codes;
+                    codes.forEach(function(code){
+                        $scope.codes[code.code_text] = code;
+                    });
+                    $scope.$apply();
 
-                // Take all codes with source = master
-                var codes = sourceData.filter(function (c) {
-                    return c.source == "master";
                 });
-
-                $scope.codes = codes;
-                codes.forEach(function(code){
-                    $scope.codes[code.code_text] = code;
-                });
-                $scope.$apply();
-
-            }, 1000);
-            //}
+            }
         };
 
         $scope.getCodeDetail = function(){

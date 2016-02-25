@@ -297,7 +297,7 @@ class CodeDefinitionView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
 
         sources = request.query_params.get('source', user.username).split(" ")
 

@@ -183,6 +183,7 @@
 
             var Coding = function () {
                 var self = this;
+                var definitions = {};
             };
 
             angular.extend(Coding.prototype, {
@@ -204,22 +205,30 @@
                         });
 
                 },
-                get_definitions: function (code_id) {
+                load_definitions: function (source) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message.id});
+                    var apiUrl = djangoUrl.reverse('definition');
 
                     var request = {
-                        code: code_id,
-                        is_example: message.example,
-                        is_ambiguous: message.ambiguous,
-                        is_saved: message.saved
+                        param: {
+                            source: source
+                        }
                     };
 
 
                     return $http.post(apiUrl, request)
                         .success(function (data) {
-                            self.data = data;
+                            self.definitions[source] = data;
                         });
+
+                },
+                get_definitions: function(source){
+                    var self = this;
+                    if ( typeof(self.definitions[source]) !== "undefined" ){
+                        return self.definitions[source];
+                    }
+                    return "Error: No definition has been loaded";
+
 
                 }
             });

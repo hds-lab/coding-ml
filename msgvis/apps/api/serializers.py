@@ -125,10 +125,20 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'source', 'message', )
 
 
+#class CodeDefinitionSerializer(serializers.ModelSerializer):
+#    source = UserSerializer(required=False)
+#    examples = MessageSerializer(required=False)
+#    class Meta:
+#        model = coding_models.CodeDefinition
+#        fields = ('code', 'source', 'text', 'examples', )
+#        read_only_fields = ('code', 'source', 'examples', )
+
+
 class CodeDefinitionSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     source = UserSerializer(required=False)
     text = serializers.CharField()
+    examples = MessageSerializer(many=True, required=False)
     assignments = CodeAssignmentSerializer(many=True, required=False)
 
 

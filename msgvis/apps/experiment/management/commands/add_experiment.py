@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, make_option, CommandError
 import msgvis.apps.experiment.models as experiment_models
 from msgvis.apps.base.utils import check_or_create_dir
-import os
+from django.db import transaction
 
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -12,12 +12,12 @@ class Command(BaseCommand):
     args = '<dictionary_id> <output_folder>'
     option_list = BaseCommand.option_list + (
         make_option('-p', '--num_pairs',
-                    default=3,
+                    default=4,
                     dest='num_pairs',
                     help='Num of pairs in each conditions'
         ),
         make_option('-c', '--num_conditions',
-                    default=3,
+                    default=2,
                     dest='num_conditions',
                     help='Num of conditions in this experiment'
         ),
@@ -58,14 +58,15 @@ class Command(BaseCommand):
         output_filename = "%s/user_accounts.log" % output_folder
 
         with open(output_filename, "w") as output:
-            # create an experiment
-            experiment = experiment_models.Experiment(name=experiment_name,
-                                                      dictionary_id=dictionary_id)
-            experiment.save()
+            with transaction.atomic(savepoint=False):
+                # create an experiment
+                experiment = experiment_models.Experiment(name=experiment_name,
+                                                          dictionary_id=dictionary_id)
+                experiment.save()
 
-            experiment.initialize_experiment(num_conditions=num_conditions,
-                                             num_stages=num_stages,
-                                             num_pairs=num_pairs,
-                                             output=output)
+                experiment.initialize_experiment(num_conditions=num_conditions,
+                                                 num_stages=num_stages,
+                                                 num_pairs=num_pairs,
+                                                 output=output)
 
 
