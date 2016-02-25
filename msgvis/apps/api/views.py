@@ -25,7 +25,7 @@ from rest_framework.reverse import reverse
 from rest_framework.compat import get_resolver_match, OrderedDict
 from django.core.context_processors import csrf
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count
+from django.db.models import Count, F
 from django.contrib.auth.models import User
 
 from msgvis.apps.api import serializers
@@ -35,6 +35,8 @@ from msgvis.apps.experiment import models as experiment_models
 from msgvis.apps.coding import models as coding_models
 import json
 import logging
+
+from msgvis.apps.base.utils import AttributeDict
 
 logger = logging.getLogger(__name__)
 
@@ -266,19 +268,43 @@ class FeatureCodeDistributionView(APIView):
         dictionary = user.pair.first().assignment.experiment.dictionary
         feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
 
-        features = []
+        source_map = {
+            "system": "system",
+            "user": user,
+            "partner": partner,
+            partner: "partner",
+            user: "user",
+            "system": "system"
+        }
+        source_list = []
         for feature_source in feature_sources:
-            if feature_source == "system":
-                features += dictionary.get_feature_list(source=None)
-            elif feature_source == "user":
-                features += dictionary.get_feature_list(source=user)
-            elif feature_source == "partner":
-                features += dictionary.get_feature_list(source=partner)
+                source_list.append(source_map[feature_source])
+
+        features = dictionary.get_feature_list(source_list)
 
         distributions = []
+        distribution_map = {}
         try:
+
             for feature in features:
-                distributions.append(feature.get_distribution(code_source=user))
+                source = feature.source if hasattr(feature, 'source') else "system"
+                item = {
+                    "feature_index": feature.index,
+                    "feature_text": feature.text,
+                    "source": source_map[source],
+                    "distribution": {}
+                }
+                for code in corpus_models.Code.objects.all():
+                    item["distribution"][code.text] = 0
+                distributions.append(item)
+                distribution_map[feature.index] = item
+
+            counts = features.filter(messages__code_assignments__isnull=False)\
+                .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
+                .annotate(count=Count('messages')).order_by('id', 'count').all()
+            for count in counts:
+                count = AttributeDict(count)
+                distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
 
             output = serializers.FeatureCodeDistributionSerializer(distributions, many=True)
 

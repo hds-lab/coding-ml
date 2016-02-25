@@ -81,7 +81,7 @@ class FeatureVectorSerializer(serializers.Serializer):
 class FeatureCodeDistributionSerializer(serializers.Serializer):
     feature_index = serializers.IntegerField()
     feature_text = serializers.CharField()
-    distribution = serializers.ListField(child=serializers.DictField())
+    distribution = serializers.DictField()
 
 
 

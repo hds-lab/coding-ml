@@ -10,3 +10,7 @@ def check_or_create_dir(dir_path):
             os.mkdir(dir_path)
         except OSError:
             raise CommandError("Weird path error happens.")
+
+class AttributeDict(dict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__

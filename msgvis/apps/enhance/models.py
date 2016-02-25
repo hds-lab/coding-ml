@@ -3,7 +3,8 @@ import math
 import re
 import numpy
 
-from operator import itemgetter
+from django.db.models import Q
+from operator import itemgetter, or_
 
 from django.db import models
 from django.conf import settings
@@ -45,13 +46,15 @@ class Dictionary(models.Model):
             feature_num += source.features.filter(valid=True).count()
         return feature_num
 
-    def get_feature_list(self, source=None):
-        features = []
-        if source is None:
-            features = list(self.features.filter(source__isnull=True).all())
-        else:
-            features = list(source.features.filter(valid=True).all())
-        return features
+    def get_feature_list(self, source_list):
+        features = self.features.filter(valid=True)
+        filter_ors = []
+        for source in source_list:
+            if source == "system":
+                filter_ors.append(("source__isnull", True))
+            else:
+                filter_ors.append(("source", source))
+        return features.filter(reduce(or_, [Q(x) for x in filter_ors])).all()
 
     @property
     def gensim_dictionary(self):
@@ -508,6 +511,7 @@ class Feature(models.Model):
         codes = Code.objects.all()
         distribution = []
         for code in codes:
+            count = self.code_assignments.filter(valid=True, )
             count = self.messages.filter(code_assignments__code=code, code_assignments__source=code_source, code_assignments__valid=True).count()
             distribution.append({"code_id": code.id,
                            "code_text": code.text,
