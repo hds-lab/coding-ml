@@ -80,6 +80,10 @@
     </div>
     <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
+        <div id="Initialization" ng-show="!(is_status('C') || is_status('R'))">
+            Waiting for the other participant... (Wait for a while and then refresh)
+        </div>
+
         <div id="coding" ng-show="is_status('C')">
             <div id="top-area">
                 <h2>New Label</h2>
@@ -105,7 +109,7 @@
                                 <div class='btn btn-toggle' ng-class="{'active': currentMessage.ambiguous}" ng-click="currentMessage.ambiguous=!currentMessage.ambiguous"><span>?</span></div>
                                 <span> Mark as an ambiguous tweet</span>
                             </div>
-                            <button class="btn btn-default" ng-disabled="!currentMessage.label" ng-click="submitLabel()">Submit Code</button>
+                            <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
                         </div>
                     </div>
                 </div>
@@ -118,7 +122,7 @@
                         <div class="code-name">{$ code.code_text $}</div>
                         <div class="code-definition scroll-y">
                             <p><strong>definition: </strong>{$ code.text $}</p>
-                            <p><strong>example: </strong>{$ code.examples[0] $}</p>
+                            <p><strong>example: </strong>{$ code.examples[0].text $}</p>
                         </div>
                     </div>
                 </div>
@@ -126,12 +130,12 @@
             <div id="bottom-area">
                 <h2 ng-show="currentMessage.label">Submitted Labels</h2>
                 <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
-                <div class="row" id="panel" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == currentMessage.label">
+                <div class="row" id="panel" ng-repeat="code in codes " ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == selectedCode.code_text">
                     <div class="col-md-3 scroll-y">
                         <h3>Master Definition for '{$ code.code_text $}'</h3>
-                        <p>{$ code.master_def $}</p>
-                        <h3>My Definition for '{$ code.code_text $}'</h3>
-                        <p>{$ code.user_def $}</p>
+                        <p>{$ Code.definitions_by_code[code.code_text]["master"].text $}</p>
+                        <h3>My Definition for '{$ code.code_text  $}'</h3>
+                        <p>{$ Code.definitions_by_code[code.code_text]["user"].text $}</p>
                     </div>
                     <div class="col-md-3 scroll-y">
                         <h3>My Keywords</h3>
@@ -147,7 +151,6 @@
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="filterMenu">
                                     <li ng-click="selectFilter('All')">All</li>
-                                    <li ng-click="selectFilter('Gold')">Gold</li>
                                     <li ng-click="selectFilter('Example')">Example</li>
                                     <li ng-click="selectFilter('Saved')">Saved</li>
                                     <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
@@ -155,14 +158,13 @@
                             </div>
                             <label>Search: <input ng-model="searchText"></label>
                         </div>
-                        <div ng-repeat="item in code.user_ex | filter:filterTweetsFlag(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                        <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="item.example=!item.example"><span class="glyphicon glyphicon-star"></span></div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="item.ambiguous=!item.ambiguous"><span>?</span></div>
                             </div>
-                            <div>{$ item.text $}</div>
+                            <div>{$ item.message.text $}</div>
                         </div>
                     </div>
                 </div>

@@ -159,7 +159,7 @@ class Experiment(models.Model):
 
     def random_assign_messages(self):
         message_count = self.dictionary.dataset.message_count
-        messages = map(lambda x: x, self.dictionary.dataset.message_set.all())
+        messages = map(lambda x: x, self.dictionary.dataset.get_message_set())
         shuffle(messages)
         num_stages = self.stage_count
         num_per_stage = int(round(message_count / num_stages))
@@ -281,7 +281,7 @@ class StageAssignment(models.Model):
     def get_next_stage(self):
         return StageAssignment.objects.filter(assignment=self.assignment, order__gt=self.order).first()
 
-    def initialize_stage(self, selected_num=100):
+    def initialize_stage(self, selected_num=5):
         stage = self.stage
         message_count = self.stage.messages.count()
         messages = map(lambda x: x, self.stage.messages.all())
@@ -421,7 +421,7 @@ class Progress(models.Model):
 
     def get_next_message(self):
         current_stage = self.get_current_stage()
-        return current_stage.selection.filter(order__gt=self.current_message_index).first().message
+        return current_stage.selection.filter(order__gt=self.current_message_index).first()
 
     def get_next_stage(self):
         current_stage = self.get_current_stage()

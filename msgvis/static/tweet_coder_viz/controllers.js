@@ -62,8 +62,10 @@
         };
 
         // Top pane
-
+        $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
+        $scope.codes = undefined;
+        $scope.coded_messages = undefined;
 
         // Tweets
         $scope.codeItems = undefined;
@@ -81,7 +83,7 @@
 
         $scope.selectLabel = function(code){
             if ($scope.Progress.current_status == 'C'){
-                $scope.currentMessage.label = code.code_text;
+                //$scope.currentMessage.label = code.code_text;
             }
             $scope.selectedCode = code;
         };
@@ -179,19 +181,26 @@
                 usSpinnerService.spin('label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('label-spinner');
+                    $scope.currentMessage = Message.current_message;
                 });
             }
         };
 
         $scope.submitLabel = function(){
 
-            var request = Message.submit($scope.Message.current_message_id, $scope.selectedCode.code_id);
+            var request = Message.submit($scope.selectedCode.code_id);
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('label-spinner');
 
                     // Save the submitted message to the list and reset selected code
+                    var idx = $scope.coded_messages['user'][$scope.selectedCode.code_text]
+                        .map(function(d){ return d.message.id; })
+                        .indexOf(Message.last_message.message.id);
+                    if (idx != -1){
+                        $scope.coded_messages['user'][$scope.selectedCode.code_text].splice(idx, 1);
+                    }
                     $scope.coded_messages['user'][$scope.selectedCode.code_text].push(Message.last_message);
                     $scope.selectedCode = undefined;
 
@@ -561,7 +570,7 @@
         });
 
         $scope.$on('messages::load_coded_messages', function($event, data) {
-            $scope.coded_messages[data.source][data.code] = data.messages;
+            $scope.coded_messages = data;
         });
         $scope.$on('definitions::updated', function($event, data) {
             $scope.codes = data;

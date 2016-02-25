@@ -56,10 +56,13 @@ class Dataset(models.Model):
 
     @property
     def message_count(self):
-        return self.message_set.count()
+        return self.get_message_set().count()
 
     def __unicode__(self):
         return self.name
+
+    def get_message_set(self):
+        return self.message_set.filter(time__isnull=False).all()
 
 
     def get_dictionary(self):

@@ -199,18 +199,18 @@
                         charStyle: charStyle,
                         ambiguous: messageData.ambiguous || false,
                         saved: messageData.saved || false,
-                        example: messageData.example || false,
+                        example: messageData.example || false
                     };
                 },
-                submit: function (message, code_id) {
+                submit: function (code_id) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message.id});
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: self.current_message.id});
 
                     var request = {
                         code: code_id,
-                        is_example: message.example,
-                        is_ambiguous: message.ambiguous,
-                        is_saved: message.saved
+                        is_example: self.current_message.example,
+                        is_ambiguous: self.current_message.ambiguous,
+                        is_saved: self.current_message.saved
                     };
 
 
@@ -241,7 +241,7 @@
                         return $http.get(apiUrl, request)
                             .success(function (data) {
                                 self.coded_messages[source][code.code_text] = data.assignments;
-                                $rootScope.$emit("messages::load_coded_messages", {source: source, code: code.code_text, messages: data.assignments});
+                                $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
                             });
                     });
 
@@ -306,7 +306,7 @@
                             });
                             self.codes = self.definitions_by_source.master;
 
-                            $rootScope.$emit('definitions::updated', self.codes);
+                            $rootScope.$broadcast('definitions::updated', self.codes);
                         });
 
                 },

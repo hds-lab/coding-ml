@@ -228,7 +228,7 @@ class Dictionary(models.Model):
         return message_id_list, results
 
     def load_to_scikit_learn_format(self, training_portion=0.80, use_tfidf=True, source=None):
-        messages = map(lambda x: x, self.dataset.message_set.all().order_by('id'))
+        messages = map(lambda x: x, self.dataset.get_message_set().order_by('id'))
         count = len(messages)
         training_data_num = int(round(float(count) * training_portion))
         testing_data_num = count - training_data_num
@@ -564,7 +564,7 @@ class TweetWord(models.Model):
 
     @property
     def all_messages(self):
-        queryset = self.dataset.message_set.all()
+        queryset = self.dataset.get_message_set()
         queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_features)))
         return queryset
 
