@@ -1,6 +1,7 @@
 from operator import itemgetter
 
 from django.db import models
+from django.db import transaction
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.coding import models as coding_models
@@ -371,7 +372,7 @@ class MessageSelection(models.Model):
     A model for saving message order in a stage
     """
     stage_assignment = models.ForeignKey(StageAssignment, default=None)
-    message = models.ForeignKey(corpus_models.Message, related_name="selected_messages", default=None)
+    message = models.ForeignKey(corpus_models.Message, related_name="selection", default=None)
     order = models.IntegerField()
 
     class Meta:
@@ -387,16 +388,81 @@ class Progress(models.Model):
     current_message_index = models.IntegerField(default=0)
 
     STATUS_CHOICES = (
+        ('I', 'Initialization'),
         ('C', 'Coding'),
+        ('W', 'Waiting'),
         ('R', 'Review'),
+        ('S', 'Switching stage'),
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='C')
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='I')
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The code created time"""
 
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
+
+    def get_current_stage(self):
+        assignment = self.user.pair.first().assignment
+        return assignment.stage_assignments.get(order=self.current_stage_index)
+
+    def get_current_message(self):
+        current_stage = self.get_current_stage()
+        return current_stage.selected_messages.get(order=self.current_message_index).message
+
+    def get_next_message(self):
+        current_stage = self.get_current_stage()
+        return current_stage.selected_messages.filter(order__gt=self.current_message_index).first()
+
+    def get_next_stage(self):
+        current_stage = self.get_current_stage()
+        return current_stage.get_next_stage()
+
+    def set_to_next_step(self):
+        # TODO handle being locked
+        with transaction.atomic(savepoint=False):
+            partner = self.user.pair.first().get_partner(self.user)
+            partner_progress = partner.progress
+
+            if self.status == 'I' and partner_progress.status == 'I':
+                current_stage = self.get_current_stage()
+                current_stage.initialize_stage()
+                self.status = 'C'
+                self.save()
+                partner_progress.status = 'C'
+                partner_progress.save()
+                return True
+            elif self.status == 'C':
+                next_message = self.get_next_message()
+                if next_message is None:  # finish coding this stage
+                    self.status = 'W'
+                    self.save()
+                    return True
+                else:
+                    self.current_message_index = next_message.order
+                    self.save()
+                    return True
+            elif self.status == 'W' and partner_progress.status == 'W':
+                self.status = 'R'
+                self.save()
+                partner_progress.status = 'R'
+                partner_progress.save()
+                return True
+            elif self.status == 'R':
+                self.status = 'S'
+                self.save()
+                return True
+            elif self.status == 'S' and partner_progress.status == 'S':
+                current_stage = self.get_current_stage()
+                current_stage.process_stage()
+                self.status = 'I'
+                self.save()
+                partner_progress.status = 'I'
+                partner_progress.save()
+                return True
+            else:
+                return False
+
 
 
 class SVMModel(models.Model):
