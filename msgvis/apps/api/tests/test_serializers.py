@@ -76,7 +76,8 @@ class CodeSerializerTest(TestCase):
             {
                 "code": code.text,
                 "source": "master",
-                "messages": [serializers.MessageSerializer(messages[0]).data, serializers.MessageSerializer(messages[1]).data]
+                "messages": [serializers.MessageSerializer(messages[0]).data,
+                             serializers.MessageSerializer(messages[1]).data]
             },
             {
                 "code": code2.text,

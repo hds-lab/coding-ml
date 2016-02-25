@@ -17,6 +17,7 @@ from rest_framework import serializers, pagination
 import msgvis.apps.corpus.models as corpus_models
 import msgvis.apps.enhance.models as enhance_models
 import msgvis.apps.coding.models as coding_models
+import msgvis.apps.experiment.models as experiment_models
 from django.contrib.auth.models import User
 
 
@@ -135,17 +136,23 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
 
 
 class CodeDefinitionSerializer(serializers.Serializer):
-    code = serializers.CharField(required=False)
+    code_id = serializers.IntegerField(required=False)
+    code_text = serializers.CharField(required=False)
     source = UserSerializer(required=False)
     text = serializers.CharField()
     examples = MessageSerializer(many=True, required=False)
-    assignments = CodeAssignmentSerializer(many=True, required=False)
 
+
+class CodeDefinitionSetSerializer(serializers.Serializer):
+    source = UserSerializer(required=False)
+    definitions = CodeDefinitionSerializer(many=True, required=False)
 
 class CodeMessageSerializer(serializers.Serializer):
-    code = serializers.CharField()
+    code_id = serializers.IntegerField(required=False)
+    code_text = serializers.CharField(required=False)
     source = UserSerializer()
-    messages = MessageSerializer(many=True)
+    assignments = CodeAssignmentSerializer(many=True, required=False)
+
 
 class DisagreementIndicatorSerializer(serializers.ModelSerializer):
     user_assignment = CodeAssignmentSerializer(required=False)
@@ -159,3 +166,10 @@ class PairwiseSerializer(serializers.Serializer):
     user_code = serializers.CharField()
     partner_code = serializers.CharField()
     count = serializers.IntegerField()
+
+class ProgressSerializer(serializers.ModelSerializer):
+    user = UserSerializer(required=False)
+    class Meta:
+        model = experiment_models.Progress
+        fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', )
+        read_only_fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', )

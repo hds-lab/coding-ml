@@ -33,6 +33,8 @@ class CodeAssignment(models.Model):
     """ Whether this code is valid (False indicate the code to the message has been removed) """
 
 
+
+
 class CodeDefinition(models.Model):
     """
     A model for code definition
@@ -40,7 +42,11 @@ class CodeDefinition(models.Model):
     code = models.ForeignKey(enhance_models.Code, related_name="definitions")
     source = models.ForeignKey(User, related_name="definitions")
     text = models.TextField(null=True, blank=True, default="")
-    examples = models.ManyToManyField(corpus_models.Message, related_name="definitions")
+
+    @property
+    def examples(self):
+        return map(lambda x: x.message, CodeAssignment.objects.filter(valid=True, is_example=True, source=self.source, code=self.code).all())
+
 
     valid = models.BooleanField(default=True)
     """ Whether this code definition is valid (False indicate the code to the message has been removed) """

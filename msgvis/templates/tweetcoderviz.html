@@ -80,7 +80,7 @@
     </div>
     <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
-        <div id="coding" ng-show="state=='code'">
+        <div id="coding" ng-show="is_status('C')">
             <div id="top-area">
                 <h2>New Label</h2>
                 <div class="row" id="labeling">
@@ -169,7 +169,7 @@
             </div>
         </div>
 
-        <div id="reviewing" ng-show="state=='review'">
+        <div id="reviewing" ng-show="is_status('R')">
             <div id="top-area">
                 <h2>Review Code Definitions</h2>
                 <div class="row" data-toggle="buttons" id="codes">

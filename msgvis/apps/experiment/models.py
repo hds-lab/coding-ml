@@ -371,9 +371,13 @@ class MessageSelection(models.Model):
     """
     A model for saving message order in a stage
     """
-    stage_assignment = models.ForeignKey(StageAssignment, default=None)
+    stage_assignment = models.ForeignKey(StageAssignment, related_name="selection", default=None)
     message = models.ForeignKey(corpus_models.Message, related_name="selection", default=None)
     order = models.IntegerField()
+
+    @property
+    def stage(self):
+        return self.stage_assignment.stage
 
     class Meta:
         ordering = ["order"]
@@ -383,18 +387,19 @@ class Progress(models.Model):
     """
     A model for recording a user's current stage
     """
-    user = models.ForeignKey(User, related_name="progress", unique=True)
+    user = models.OneToOneField(User, related_name="progress", unique=True)
     current_stage_index = models.IntegerField(default=0)
     current_message_index = models.IntegerField(default=0)
 
     STATUS_CHOICES = (
+        ('N', 'Not yet start'),
         ('I', 'Initialization'),
         ('C', 'Coding'),
         ('W', 'Waiting'),
         ('R', 'Review'),
         ('S', 'Switching stage'),
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='I')
+    current_status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='N')
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The code created time"""
@@ -402,64 +407,89 @@ class Progress(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
 
+    @property
+    def current_message_id(self):
+        return self.get_current_message().id
+
     def get_current_stage(self):
         assignment = self.user.pair.first().assignment
         return assignment.stage_assignments.get(order=self.current_stage_index)
 
     def get_current_message(self):
         current_stage = self.get_current_stage()
-        return current_stage.selected_messages.get(order=self.current_message_index).message
+        return current_stage.selection.get(order=self.current_message_index).message
 
     def get_next_message(self):
         current_stage = self.get_current_stage()
-        return current_stage.selected_messages.filter(order__gt=self.current_message_index).first()
+        return current_stage.selection.filter(order__gt=self.current_message_index).first().message
 
     def get_next_stage(self):
         current_stage = self.get_current_stage()
         return current_stage.get_next_stage()
 
     def set_to_next_step(self):
-        # TODO handle being locked
+        # make sure only one user is making changes to the progress table
         with transaction.atomic(savepoint=False):
             partner = self.user.pair.first().get_partner(self.user)
             partner_progress = partner.progress
 
-            if self.status == 'I' and partner_progress.status == 'I':
-                current_stage = self.get_current_stage()
-                current_stage.initialize_stage()
-                self.status = 'C'
+            if self.current_status == 'N':
+                self.current_status = 'I'
                 self.save()
-                partner_progress.status = 'C'
-                partner_progress.save()
+
+                # Switch to the next status when both are on the same page
+                if self.current_status == 'I' and partner_progress.current_status == 'I':
+                    current_stage = self.get_current_stage()
+                    current_stage.initialize_stage()
+                    self.current_status = 'C'
+                    self.current_message_index = 0
+                    self.save()
+                    partner_progress.current_status = 'C'
+                    partner_progress.current_message_index = 0
+                    partner_progress.save()
+
                 return True
-            elif self.status == 'C':
+
+            elif self.current_status == 'C':
+                current_message = self.get_current_message()
+
+                # Check if the current message has been coded
+                if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
+                                                                   source=self.user, message=current_message).exists():
+                    return False
+
                 next_message = self.get_next_message()
                 if next_message is None:  # finish coding this stage
-                    self.status = 'W'
+                    self.current_status = 'W'
                     self.save()
-                    return True
                 else:
                     self.current_message_index = next_message.order
                     self.save()
-                    return True
-            elif self.status == 'W' and partner_progress.status == 'W':
-                self.status = 'R'
-                self.save()
-                partner_progress.status = 'R'
-                partner_progress.save()
+
+                # Switch to the next status when both are on the same page
+                if self.current_status == 'W' and partner_progress.current_status == 'W':
+                    self.current_status = 'R'
+                    self.save()
+                    partner_progress.current_status = 'R'
+                    partner_progress.save()
+
                 return True
-            elif self.status == 'R':
-                self.status = 'S'
+
+            elif self.current_status == 'R':
+                self.current_status = 'S'
                 self.save()
+
+                # Switch to the next status when both are on the same page
+                if self.current_status == 'S' and partner_progress.current_status == 'S':
+                    current_stage = self.get_current_stage()
+                    current_stage.process_stage()
+                    self.current_status = 'N'
+                    self.save()
+                    partner_progress.current_status = 'N'
+                    partner_progress.save()
+
                 return True
-            elif self.status == 'S' and partner_progress.status == 'S':
-                current_stage = self.get_current_stage()
-                current_stage.process_stage()
-                self.status = 'I'
-                self.save()
-                partner_progress.status = 'I'
-                partner_progress.save()
-                return True
+
             else:
                 return False
 

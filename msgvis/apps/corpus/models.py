@@ -27,10 +27,11 @@ class Code(models.Model):
 
         definition = self.definitions.get(source=source, valid=True)
         return {
-            "code": self.text,
+            "code_id": self.id,
+            "code_text": self.text,
             "source": source,
             "text": definition.text,
-            "examples": definition.examples.all()
+            "examples": definition.examples
         }
 
 class Dataset(models.Model):
@@ -292,15 +293,16 @@ class Message(models.Model):
 
     def get_feature_vector(self, dictionary, source=None):
         vector = []
-        for feature_score in self.feature_scores.filter(feature__source__isnull=True).all():
-            vector.append({"text": feature_score.feature.text,
-                           "feature_index": feature_score.feature_index,
-                           "count": feature_score.count,
-                           "source": "system"})
-        if source is not None:
+        if source is None:
+            for feature_score in self.feature_scores.filter(feature__source__isnull=True).all():
+                vector.append({"text": feature_score.feature.text,
+                               "feature_index": feature_score.feature_index,
+                               "count": feature_score.count,
+                               "source": "system"})
+        else:
             for feature_score in self.feature_scores.filter(feature__source=source, feature__valid=True).all():
                 vector.append({"text": feature_score.feature.text,
                                "feature_index": feature_score.feature_index,
                                "count": feature_score.count,
-                               "source": feature_score.feature.source }) #TODO: fix source = None problem
+                               "source": feature_score.feature.source })
         return vector

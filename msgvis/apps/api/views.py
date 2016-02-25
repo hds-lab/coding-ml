@@ -15,8 +15,8 @@ The view classes below define the API endpoints.
 | Snapshots                                                       | /api/snapshots  | Save a visualization snapshot                   |
 +-----------------------------------------------------------------+-----------------+-------------------------------------------------+
 """
-import types
-from django.db import transaction
+
+from django.db import IntegrityError
 
 from rest_framework import status
 from rest_framework.views import APIView, Response
@@ -155,7 +155,7 @@ class FeatureVectorView(APIView):
     """
     Get svm result of a dictionary
 
-    **Request:** ``GET /api/vector/(?P<message_id>[0-9]+)``
+    **Request:** ``GET /api/vector/(?P<message_id>[0-9]+)?feature_source=system+user+partner``
     """
 
 
@@ -165,16 +165,25 @@ class FeatureVectorView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
         dictionary = user.pair.first().assignment.experiment.dictionary
         message_id = int(message_id)
+        feature_sources = request.query_params.get('feature_source', "user").split(" ")
 
         try:
 
             message = corpus_models.Message.objects.get(id=message_id)
-            feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
+            final_vector = []
+            for feature_source in feature_sources:
+                if feature_source == "system":
+                    final_vector += message.get_feature_vector(dictionary=dictionary, source=None)
+                elif feature_source == "user":
+                    final_vector += message.get_feature_vector(dictionary=dictionary, source=user)
+                elif feature_source == "partner":
+                    final_vector += message.get_feature_vector(dictionary=dictionary, source=partner)
             tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
             # TODO: make sure to better communicate the fact we lemmatize words
-            output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector})
+            output = serializers.FeatureVectorSerializer({'message': message, 'tokens': tweet_words, 'feature_vector': final_vector})
 
             return Response(output.data, status=status.HTTP_200_OK)
         except:
@@ -299,11 +308,12 @@ class CodeDefinitionView(APIView):
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
 
-        sources = request.query_params.get('source', user.username).split(" ")
+        sources = request.query_params.get('source', "user").split(" ")
 
         try:
-            code_definitions = []
+            code_def_set = []
             for source in sources:
+                code_definitions = []
                 if source == "user":
                     source_user = user
                 elif source == "partner":
@@ -314,8 +324,9 @@ class CodeDefinitionView(APIView):
                     code_definition = code.get_definition(source_user)
                     if code_definition:
                         code_definitions.append(code_definition)
+                code_def_set.append({"source": source_user, "definitions":code_definitions})
 
-            output = serializers.CodeDefinitionSerializer(code_definitions, many=True)
+            output = serializers.CodeDefinitionSetSerializer(code_def_set, many=True)
 
             return Response(output.data, status=status.HTTP_200_OK)
         except:
@@ -401,12 +412,14 @@ class CodeAssignmentView(APIView):
                 user_dict = self.request.user
                 if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
                     user = User.objects.get(id=self.request.user.id)
-                    assignments = coding_models.CodeAssignment.objects.filter(source=user, message=message, valid=True)
+                    assignments = coding_models.CodeAssignment.objects.filter(is_user_labeled=True, source=user,
+                                                                              message=message, valid=True)
                     if assignments.exists():
                         assignments.update(valid=False)
 
                     code_assignment, created = coding_models.CodeAssignment.objects.get_or_create(
-                                                                    source=user, message=message, code=code, valid=True)
+                                                                    is_user_labeled=True, source=user,
+                                                                    message=message, code=code, valid=True)
 
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
@@ -448,7 +461,7 @@ class CodeMessageView(APIView):
     """
     Get the messages of a code
 
-    **Request:** ``GET /code_messages/code=code1+code2...&source=master&stage=current``
+    **Request:** ``GET /code_messages/?code_id=1&source=master&stage=current``
     (Whatever value is given to stage will make this query only get current stage.)
     """
 
@@ -458,38 +471,44 @@ class CodeMessageView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        stage = None
-        if request.query_params.get('stage'):
-            stage = user.progress.current_stage
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
 
         try:
-            codes = request.query_params.get('code', "").split(" ")
-            source = user
-            if request.query_params.get('source'):
-                source_username = request.query_params.get('source')
-                source = User.objects.get(username=source_username)
+            code_id = int(request.query_params.get('code'))
+            code = corpus_models.Code.objects.get(id=code_id)
 
-            code_messages = []
-            for code in codes:
-                if coding_models.Code.objects.filter(text=code).exists():
-                    code_obj = coding_models.Code.objects.get(text=code)
-                    if stage:
-                        #messages = stage.get_messages_by_code(source, code_obj)
-                        assignments = coding_models.CodeAssignment.objects.filter(source=source,
-                                                                                  code=code_obj,
-                                                                                  message__message_selection__stage=stage,
-                                                                                  valid=True).all()
-                    else:
-                        assignments = coding_models.CodeAssignment.objects.filter(source=source,
-                                                                                  code=code_obj,
-                                                                                  valid=True).all()
-                    code_messages.append({
-                        "code": code,
-                        "source": source,
-                        "assignments": assignments,
-                    })
+            stage = None
+            if request.query_params.get('stage'):
+                stage = user.progress.current_stage
 
-            output = serializers.CodeMessageSerializer(code_messages, many=True)
+            source = request.query_params.get('source', "user")
+            if source == "user":
+                source_user = user
+            elif source == "partner":
+                source_user = partner
+            else:
+                source_user = User.objects.get(username=source)
+
+
+            if stage:
+                assignments = coding_models.CodeAssignment.objects.filter(source=source_user,
+                                                                          is_user_labeled=True,
+                                                                          code=code,
+                                                                          message__selection__stage=stage,
+                                                                          valid=True).all()
+            else:
+                assignments = coding_models.CodeAssignment.objects.filter(source=source_user,
+                                                                          is_user_labeled=True,
+                                                                          code=code,
+                                                                          valid=True).all()
+            code_messages = {
+                "code_id": code.id,
+                "code_text": code.text,
+                "source": source_user,
+                "assignments": assignments,
+            }
+
+            output = serializers.CodeMessageSerializer(code_messages)
 
             return Response(output.data, status=status.HTTP_200_OK)
         except:
@@ -552,8 +571,10 @@ class DisagreementIndicatorView(APIView):
             data = input.validated_data
             type = data['type']
 
-            user_assignment = coding_models.CodeAssignment.objects.get(source=user, message=message)
-            partner_assignment = coding_models.CodeAssignment.objects.get(source=partner, message=message)
+            user_assignment = coding_models.CodeAssignment.objects.get(source=user, message=message,
+                                                                       is_user_labeled=True)
+            partner_assignment = coding_models.CodeAssignment.objects.get(source=partner, message=message,
+                                                                          is_user_labeled=True)
 
             indicator = coding_models.DisagreementIndicator.objects.filter(message=message,
                                                                         user_assignment=user_assignment,
@@ -637,6 +658,69 @@ class PairwiseConfusionMatrixView(APIView):
             pdb.set_trace()
 
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProgressView(APIView):
+    """
+    Get the progress of the current user
+
+    **Request:** ``GET /progress
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        progress = user.progress
+
+        try:
+
+            while progress.current_status == 'N':
+                try:
+                    progress.set_to_next_step()
+                except IntegrityError:
+                    import time
+                    time.sleep(1)
+
+            output = serializers.ProgressSerializer(progress)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+    def post(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        progress = user.progress
+
+        try:
+            success = False
+            while True:
+                try:
+                    success = progress.set_to_next_step()
+                    break
+                except IntegrityError:
+                        import time
+                        time.sleep(1)
+            if success:
+                progress = user.progress
+                output = serializers.ProgressSerializer(progress)
+                return Response(output.data, status=status.HTTP_200_OK)
+            else:
+                return Response("No progress can be made.", status=status.HTTP_400_BAD_REQUEST)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
 
 
 class APIRoot(APIView):
