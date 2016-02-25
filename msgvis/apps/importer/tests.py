@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from msgvis.apps.corpus.models import Dataset, Message
-from msgvis.apps.questions.models import Article, Question
 
-from models import create_an_instance_from_json, load_research_questions_from_json, get_or_create_a_tweet_from_json_obj
+from models import create_an_instance_from_json, get_or_create_a_tweet_from_json_obj
 
 
 # Create your tests here.

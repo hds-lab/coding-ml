@@ -17,7 +17,7 @@ class CodeSerializerTest(TestCase):
     def test_code_definition_serialization(self):
         master = User.objects.create_user(username='master')
         user1 = User.objects.create_user(username='user1')
-        code = coding_models.Code.objects.create(text='testcode')
+        code = corpus_models.Code.objects.create(text='testcode')
         dataset = corpus_models.Dataset.objects.create(name='test', description='test')
         messages = [corpus_models.Message.objects.create(dataset=dataset, text='msg0'),
                     corpus_models.Message.objects.create(dataset=dataset, text='msg1'),
@@ -59,8 +59,8 @@ class CodeSerializerTest(TestCase):
 
     def test_code_message_serialization(self):
         master = User.objects.create_user(username='master')
-        code = coding_models.Code.objects.create(text='testcode')
-        code2 = coding_models.Code.objects.create(text='testcode2')
+        code = corpus_models.Code.objects.create(text='testcode')
+        code2 = corpus_models.Code.objects.create(text='testcode2')
         dataset = corpus_models.Dataset.objects.create(name='test', description='test')
         messages = [corpus_models.Message.objects.create(dataset=dataset, text='msg0'),
                     corpus_models.Message.objects.create(dataset=dataset, text='msg1'),
@@ -89,8 +89,8 @@ class CodeSerializerTest(TestCase):
         codes = [code.text, code2.text]
         code_messages = []
         for code in codes:
-            if coding_models.Code.objects.filter(text=code).exists():
-                code_obj = coding_models.Code.objects.get(text=code)
+            if corpus_models.Code.objects.filter(text=code).exists():
+                code_obj = corpus_models.Code.objects.get(text=code)
                 messages = corpus_models.Message.objects.filter(code_assignments__valid=True,
                                                                 code_assignments__source=source,
                                                                 code_assignments__code=code_obj).all()
