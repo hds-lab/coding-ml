@@ -183,19 +183,19 @@
                         <div class="code-name">{$ code.code_text $}</div>
                     </div>
                 </div>
-                <div class="row" id="definitions" ng-repeat="code in codeItems" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_id == selectedCode.code_id">
+                <div class="row" id="definitions" ng-repeat="code in codes" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_id == selectedCode.code_id">
                     <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                     <div class="col-md-4 scroll-y">
                         <h3>Master Definition</h3>
-                        <p class="code-definition">{$ code.master_def $}</p>
+                        <p class="code-definition">{$ Code.definitions_by_code[code.code_text]["master"].text $}</p>
                     </div>
                     <div class="col-md-4 scroll-y">
                         <h3>Partner Definition</h3>
-                        <p class="code-definition">{$ code.partner_def $}</p>
+                        <p class="code-definition">{$ Code.definitions_by_code[code.code_text]["partner"].text $}</p>
                     </div>
                     <div class="col-md-4 scroll-y">
                         <h3>My Definition</h3>
-                        <textarea class="code-definition" ng-model="code.user_def" ng-change="saveDefinition(code)"></textarea>
+                        <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text" ng-change="saveDefinition(code)"></textarea>
                     </div>
                 </div>
             </div>
