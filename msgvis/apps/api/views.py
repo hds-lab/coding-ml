@@ -235,6 +235,7 @@ class UserFeatureView(APIView):
             feature = dictionary.add_feature(token_list, source=user)
 
             item = {
+                "feature_id": feature.id,
                 "feature_index": feature.index,
                 "feature_text": feature.text,
                 "source": "user",
@@ -324,6 +325,7 @@ class FeatureCodeDistributionView(APIView):
             for feature in features:
                 source = feature.source if hasattr(feature, 'source') else "system"
                 item = {
+                    "feature_id": feature.id,
                     "feature_index": feature.index,
                     "feature_text": feature.text,
                     "source": source_map[source],

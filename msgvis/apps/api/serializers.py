@@ -85,6 +85,7 @@ class FeatureVectorSerializer(serializers.Serializer):
     feature_vector = serializers.ListField(child=serializers.DictField())
 
 class FeatureCodeDistributionSerializer(serializers.Serializer):
+    feature_id = serializers.IntegerField()
     feature_index = serializers.IntegerField()
     feature_text = serializers.CharField()
     source = serializers.CharField()

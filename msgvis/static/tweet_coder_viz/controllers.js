@@ -508,20 +508,20 @@
                 var key = item.message.id;
                 console.log("addFeature for: " + key);
 
-                // check if it already exists
+                /*// check if it already exists
                 var existingTokens = $scope.message_featureList[key];
 
                 if (existingTokens) {
                     delete $scope.message_featureList[key];
-                }
+                }*/
 
                 var request = Feature.add(tokens);
                 if (request) {
                     usSpinnerService.spin('vector-spinner');
                     request.then(function() {
                         usSpinnerService.stop('vector-spinner');
-                        var feature = Feature.latest_data;
-                        $scope.message_featureList[key] = feature; // TODO: make sure this is correct
+                    //    var feature = Feature.latest_data;
+                   //     $scope.message_featureList[key] = feature; // TODO: make sure this is correct
                     });
                 }
 
@@ -543,25 +543,25 @@
                 console.log("removeFeature for: " + key);
 
                 // check if it already exists
-                var existingTokens = $scope.featureList[key];
+                //var existingTokens = $scope.featureList[key];
 
-                if (existingTokens) {
+                //if (existingTokens) {
 
-                    //var request = UserFeatures.remove(feature.id);
-                    //if (request) {
-                    //    usSpinnerService.spin('vector-spinner');
-                    //    request.then(function() {
-                    //        usSpinnerService.stop('vector-spinner');
+                    var request = Feature.remove(feature);
+                    if (request) {
+                        usSpinnerService.spin('vector-spinner');
+                        request.then(function() {
+                            usSpinnerService.stop('vector-spinner');
                     //        delete $scope.featureList[key];
-                    //    });
-                    //}
+                        });
+                    }
 
-                    delete $scope.featureList[key];
-                    feature.source.submittedTokenIndices.clear();
-                }
-                else {
-                    console.log("feature does not exist: " + key);
-                }
+                    //delete $scope.featureList[key];
+                  //  feature.source.submittedTokenIndices.clear();
+                //}
+                //else {
+                //    console.log("feature does not exist: " + key);
+                //}
             }
         };
 

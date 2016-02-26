@@ -74,17 +74,18 @@
                         });
 
                 },
-                remove: function (id) {
+                remove: function (feature) {
                     var self = this;
 
                     var request = {
 
                     };
 
-                    var itemApiUrl = djangoUrl.reverse('feature', {feature_id: id});
+                    var itemApiUrl = djangoUrl.reverse('feature', {feature_id: feature.feature_id});
                     return $http.delete(itemApiUrl, request)
                         .success(function (data) {
-                            self.latest_data = data;
+                            // Remove feature from list
+                            delete self.distributions["user"][feature.feature_text];
                         });
                 },
                 get_distribution: function(source){
