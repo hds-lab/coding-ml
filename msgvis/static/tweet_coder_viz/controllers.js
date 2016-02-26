@@ -121,7 +121,7 @@
                         break;
                 }
 
-                return (!searchText || searchText.length == 0 || item.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
+                return (!searchText || searchText.length == 0 || item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
             }
         };
 
@@ -130,7 +130,7 @@
                 var confusion = $scope.selectedConfusion;
                 var searchText = $scope.searchText;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
-                return (!searchText || searchText.length == 0 || item.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
+                return (!searchText || searchText.length == 0 || item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
             }
         };
 
