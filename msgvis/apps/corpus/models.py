@@ -309,3 +309,7 @@ class Message(models.Model):
                                "count": feature_score.count,
                                "source": feature_score.feature.source })
         return vector
+
+    @property
+    def tokens(self):
+        return map(lambda x: x.tweet_word.original_text, self.tweetword_connections.all())

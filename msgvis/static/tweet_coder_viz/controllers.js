@@ -31,7 +31,7 @@
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Progress, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, usSpinnerService) {
 
         $scope.Progress = Progress;
         $scope.Message = Message;
@@ -39,7 +39,7 @@
 
         $scope.is_status = function(status){
             return Progress.current_status == status
-        }
+        };
 
         var sortOption_None = 0;
         var sortOption_Descending = 1;
@@ -65,6 +65,7 @@
         $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
         $scope.codes = undefined;
+        $scope.code_map = {};
         $scope.coded_messages = undefined;
 
         // Tweets
@@ -77,13 +78,14 @@
         $scope.confusionPairs = undefined;
         $scope.distribution = undefined;
         $scope.selectedConfusion = undefined;
-        $scope.featureList = {};
+        $scope.featureList = [];
+        $scope.message_featureList = {}; // TODO: fix this -- there is no message feature now
 
 
 
         $scope.selectLabel = function(code){
             if ($scope.Progress.current_status == 'C'){
-                //$scope.currentMessage.label = code.code_text;
+                //$scope.currentMessage.user_code.text = code.code_text;
             }
             $scope.selectedCode = code;
         };
@@ -123,9 +125,11 @@
             }
         };
 
-        $scope.filterTweetsConfusion = function(confusion, searchText) {
+        $scope.filterTweetsConfusion = function() {
             return function(item) {
-                var flagged = !confusion || (item.label == confusion.label && item.partner == confusion.partner);
+                var confusion = $scope.selectedConfusion;
+                var searchText = $scope.searchText;
+                var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
                 return (!searchText || searchText.length == 0 || item.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
             }
         };
@@ -234,32 +238,18 @@
 
         $scope.getAllMessages = function() {
 
-            var request = Message.load_coded_messages();
+            var request = Message.load_all_coded_messages();
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function () {
                     usSpinnerService.stop('label-spinner');
-                    $scope.allItems = [];
-                    $scope.confusionPairs = [];
+                    $scope.allItems = Message.all_coded_messages;
 
-                    // TODO: calculate pairs
-
-                    for (var i = 0; i < 200; i++) {
-                        var prototype = tweetItem(FeatureVector.data);
-
-                        var myLabel = Math.floor(Math.random() * $scope.codes.length);
-                        var partnerLabel = Math.floor(Math.random() * $scope.codes.length);
-
+                    for (var i = 0; i < $scope.allItems.length; i++) {
+                        var prototype = $scope.allItems[i];
                         // Update all message items
-                        prototype.characters = prototype.text.split("");
-                        prototype.label = $scope.codes[myLabel].code_text;
-                        prototype.partner = $scope.codes[partnerLabel].code_text;
-                        prototype.ambiguous = Math.random() < 0.5;
-                        prototype.example = Math.random() < 0.5;
-                        prototype.saved = Math.random() < 0.5;
-                        prototype.gold = false;
-                        prototype.id = i;
-                        prototype.analysis = myLabel != partnerLabel ? "Who's right?" : undefined;
+                        prototype.characters = prototype.message.text.split("");
+                        //prototype.analysis = myLabel != partnerLabel ? "Who's right?" : undefined;
 
                         // Interaction states
                         prototype.hoveredCharStart = -1;
@@ -268,22 +258,6 @@
                         prototype.selectedTokens = undefined;
                         prototype.selectedTokenIndices = new Map();
 
-                        $scope.allItems.push(prototype);
-
-                        // Update confusion pair
-                        var pairKey = myLabel + "_" + partnerLabel;
-
-                        var confusionPair = $scope.confusionPairs[pairKey];
-                        if (confusionPair == undefined) {
-                            confusionPair = [];
-                            confusionPair.key = pairKey;
-                            confusionPair.label = $scope.codes[myLabel].code_text;
-                            confusionPair.partner = $scope.codes[partnerLabel].code_text;
-                            $scope.confusionPairs[pairKey] = confusionPair;
-                            $scope.confusionPairs.push(confusionPair);
-                        }
-
-                        $scope.confusionPairs[pairKey].push(prototype);
                     }
                 });
             }
@@ -297,10 +271,45 @@
                 request.then(function() {
                     usSpinnerService.stop('code-detail-spinner');
                     Message.load_coded_messages();
-                    $scope.codeItems = Code.codes;
+                    $scope.codes = Code.codes;
+                    if (Progress.current_status == 'R'){
+                        $scope.load_distribution();
+                        $scope.load_pairwise_distribution();
+
+                    }
                 });
             }
             
+        };
+
+        $scope.load_distribution = function(){
+
+            var request = Feature.get_distribution();
+            if (request) {
+                usSpinnerService.spin('feature-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('feature-spinner');
+                    $scope.featureList = Feature.distribution;
+                    /*
+                    TODO: This is not correct -- we want feature list of messages
+                    $scope.featureList.forEach(function(feature){
+                        $scope.message_featureList[feature.index] = feature;
+                    });*/
+                });
+            }
+
+        };
+        $scope.load_pairwise_distribution = function(){
+
+            var request = Code.get_pairwise();
+            if (request) {
+                usSpinnerService.spin('pairwise-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('pairwise-spinner');
+                    $scope.confusionPairs = Code.pairwise_distribution;
+                });
+            }
+
         };
 
 
@@ -466,7 +475,7 @@
             }
 
             if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
-                style["background"] = $scope.codeColorLight($scope.codes[item.label]);
+                style["background"] = $scope.codeColorLight($scope.code_map[item.user_code.text]);
             }
             return style;
         };
@@ -474,34 +483,26 @@
         $scope.addFeature = function(item){
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
                 var tokens = item.selectedTokens;
-                var key = item.id;
+                var key = item.message.id;
                 console.log("addFeature for: " + key);
 
                 // check if it already exists
-                var existingTokens = $scope.featureList[key];
+                var existingTokens = $scope.message_featureList[key];
 
                 if (existingTokens) {
-                    delete $scope.featureList[key];
+                    delete $scope.message_featureList[key];
                 }
 
-                //var request = UserFeatures.add(tokens);
-                //if (request) {
-                //    usSpinnerService.spin('vector-spinner');
-                //    request.then(function() {
-                //        usSpinnerService.stop('vector-spinner');
-                //        var featureId = UserFeatures.data;
-                //        $scope.featureList[key] = {
-                //            id: featureId,
-                //            tokens: tokens,
-                //            source: item
-                //        };
-                //    });
-                //}
-                $scope.featureList[key] = {
-                    id: Math.floor(Math.random() * 1000),
-                    tokens: tokens,
-                    source: item
-                };
+                var request = Feature.add(tokens);
+                if (request) {
+                    usSpinnerService.spin('vector-spinner');
+                    request.then(function() {
+                        usSpinnerService.stop('vector-spinner');
+                        var feature = Feature.latest_data;
+                        $scope.message_featureList[key] = feature; // TODO: make sure this is correct
+                    });
+                }
+
 
                 var newMap = {};
 
@@ -564,6 +565,7 @@
                         break;
                     case 'R':  // review
                         $scope.getCodeDetail();
+                        $scope.getAllMessages();
                         break;
                 }
             }
@@ -574,6 +576,10 @@
         });
         $scope.$on('definitions::updated', function($event, data) {
             $scope.codes = data;
+            $scope.codes.forEach(function(code){
+                $scope.code_map[code.code_text] = code;
+            });
+
         });
 
     };
@@ -584,6 +590,7 @@
         'TweetCoderViz.services.Dictionary',
         'TweetCoderViz.services.Code',
         'TweetCoderViz.services.Message',
+        'TweetCoderViz.services.Feature',
         'TweetCoderViz.services.Progress',
         'usSpinnerService'
     ];

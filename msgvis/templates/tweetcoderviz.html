@@ -96,17 +96,17 @@
                     <div class="col-md-3 tweet-submit">
                         <div class="">
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.saved}" ng-click="currentMessage.saved=!currentMessage.saved"><span class="glyphicon glyphicon-tag"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
                                 <span> Tag this tweet</span>
                             </div>
 
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.example}" ng-click="currentMessage.example=!currentMessage.example"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
                                 <span> Save as an example tweet</span>
                             </div>
 
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.ambiguous}" ng-click="currentMessage.ambiguous=!currentMessage.ambiguous"><span>?</span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
                                 <span> Mark as an ambiguous tweet</span>
                             </div>
                             <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
@@ -122,7 +122,7 @@
                         <div class="code-name">{$ code.code_text $}</div>
                         <div class="code-definition scroll-y">
                             <p><strong>definition: </strong>{$ code.text $}</p>
-                            <p><strong>example: </strong>{$ code.examples[0].text $}</p>
+                            <p><strong>example: </strong>{$ code.is_examples[0].text $}</p>
                         </div>
                     </div>
                 </div>
@@ -160,9 +160,9 @@
                         </div>
                         <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="item.saved=!item.saved"><span class="glyphicon glyphicon-tag"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="item.example=!item.example"><span class="glyphicon glyphicon-star"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="item.ambiguous=!item.ambiguous"><span>?</span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="item.is_saved=!item.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="item.is_example=!item.is_example"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="item.is_ambiguous=!item.is_ambiguous"><span>?</span></div>
                             </div>
                             <div>{$ item.message.text $}</div>
                         </div>
@@ -204,17 +204,20 @@
                 <div class="col-md-4 scroll-y">
                     <h2>Code distribution</h2>
                     <h2>User features</h2>
-                    <div ng-repeat="(key, feature) in featureList track by key" class="user-feature">
-                        <span>{$ feature.tokens.join(" ") $}</span>
+                    <span us-spinner="spinnerOptions" spinner-key="feature-spinner"></span>
+                    <div ng-repeat="feature in featureList" class="user-feature">
+                        <span>{$ feature.feature_text $}</span>
+                        <span>{$ feature.distribution $}</span>
                         <button class="btn btn-default" ng-click="removeFeature(feature)">Remove</button>
                     </div>
                 </div>
                 <div class="col-md-2 scroll-y">
                     <h2>Comparison</h2>
+                    <span us-spinner="spinnerOptions" spinner-key="pairwise-spinner"></span>
                     <div class="confusion" ng-class="{ selected: selectedConfusion==pair}" ng-repeat="pair in confusionPairs" ng-click="selectConfusion(pair)">
-                        <div class="confusion-box" ng-style="{ 'background': codeColor(codes[pair.label])}"></div>
-                        <div class="confusion-box" ng-style="{ 'background': codeColor(codes[pair.partner])}"></div>
-                        <div class="confusion-size">{$ pair.length $}</div>
+                        <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.user_code])}">{$ pair.user_code $}</div>
+                        <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.partner_code])}">{$ pair.partner_code $}</div>
+                        <div class="confusion-size">{$ pair.count $}</div>
                     </div>
                 </div>
                 <div class="col-md-6 scroll-y">
@@ -222,17 +225,16 @@
                     <div>
                         <label>Search: <input ng-model="searchText"></label>
                     </div>
-                    <div ng-repeat="item in allItems | filter:filterTweetsConfusion(selectedConfusion, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(codes[item.label]) }" ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)">
+                    <div ng-repeat="item in allItems | filter:filterTweetsConfusion()" class="label-item" ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }" ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)">
                         <div ng-if="hoveredItem==item">
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.gold}" disabled><span class="glyphicon glyphicon-certificate"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.saved}" ng-click="updateItem(item, !item.saved, item.example, item.ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.example}" ng-click="updateItem(item, item.saved, !item.example, item.ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.ambiguous}" ng-click="updateItem(item, item.saved, item.example, !item.ambiguous)"><span>?</span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"><span>?</span></div>
                                 <span ng-show="item.analysis">Analysis: </span>
-                                <div class="dropdown inline" ng-show="item.analysis">
+                                <div class="dropdown inline" ng-show="item.indicator">
                                     <button class="btn btn-default dropdown-toggle" type="button" id="analysisMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                        {$ item.analysis $}
+                                        {$ item.indicator $}
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="analysisMenu">
@@ -252,7 +254,7 @@
                             <button class="btn btn-default" ng-click="addFeature(item)">Add Feature</button>
                         </div>
 
-                        <div ng-hide="hoveredItem==item">{$ item.text $}</div>
+                        <div ng-hide="hoveredItem==item">{$ item.message.text $}</div>
                     </div>
                 </div>
             </div>

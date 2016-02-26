@@ -32,6 +32,25 @@ class CodeAssignment(models.Model):
     valid = models.BooleanField(default=True)
     """ Whether this code is valid (False indicate the code to the message has been removed) """
 
+    def partner_assignment(self):
+        partner = self.source.pair.first().get_partner(self.source)
+        return partner.code_assignments.filter(valid=True, is_user_labeled=True,
+                                               message=self.message).first()
+
+    @property
+    def partner_code(self):
+        partner_assignment = self.partner_assignment()
+
+        if partner_assignment:
+            return partner_assignment.code
+        else:
+            return None
+
+    @property
+    def disagreement_indicator(self):
+        partner_assignment = self.partner_assignment()
+        return self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
+
 
 
 

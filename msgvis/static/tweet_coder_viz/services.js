@@ -35,18 +35,20 @@
 
 
     //A service for user defined features.
-    module.factory('TweetCoderViz.services.UserFeatures', [
+    module.factory('TweetCoderViz.services.Feature', [
         '$http', 'djangoUrl',
-        function scriptFactory($http, djangoUrl) {
+        'TweetCoderViz.services.Code',
+        function scriptFactory($http, djangoUrl, Code) {
 
-            var listApiUrl = djangoUrl.reverse('featurelist');
+            var listApiUrl = djangoUrl.reverse('feature_list');
 
-            var UserFeatures = function () {
+            var Feature = function () {
                 var self = this;
-                self.data = undefined;
+                self.latest_data = undefined;
+                self.distribution = [];
             };
 
-            angular.extend(UserFeatures.prototype, {
+            angular.extend(Feature.prototype, {
                 load: function () {
                     var self = this;
 
@@ -55,7 +57,7 @@
                     };
                     return $http.get(listApiUrl, request)
                         .success(function (data) {
-                            self.data = data;
+                            self.latest_data = data;
                         });
                 },
                 add: function (tokens) {
@@ -67,7 +69,8 @@
 
                     return $http.post(listApiUrl, request)
                         .success(function (data) {
-                            self.data = data;
+                            self.latest_data = data;
+                            self.distribution.push(data);
                         });
 
                 },
@@ -81,12 +84,26 @@
                     var itemApiUrl = djangoUrl.reverse('feature', {feature_id: id});
                     return $http.delete(itemApiUrl, request)
                         .success(function (data) {
-                            self.data = data;
+                            self.latest_data = data;
+                        });
+                },
+                get_distribution: function(sources){
+                    var self = this;
+                    var request = {
+                        params: {
+                            feature_source: sources || "system user"
+                        }
+                    };
+
+                    var apiUrl= djangoUrl.reverse('distribution');
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.distribution = data;
                         });
                 }
             });
 
-            return new UserFeatures();
+            return new Feature();
         }
     ]);
 
@@ -131,7 +148,7 @@
                 format_tweet_item: function(messageData) {
                     var text = messageData.message.text;
                     var characters = text.split("");
-                    var tokens = messageData.tokens;
+                    var tokens = messageData.message.tokens;
 
                     var tokenItems = [];
                     var charToToken = [];
@@ -160,23 +177,8 @@
                             }
                         }
                     }
-
-                    // TODO: Integrate with service. Make up some user feature data
-                    var features = messageData.feature_vector;
-                    var featureCount = features.length;
-                    for (i = 0; i < featureCount; i++){
-                        var tokenIndex = Math.floor((Math.random() * (tokenItems.length - 1)) + 1);
-                        var codeIndex = Math.floor((Math.random() * ($scope.codes.length - 1)));
-
-                        features.push({
-                            startCharIndex: tokenItems[tokenIndex - 1].startIndex,
-                            endCharIndex: tokenItems[tokenIndex].endIndex,
-                            codeIndex: codeIndex
-                        });
-                    }
-
                     var charStyle = function(charIndex) {
-                        for (var i = 0; i < features.length; i++) {
+                        for (var i = 0; features && i < features.length; i++) {
                             var feature = features[i];
                             if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
                                 var color = $scope.colorsLight[feature.codeIndex % $scope.colors.length];
@@ -189,18 +191,33 @@
                             }
                         }
                     };
+                    // TODO: Integrate with service. Make up some user feature data
+                    if (messageData.feature_vector && messageData.feature_vector.length > 0){
+                        var features = messageData.feature_vector;
+                        var featureCount = features.length;
+                        for (i = 0; i < featureCount; i++){
+                            var tokenIndex = Math.floor((Math.random() * (tokenItems.length - 1)) + 1);
+                            var codeIndex = Math.floor((Math.random() * ($scope.codes.length - 1)));
 
-                    return {
-                        id: messageData.message.id,
-                        text: text,
+                            features.push({
+                                startCharIndex: tokenItems[tokenIndex - 1].startIndex,
+                                endCharIndex: tokenItems[tokenIndex].endIndex,
+                                codeIndex: codeIndex
+                            });
+                        }
+                    }
+
+                    return angular.extend(messageData, {
+                       // id: messageData.message.id,
+                       // text: text,
                         characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
                         charToToken: charToToken,
                         tokens: tokenItems,
                         charStyle: charStyle,
-                        ambiguous: messageData.ambiguous || false,
-                        saved: messageData.saved || false,
-                        example: messageData.example || false
-                    };
+                       // is_ambiguous: messageData.is_ambiguous || false,
+                       // is_saved: messageData.is_saved || false,
+                       // is_example: messageData.is_example || false
+                    });
                 },
                 submit: function (code_id) {
                     var self = this;
@@ -208,9 +225,9 @@
 
                     var request = {
                         code: code_id,
-                        is_example: self.current_message.example,
-                        is_ambiguous: self.current_message.ambiguous,
-                        is_saved: self.current_message.saved
+                        is_example: self.current_message.is_example,
+                        is_ambiguous: self.current_message.is_ambiguous,
+                        is_saved: self.current_message.is_saved
                     };
 
 
@@ -246,12 +263,24 @@
                     });
 
                 },
-                load_all_coded_messages: function(){
+                load_all_coded_messages: function(use_current_stage){
                     var self = this;
-                    var sources = ["master", "user", "partner"];
-                    sources.forEach(function(source){
-                        self.load_coded_messages(source);
-                    });
+
+
+                    var apiUrl = djangoUrl.reverse('all_coded_messages');
+
+                    var request = {
+                        params: {
+                            stage: use_current_stage || undefined
+                        }
+                    };
+
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.all_coded_messages = data.map(function(d){ return self.format_tweet_item(d);});
+                            $rootScope.$broadcast("messages::load_all_coded_messages", data);
+                        });
+
                 }
             });
 
@@ -273,6 +302,8 @@
                 };
                 self.definitions_by_code = {};
                 self.codes = undefined;
+                self.pairwise_distribution = [];
+                self.pairwise_distribution_map = {};
 
             };
 
@@ -304,6 +335,7 @@
                                     self.definitions_by_code[def.code_text][def.source] = def;
                                 });
                             });
+
                             self.codes = self.definitions_by_source.master;
 
                             $rootScope.$broadcast('definitions::updated', self.codes);
@@ -319,6 +351,24 @@
 
 
                 },
+                get_pairwise: function(use_current_stage){
+                    var self = this;
+                    var request = {
+                        params: {
+                            stage: use_current_stage || "current"
+                        }
+                    };
+
+                    var apiUrl= djangoUrl.reverse('pairwise');
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.pairwise_distribution = data;
+                            self.pairwise_distribution.forEach(function(pair){
+                                var key = pair.user_code + "_" + pair.partner_code;
+                                self.pairwise_distribution_map[key] = pair;
+                            });
+                        });
+                }
 
             });
 
@@ -331,7 +381,7 @@
     //A service for progress
     module.factory('TweetCoderViz.services.Progress', [
         '$http', 'djangoUrl', '$rootScope',
-        function codingFactory($http, djangoUrl, $rootScope) {
+        function progressFactory($http, djangoUrl, $rootScope) {
 
 
 

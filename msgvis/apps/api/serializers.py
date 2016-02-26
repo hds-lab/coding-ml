@@ -58,11 +58,18 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = PersonSerializer()
     embedded_html = serializers.CharField()
     media_url = serializers.CharField()
+    tokens = serializers.ListField()
 
     class Meta:
         model = corpus_models.Message
-        fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html', 'media_url', )
+        fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html', 'media_url', 'tokens', )
 
+
+class CodeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = corpus_models.Code
+        fields = ('id', 'text', )
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -75,12 +82,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
-    tokens = serializers.ListField()
     feature_vector = serializers.ListField(child=serializers.DictField())
 
 class FeatureCodeDistributionSerializer(serializers.Serializer):
     feature_index = serializers.IntegerField()
     feature_text = serializers.CharField()
+    source = serializers.CharField()
     distribution = serializers.DictField()
 
 
@@ -118,12 +125,23 @@ class DictionarySerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
 
 
+class IndicatorSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        return instance.type
+    class Meta:
+        model = coding_models.DisagreementIndicator
+
 class CodeAssignmentSerializer(serializers.ModelSerializer):
+    user_code = CodeSerializer(source="code")
+    partner_code = CodeSerializer()
+    disagreement_indicator = IndicatorSerializer()
+
     message = MessageSerializer(required=False)
     class Meta:
         model = coding_models.CodeAssignment
-        fields = ('id', 'source', 'message', 'code', 'is_example', 'is_ambiguous', 'is_saved', )
-        read_only_fields = ('id', 'source', 'message', )
+        fields = ('id', 'source', 'message', 'is_example', 'is_ambiguous',
+                  'is_saved', 'code', 'user_code', 'partner_code', 'disagreement_indicator', )
+        read_only_fields = ('id', 'source', 'message', 'user_code', 'partner_code', 'disagreement_indicator', )
 
 
 #class CodeDefinitionSerializer(serializers.ModelSerializer):
@@ -161,6 +179,9 @@ class DisagreementIndicatorSerializer(serializers.ModelSerializer):
         model = coding_models.DisagreementIndicator
         fields = ('id', 'message', 'user_assignment', 'partner_assignment', 'type', )
         read_only_fields = ('id', 'message', 'user_assignment', 'partner_assignment', )
+
+
+
 
 class PairwiseSerializer(serializers.Serializer):
     user_code = serializers.CharField()

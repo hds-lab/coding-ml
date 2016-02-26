@@ -25,8 +25,9 @@ from rest_framework.reverse import reverse
 from rest_framework.compat import get_resolver_match, OrderedDict
 from django.core.context_processors import csrf
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count, F
+from django.db.models import Count
 from django.contrib.auth.models import User
+from operator import attrgetter, itemgetter
 
 from msgvis.apps.api import serializers
 from msgvis.apps.corpus import models as corpus_models
@@ -36,7 +37,7 @@ from msgvis.apps.coding import models as coding_models
 import json
 import logging
 
-from msgvis.apps.base.utils import AttributeDict
+from msgvis.apps.base.utils import AttributeDict, entropy
 
 logger = logging.getLogger(__name__)
 
@@ -136,8 +137,7 @@ class SVMResultView(APIView):
                 for message in all_messages:
 
                     feature_vector = message.get_feature_vector(dictionary=dictionary)
-                    tweet_words = map(lambda x: x.tweet_word.original_text, message.tweetword_connections.all()) # get the token list and extract only original text
-                    output = {'message': message, 'tokens': tweet_words, 'feature_vector': feature_vector}
+                    output = {'message': message, 'feature_vector': feature_vector}
                     messages.append(output)
 
                 output = serializers.SVMResultSerializer({'results': results, 'messages': messages})
@@ -234,7 +234,26 @@ class UserFeatureView(APIView):
             token_list = data["token_list"]
             feature = dictionary.add_feature(token_list, source=user)
 
-            output = serializers.FeatureSerializer(feature)
+            item = {
+                "feature_index": feature.index,
+                "feature_text": feature.text,
+                "source": "user",
+                "distribution": {}
+            }
+            item = AttributeDict(item)
+            for code in corpus_models.Code.objects.all():
+                item["distribution"][code.text] = 0
+
+            counts = enhance_models.Feature.objects.filter(id=feature.id, messages__code_assignments__isnull=False)\
+                .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
+                                    .annotate(count=Count('messages')).order_by('id', 'count').all()
+            for count in counts:
+                count = AttributeDict(count)
+                item["distribution"][count.messages__code_assignments__code__text] = count.count
+
+
+            output = serializers.FeatureCodeDistributionSerializer(item)
+
             return Response(output.data, status=status.HTTP_200_OK)
 
         return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -267,6 +286,8 @@ class FeatureCodeDistributionView(APIView):
         partner = user.pair.first().get_partner(user)
         dictionary = user.pair.first().assignment.experiment.dictionary
         feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
+        feature_num = int(request.query_params.get('feature_num', 30))
+
 
         source_map = {
             "system": "system",
@@ -294,6 +315,7 @@ class FeatureCodeDistributionView(APIView):
                     "source": source_map[source],
                     "distribution": {}
                 }
+                item = AttributeDict(item)
                 for code in corpus_models.Code.objects.all():
                     item["distribution"][code.text] = 0
                 distributions.append(item)
@@ -305,6 +327,10 @@ class FeatureCodeDistributionView(APIView):
             for count in counts:
                 count = AttributeDict(count)
                 distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
+
+            distributions.sort(key=lambda x: entropy(x.distribution))
+
+            distributions = distributions[:feature_num]
 
             output = serializers.FeatureCodeDistributionSerializer(distributions, many=True)
 
@@ -545,6 +571,48 @@ class CodeMessageView(APIView):
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
 
+class AllCodedMessageView(APIView):
+    """
+    Get the messages of a code
+
+    **Request:** ``GET /all_coded_messages/?stage=current``
+    (Whatever value is given to stage will make this query only get current stage.)
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+
+        try:
+            stage = None
+            if request.query_params.get('stage'):
+                stage = user.progress.current_stage
+
+            if stage:
+                assignments = coding_models.CodeAssignment.objects.filter(source=user,
+                                                                          is_user_labeled=True,
+                                                                          message__selection__stage=stage,
+                                                                          valid=True).all()
+            else:
+                assignments = coding_models.CodeAssignment.objects.filter(source=user,
+                                                                          is_user_labeled=True,
+                                                                          valid=True).all()
+
+            output = serializers.CodeAssignmentSerializer(assignments, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
+
 class DisagreementIndicatorView(APIView):
     """
     Get the disagreement indicator of a message
@@ -643,7 +711,7 @@ class PairwiseConfusionMatrixView(APIView):
 
         stage = None
         if request.query_params.get('stage'):
-            stage = user.progress.current_stage
+            stage = user.progress.get_current_stage()
 
         try:
             pairwise_count = {}
@@ -653,7 +721,7 @@ class PairwiseConfusionMatrixView(APIView):
                     pairwise_count[(user_code.text, partner_code.text)] = 0
 
             if stage:
-                messages = stage.messages.all()
+                messages = stage.selected_messages.all()
             else:
                 messages = corpus_models.Message.objects.all()
 
@@ -673,6 +741,8 @@ class PairwiseConfusionMatrixView(APIView):
                                  "partner_code": key[1],
                                  "count": value
                                  })
+
+            pairwise.sort(key=itemgetter("count", "user_code"), reverse=True)
 
             output = serializers.PairwiseSerializer(pairwise, many=True)
             return Response(output.data, status=status.HTTP_200_OK)

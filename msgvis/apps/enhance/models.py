@@ -506,21 +506,6 @@ class Feature(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def get_distribution(self, code_source=None):
-
-        codes = Code.objects.all()
-        distribution = []
-        for code in codes:
-            count = self.code_assignments.filter(valid=True, )
-            count = self.messages.filter(code_assignments__code=code, code_assignments__source=code_source, code_assignments__valid=True).count()
-            distribution.append({"code_id": code.id,
-                           "code_text": code.text,
-                           "count": count})
-
-        return {"feature_index": self.index,
-                "feature_text": self.text,
-                "distribution": distribution}
-
 
 
 class MessageFeature(models.Model):
