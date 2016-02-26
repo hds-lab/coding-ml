@@ -179,6 +179,28 @@
             return css;
         };
 
+        $scope.distributionStyle = function(label, distribution){
+            var color;
+            var width;
+
+            if (distribution > 0) {
+                var colorIndex = $scope.code_map[label].code_id;
+                color = $scope.colors[colorIndex % $scope.colorsLight.length];
+                width = Math.round(distribution * 100) + "%";
+            }
+            else {
+                color = "transparent";
+                width = "0";
+            }
+
+            var css = {
+                'background-color' : color,
+                'width' : width
+            };
+
+            return css;
+        };
+
         $scope.getMessageDetail = function(){
             var request = Message.load_message_details();
             if (request) {
@@ -290,6 +312,30 @@
                 request.then(function() {
                     usSpinnerService.stop('feature-spinner');
                     $scope.featureList = Feature.distribution;
+
+                    // Compute normalized distribution. For now, normalize over total count per feature
+                    $scope.featureList.forEach(function(feature) {
+                        feature.normalized_distribution = [];
+                        feature.total_count = 0;
+                        for (var key in feature.distribution) {
+                            feature.total_count += feature.distribution[key];
+                            feature.normalized_distribution.push({
+                                code_text: key,
+                                value: feature.distribution[key]
+                            });
+                        }
+
+                        // If total is zero, there's no distribution
+                        feature.normalized_distribution.forEach(function (dist) {
+                            if (feature.total_count > 0) {
+                                dist.value /= feature.total_count;
+                            }
+                            else {
+                                dist.value = 0;
+                            }
+                        });
+                    });
+
                     /*
                     TODO: This is not correct -- we want feature list of messages
                     $scope.featureList.forEach(function(feature){

@@ -203,12 +203,25 @@
             <div id="bottom-area">
                 <div class="col-md-4 scroll-y">
                     <h2>Code distribution</h2>
-                    <h2>User features</h2>
                     <span us-spinner="spinnerOptions" spinner-key="feature-spinner"></span>
-                    <div ng-repeat="feature in featureList" class="user-feature">
-                        <span>{$ feature.feature_text $}</span>
-                        <span>{$ feature.distribution $}</span>
-                        <button class="btn btn-default" ng-click="removeFeature(feature)">Remove</button>
+                    <h3>User features</h3>
+                    <div ng-repeat="feature in message_featureList" id="user-features">
+                        <span class="feature-text">{$ feature.feature_text $}</span>
+                        <div ng-if="feature.total_count > 0" class="feature-distribution">
+                            <div ng-repeat="dist in feature.normalized_distribution" ng-style="distributionStyle(dist.code_text, dist.value)"></div>
+                        </div>
+                        <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                        <span class="feature-total">{$ feature.total_count $}</span>
+                        <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove"></span></button>
+                    </div>
+                    <h3>System features</h3>
+                    <div ng-repeat="feature in featureList" id="system-features">
+                        <span class="feature-text">{$ feature.feature_text $}</span>
+                        <div ng-if="feature.total_count > 0" class="feature-distribution">
+                            <div ng-repeat="dist in feature.normalized_distribution" ng-style="distributionStyle(dist.code_text, dist.value)"></div>
+                        </div>
+                        <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                        <span class="feature-total">{$ feature.total_count $}</span>
                     </div>
                 </div>
                 <div class="col-md-2 scroll-y">
