@@ -205,20 +205,20 @@
                     <h2>Code distribution</h2>
                     <span us-spinner="spinnerOptions" spinner-key="feature-spinner"></span>
                     <h3>User features</h3>
-                    <div ng-repeat="feature in message_featureList" id="user-features">
-                        <span class="feature-text">{$ feature.feature_text $}</span>
+                    <div ng-repeat="(feature_text, feature) in featureList.user" id="user-features">
+                        <span class="feature-text">{$ feature_text $}</span>
                         <div ng-if="feature.total_count > 0" class="feature-distribution">
-                            <div ng-repeat="dist in feature.normalized_distribution" ng-style="distributionStyle(dist.code_text, dist.value)"></div>
+                            <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
                         </div>
                         <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                         <span class="feature-total">{$ feature.total_count $}</span>
                         <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove"></span></button>
                     </div>
                     <h3>System features</h3>
-                    <div ng-repeat="feature in featureList" id="system-features">
-                        <span class="feature-text">{$ feature.feature_text $}</span>
+                    <div ng-repeat="(feature_text, feature) in featureList.system" id="system-features">
+                        <span class="feature-text">{$ feature_text $}</span>
                         <div ng-if="feature.total_count > 0" class="feature-distribution">
-                            <div ng-repeat="dist in feature.normalized_distribution" ng-style="distributionStyle(dist.code_text, dist.value)"></div>
+                            <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
                         </div>
                         <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                         <span class="feature-total">{$ feature.total_count $}</span>

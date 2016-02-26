@@ -238,7 +238,10 @@ class UserFeatureView(APIView):
                 "feature_index": feature.index,
                 "feature_text": feature.text,
                 "source": "user",
-                "distribution": {}
+                "distribution": {},
+                "normalized_distribution": {},
+                "total_count": 0,
+                "entropy": None
             }
             item = AttributeDict(item)
             for code in corpus_models.Code.objects.all():
@@ -250,6 +253,17 @@ class UserFeatureView(APIView):
             for count in counts:
                 count = AttributeDict(count)
                 item["distribution"][count.messages__code_assignments__code__text] = count.count
+
+
+            item["total_count"] = 0
+            for code in item.distribution:
+                item["total_count"] += item.distribution[code]
+            for code in item.distribution:
+                if item["total_count"] > 0:
+                    item.normalized_distribution[code] = float(item.distribution[code]) / float(item["total_count"])
+                else:
+                    item.normalized_distribution[code] = 0
+            item["entropy"] = entropy(item.distribution)
 
 
             output = serializers.FeatureCodeDistributionSerializer(item)
@@ -313,7 +327,10 @@ class FeatureCodeDistributionView(APIView):
                     "feature_index": feature.index,
                     "feature_text": feature.text,
                     "source": source_map[source],
-                    "distribution": {}
+                    "distribution": {},
+                    "normalized_distribution": {},
+                    "total_count": 0,
+                    "entropy": None
                 }
                 item = AttributeDict(item)
                 for code in corpus_models.Code.objects.all():
@@ -328,7 +345,25 @@ class FeatureCodeDistributionView(APIView):
                 count = AttributeDict(count)
                 distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
 
-            distributions.sort(key=lambda x: entropy(x.distribution))
+            for item in distributions:
+                item["total_count"] = 0
+                for code in item.distribution:
+                    item["total_count"] += item.distribution[code]
+
+                for code in item.distribution:
+                    if item["total_count"] > 0:
+                        item.normalized_distribution[code] = float(item.distribution[code]) / float(item["total_count"])
+                    else:
+                        item.normalized_distribution[code] = 0
+
+                item["entropy"] = entropy(item.distribution)
+
+
+
+            # first sort by total count
+            distributions.sort(key=attrgetter("total_count"), reverse=True)
+            # Then sort by entropy. The order will be equivalent to (entropy, -total_count)
+            distributions.sort(key=attrgetter("entropy"))
 
             distributions = distributions[:feature_num]
 

@@ -78,8 +78,12 @@
         $scope.confusionPairs = undefined;
         $scope.distribution = undefined;
         $scope.selectedConfusion = undefined;
-        $scope.featureList = [];
-        $scope.message_featureList = {}; // TODO: fix this -- there is no message feature now
+        $scope.featureList = {
+            system: {},
+            user: {},
+            partner: {}
+        };
+
 
 
 
@@ -295,7 +299,8 @@
                     Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
-                        $scope.load_distribution();
+                        $scope.load_distribution("user");
+                        $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
 
                     }
@@ -304,43 +309,14 @@
             
         };
 
-        $scope.load_distribution = function(){
+        $scope.load_distribution = function(source){
 
-            var request = Feature.get_distribution();
+            var request = Feature.get_distribution(source);
             if (request) {
                 usSpinnerService.spin('feature-spinner');
                 request.then(function() {
                     usSpinnerService.stop('feature-spinner');
-                    $scope.featureList = Feature.distribution;
-
-                    // Compute normalized distribution. For now, normalize over total count per feature
-                    $scope.featureList.forEach(function(feature) {
-                        feature.normalized_distribution = [];
-                        feature.total_count = 0;
-                        for (var key in feature.distribution) {
-                            feature.total_count += feature.distribution[key];
-                            feature.normalized_distribution.push({
-                                code_text: key,
-                                value: feature.distribution[key]
-                            });
-                        }
-
-                        // If total is zero, there's no distribution
-                        feature.normalized_distribution.forEach(function (dist) {
-                            if (feature.total_count > 0) {
-                                dist.value /= feature.total_count;
-                            }
-                            else {
-                                dist.value = 0;
-                            }
-                        });
-                    });
-
-                    /*
-                    TODO: This is not correct -- we want feature list of messages
-                    $scope.featureList.forEach(function(feature){
-                        $scope.message_featureList[feature.index] = feature;
-                    });*/
+                    $scope.featureList[source] = Feature.distributions[source];
                 });
             }
 

@@ -89,7 +89,9 @@ class FeatureCodeDistributionSerializer(serializers.Serializer):
     feature_text = serializers.CharField()
     source = serializers.CharField()
     distribution = serializers.DictField()
-
+    normalized_distribution = serializers.DictField()
+    total_count = serializers.IntegerField()
+    entropy = serializers.FloatField()
 
 
 class SVMResultSerializer(serializers.Serializer):

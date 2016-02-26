@@ -45,7 +45,7 @@
             var Feature = function () {
                 var self = this;
                 self.latest_data = undefined;
-                self.distribution = [];
+                self.distributions = {};
             };
 
             angular.extend(Feature.prototype, {
@@ -70,7 +70,7 @@
                     return $http.post(listApiUrl, request)
                         .success(function (data) {
                             self.latest_data = data;
-                            self.distribution.push(data);
+                            self.distributions["user"][data.feature_text] = data;
                         });
 
                 },
@@ -87,18 +87,24 @@
                             self.latest_data = data;
                         });
                 },
-                get_distribution: function(sources){
+                get_distribution: function(source){
                     var self = this;
                     var request = {
                         params: {
-                            feature_source: sources || "system user"
+                            feature_source: source || "user"
                         }
                     };
 
                     var apiUrl= djangoUrl.reverse('distribution');
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.distribution = data;
+
+                            self.distributions[source] = {};
+                            data.forEach(function(feature){
+                                // Add to the dict
+                                self.distributions[source][feature.feature_text] = feature;
+                            });
+
                         });
                 }
             });
