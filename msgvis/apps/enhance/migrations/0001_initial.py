@@ -9,7 +9,7 @@ import msgvis.apps.base.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('corpus', '0001_initial'),
+        ('corpus', '0003_auto_20160219_0743'),
     ]
 
     operations = [
@@ -30,78 +30,29 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='MessageTopic',
+            name='Feature',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('probability', models.FloatField()),
-                ('message', models.ForeignKey(related_name='topic_probabilities', to='corpus.Message', db_index=False)),
+                ('index', models.IntegerField()),
+                ('text', msgvis.apps.base.models.Utf8CharField(max_length=150)),
+                ('document_frequency', models.IntegerField()),
+                ('source', models.CharField(default=b'S', max_length=1, choices=[(b'S', b'System'), (b'U', b'User')])),
+                ('dictionary', models.ForeignKey(related_name='features', to='enhance.Dictionary')),
             ],
             options={
             },
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='MessageWord',
+            name='MessageFeature',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('word_index', models.IntegerField()),
+                ('feature_index', models.IntegerField()),
                 ('count', models.FloatField()),
                 ('tfidf', models.FloatField()),
                 ('dictionary', models.ForeignKey(to='enhance.Dictionary', db_index=False)),
-                ('message', models.ForeignKey(related_name='word_scores', to='corpus.Message', db_index=False)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='PrecalcCategoricalDistribution',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('dimension_key', models.CharField(default=b'', max_length=64, db_index=True, blank=True)),
-                ('level', msgvis.apps.base.models.Utf8CharField(default=b'', max_length=128, db_index=True, blank=True)),
-                ('count', models.IntegerField()),
-                ('dataset', models.ForeignKey(related_name='distributions', default=None, blank=True, to='corpus.Dataset', null=True)),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Topic',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', msgvis.apps.base.models.Utf8CharField(max_length=100)),
-                ('description', msgvis.apps.base.models.Utf8CharField(max_length=200)),
-                ('index', models.IntegerField()),
-                ('alpha', models.FloatField()),
-                ('messages', models.ManyToManyField(related_name='topics', through='enhance.MessageTopic', to='corpus.Message')),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='TopicModel',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=100)),
-                ('description', models.CharField(max_length=200)),
-                ('time', models.DateTimeField(auto_now_add=True)),
-                ('perplexity', models.FloatField(default=0)),
-                ('dictionary', models.ForeignKey(to='enhance.Dictionary')),
-            ],
-            options={
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='TopicWord',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('word_index', models.IntegerField()),
-                ('probability', models.FloatField()),
-                ('topic', models.ForeignKey(related_name='word_scores', to='enhance.Topic')),
+                ('feature', models.ForeignKey(related_name='message_scores', to='enhance.Feature')),
+                ('message', models.ForeignKey(related_name='feature_scores', to='corpus.Message', db_index=False)),
             ],
             options={
             },
@@ -115,72 +66,42 @@ class Migration(migrations.Migration):
                 ('pos', models.CharField(default=b'', max_length=4, null=True, blank=True)),
                 ('text', msgvis.apps.base.models.Utf8CharField(default=b'', max_length=100, db_index=True, blank=True)),
                 ('dataset', models.ForeignKey(related_name='tweet_words', default=None, blank=True, to='corpus.Dataset', null=True)),
-                ('messages', models.ManyToManyField(related_name='tweet_words', to='corpus.Message')),
             ],
             options={
             },
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='Word',
+            name='TweetWordMessageConnection',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('index', models.IntegerField()),
-                ('text', msgvis.apps.base.models.Utf8CharField(max_length=100)),
-                ('document_frequency', models.IntegerField()),
-                ('dictionary', models.ForeignKey(related_name='words', to='enhance.Dictionary')),
-                ('messages', models.ManyToManyField(related_name='words', through='enhance.MessageWord', to='corpus.Message')),
+                ('order', models.IntegerField()),
+                ('message', models.ForeignKey(related_name='tweetword_connections', to='corpus.Message')),
+                ('tweet_word', models.ForeignKey(related_name='tweetword_connections', to='enhance.TweetWord')),
             ],
             options={
+                'ordering': ['message', 'order'],
             },
             bases=(models.Model,),
         ),
-        migrations.AddField(
-            model_name='topicword',
-            name='word',
-            field=models.ForeignKey(related_name='topic_scores', to='enhance.Word'),
-            preserve_default=True,
+        migrations.AlterUniqueTogether(
+            name='tweetwordmessageconnection',
+            unique_together=set([('message', 'tweet_word', 'order')]),
         ),
         migrations.AddField(
-            model_name='topic',
-            name='model',
-            field=models.ForeignKey(related_name='topics', to='enhance.TopicModel'),
-            preserve_default=True,
-        ),
-        migrations.AddField(
-            model_name='topic',
-            name='words',
-            field=models.ManyToManyField(related_name='topics', through='enhance.TopicWord', to='enhance.Word'),
+            model_name='tweetword',
+            name='messages',
+            field=models.ManyToManyField(related_name='tweet_words', through='enhance.TweetWordMessageConnection', to='corpus.Message'),
             preserve_default=True,
         ),
         migrations.AlterIndexTogether(
-            name='precalccategoricaldistribution',
-            index_together=set([('dimension_key', 'level')]),
+            name='messagefeature',
+            index_together=set([('message', 'feature')]),
         ),
         migrations.AddField(
-            model_name='messageword',
-            name='word',
-            field=models.ForeignKey(related_name='message_scores', to='enhance.Word'),
+            model_name='feature',
+            name='messages',
+            field=models.ManyToManyField(related_name='features', through='enhance.MessageFeature', to='corpus.Message'),
             preserve_default=True,
-        ),
-        migrations.AlterIndexTogether(
-            name='messageword',
-            index_together=set([('dictionary', 'message'), ('message', 'word')]),
-        ),
-        migrations.AddField(
-            model_name='messagetopic',
-            name='topic',
-            field=models.ForeignKey(related_name='message_probabilities', to='enhance.Topic'),
-            preserve_default=True,
-        ),
-        migrations.AddField(
-            model_name='messagetopic',
-            name='topic_model',
-            field=models.ForeignKey(to='enhance.TopicModel', db_index=False),
-            preserve_default=True,
-        ),
-        migrations.AlterIndexTogether(
-            name='messagetopic',
-            index_together=set([('topic_model', 'message'), ('message', 'topic')]),
         ),
     ]

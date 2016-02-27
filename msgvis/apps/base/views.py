@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
+from msgvis.apps.experiment import models as experiment_models
 from django.contrib.auth.decorators import login_required
 
 
@@ -146,16 +147,16 @@ class TweetCoderView(generic.DetailView):
                           {'verbose_name': queryset.model._meta.verbose_name})
         return obj
 
-class TweetCoderVizView(generic.DetailView):
+class TweetCoderVizView(LoginRequiredMixin, generic.DetailView):
     """The view for the visualization tool."""
 
     template_name = 'tweetcoderviz.html'
 
-    pk_url_kwarg = 'dictionary_pk'
-    default_dictionary_pk = 1
+    pk_url_kwarg = 'experiment_pk'
+    default_experiment_pk = 1
 
     def get_queryset(self):
-        return enhance_models.Dictionary.objects.all()
+        return experiment_models.Experiment.objects.all()
 
 
     def get_object(self, queryset=None):
@@ -165,7 +166,7 @@ class TweetCoderVizView(generic.DetailView):
 
         pk = self.kwargs.get(self.pk_url_kwarg, None)
         if pk is None:
-            pk = self.default_dictionary_pk
+            pk = self.default_experiment_pk
 
         queryset = queryset.filter(pk=pk)
 

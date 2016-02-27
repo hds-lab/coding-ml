@@ -1,0 +1,81 @@
+import numpy
+from sklearn import svm
+from sklearn.externals import joblib
+from django.db.models import Q
+from operator import or_
+
+
+def get_formatted_X(dictionary, source, messages, feature_index_map, feature_num, use_tfidf=False):
+
+    message_num = len(messages)
+
+    source_list = ["system", source]
+    filter_ors = []
+    for source in source_list:
+        if source == "system":
+            filter_ors.append(("feature__source__isnull", True))
+        else:
+            filter_ors.append(("feature__source", source))
+
+    X = numpy.zeros((message_num, feature_num), dtype=numpy.float64)
+
+    for idx, msg in enumerate(messages):
+        message_feature_scores = msg.feature_scores.filter(feature__dictionary=dictionary, feature__valid=True)
+        message_feature_scores = message_feature_scores.filter(reduce(or_, [Q(x) for x in filter_ors])).all()
+        for feature_score in message_feature_scores:
+            index = feature_index_map[feature_score.feature_index]
+            X[idx, index] = feature_score.tfidf if use_tfidf else feature_score.count
+
+
+    return X
+
+def get_formatted_y(source, messages):
+
+    code_num = 0
+    code_map = {}
+    code_map_inverse = {}
+
+    y = []
+    for idx, msg in enumerate(messages):
+        code_id = msg.code_assignments.get(source=source, valid=True, is_user_labeled=True).code.id
+        code_index = code_map.get(code_id)
+        if code_index is None:
+            code_index = code_num
+            code_map[code_id] = code_index
+            code_map_inverse[code_index] = code_id
+            code_num += 1
+
+        y.append(code_index)
+
+    return y, code_map_inverse
+
+def get_formatted_data(dictionary, source, messages, feature_index_map, feature_num, use_tfidf=False):
+    X = get_formatted_X(dictionary, source, messages, feature_index_map, feature_num, use_tfidf)
+    y, code_map_inverse = get_formatted_y(source, messages)
+
+    return X, y, code_map_inverse
+
+
+def train_model(X, y, model_save_path=None):
+    lin_clf = svm.LinearSVC()
+    lin_clf.fit(X, y)
+
+    if model_save_path:
+        joblib.dump(lin_clf, model_save_path + "/model.pkl")
+
+    return lin_clf
+
+
+def get_prediction(lin_model, X):
+    prediction = lin_model.predict(X)
+
+    if hasattr(lin_model, "predict_proba"):
+        prob = lin_model.predict_proba(X)[:, 1]
+    else:  # use decision function
+        prob = lin_model.decision_function(X)
+        min = prob.min()
+        max = prob.max()
+        prob = \
+            (prob - min) / (max - min)
+
+    return prediction, prob

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from msgvis.apps.corpus.models import Dataset, Message
-from msgvis.apps.questions.models import Article, Question
 
-from models import create_an_instance_from_json, load_research_questions_from_json, get_or_create_a_tweet_from_json_obj
+from models import create_an_instance_from_json, get_or_create_a_tweet_from_json_obj
 
 
 # Create your tests here.
@@ -32,37 +31,3 @@ class ImportTest(TestCase):
 
         msg = dset.message_set.filter(original_id="570735009314656256")
         self.assertEquals(msg.count(), 1)
-
-
-    def test_import_questions(self):
-        json_str = r"""[{
-                            "source":{
-                                "authors":"Shaomei Wu\nJake M. Hofman\nWinter A. Mason\nDuncan J. Watts",
-                                "link":"http:\/\/nanro.org\/~nanchen\/social_science_papers\/pdfs\/Wu et al_2011_Who says what to whom on twitter.pdf",
-                                "title":"Who says what to whom on twitter",
-                                "year":"2011",
-                                "venue":"Proceedings of the 20th international conference on World wide web"
-                            },
-                            "dimensions":[
-                                "urls",
-                                "media",
-                                "age",
-                                "gender",
-                                "sender_message_count",
-                                "sender_reply_count",
-                                "sender_mention_count",
-                                "sender_friend_count",
-                                "sender_follower_count"
-                            ],
-                            "text":"What 12\\types of content\\ are emphasized by 3456789\\different categories of users\\?"
-                        }]"""
-
-
-        result = load_research_questions_from_json(json_str)
-        self.assertTrue(result)
-
-        question = Question.objects.get(text="""What 12\\types of content\\ are emphasized by 3456789\\different categories of users\\?""")
-        self.assertEquals(len(question.dimensions.all()), 9)
-
-        article = question.source
-        self.assertEquals(article.year, 2011)
