@@ -302,6 +302,8 @@
                                 <div class="item-message" ng-hide="hoveredItem==item">{$ item.message.text $}</div>
                             </div>
                         </div>
+                        <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsConfusion()).length==0" class="help-text">No tweets were found.</p>
+
                     </div>
                 </div>
             </div>
