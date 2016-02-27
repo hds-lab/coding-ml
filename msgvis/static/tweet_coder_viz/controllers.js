@@ -72,6 +72,7 @@
         $scope.codeItems = undefined;
         $scope.selectedFilter = 'All';
         $scope.searchText = undefined;
+        $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
         $scope.hoveredItem = undefined;
@@ -103,6 +104,10 @@
             if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text].length > 0){
                 $scope.hoveredItem = $scope.coded_messages['user'][code.code_text][0];
             }
+        };
+
+        $scope.selectMedia = function(media_url){
+            $scope.selectedMedia = media_url;
         };
 
         $scope.selectFilter = function(filter){
