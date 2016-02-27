@@ -9,7 +9,7 @@
 @item-background-color-selected: rgba(0,0,0,0.1);
 
 /* Offsets */
-@coding-top-height: 330px;
+@coding-top-height: 320px;
 @coding-top-labeling-height: 140px;
 @review-top-height: 225px;
 
@@ -72,26 +72,6 @@ th:hover{
 }
 
 
-#panel {
-    margin: 5px -10px;
-    padding: 10px;
-    height: 100%;
-}
-
-#panel .label-item {
-    border: solid 1px transparent;
-    padding: 5px;
-    margin: 5px;
-}
-
-#panel .item-filter {
-    display: inline;
-}
-
-#panel .item-filter .btn {
-    background: transparent;
-    border: solid 0 transparent;
-}
 
 
 /* START Shared between coding and reviewing */
@@ -207,7 +187,6 @@ h3 {
                 -ms-user-select: none;
                 user-select: none;
 
-
                 span {
                     cursor: pointer;
                 }
@@ -251,7 +230,7 @@ h3 {
         }
 
         #codes {
-            height: calc(@coding-top-height ~"-" @coding-top-labeling-height ~"-" 45px);
+            height: calc(@coding-top-height ~ "-" @coding-top-labeling-height ~ "-" 25px);
             padding-top: 10px;
 
             .btn-default {
@@ -266,7 +245,7 @@ h3 {
                     height: calc(100% ~ "-" 20px);
                     overflow-y: auto;
 
-                    &>p {
+                    & > p {
                         margin: 0;
                     }
                 }
@@ -275,7 +254,31 @@ h3 {
     }
 
     #bottom-area {
-        height: calc(100% ~"-" @coding-top-height);
+        height: calc(100% ~ "-" @coding-top-height);
+
+        #panel {
+            margin: 0;
+            padding: 10px;
+            height: 100%;
+
+            .label-item {
+                border: solid 1px transparent;
+                padding: 5px;
+                margin: 5px;
+            }
+
+            .item-filter {
+                display: inline;
+                .btn {
+                    background: transparent;
+                    border: solid 0 transparent;
+                }
+            }
+
+            .help-text {
+                color: #777;
+            }
+        }
     }
 }
 /* END Coding interface styles */

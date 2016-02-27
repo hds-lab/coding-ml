@@ -86,84 +86,91 @@
         </div>
 
         <div id="coding" ng-show="is_status('C')">
-            <div class="box box-top" id="top-area">
-                <h2>New Label</h2>
-                <div class="" id="labeling">
-                    <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                    <div class="col-md-9 tweet-item">
-                        <span ng-repeat="char in currentMessage.characters track by $index"
-                               ng-style="char.style">{$char.char$}</span>
-                    </div>
-                    <div class="col-md-3 tweet-submit">
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
-                            <span> Tag this tweet</span>
+            <div class="box box-top">
+                <div id="top-area">
+                    <h2>New Label</h2>
+                    <div class="" id="labeling">
+                        <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
+                        <div class="col-md-9 tweet-item">
+                            <span ng-repeat="char in currentMessage.characters track by $index"
+                                   ng-style="char.style">{$char.char$}</span>
                         </div>
-
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
-                            <span> Save as an example tweet</span>
-                        </div>
-
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
-                            <span> Mark as an ambiguous tweet</span>
-                        </div>
-                        <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
-                    </div>
-                </div>
-                <div class="" id="codes" data-toggle="buttons">
-                    <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
-                    <div class="btn btn-default" ng-repeat="code in codes"
-                               ng-click="selectLabel(code)"
-                               ng-class="{'active': code == selectedCode}"
-                               ng-style="buttonStyle(code)">
-                        <div class="code-name">{$ code.code_text $}</div>
-                        <div class="code-definition scroll-y">
-                            <p><strong>definition: </strong>{$ code.text $}</p>
-                            <p><strong>example: </strong>{$ code.examples[0].text $}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="bottom-area">
-                <h2 ng-show="currentMessage.label">Submitted Labels</h2>
-                <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
-                <div class="row" id="panel" ng-repeat="code in codes " ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_text == selectedCode.code_text">
-                    <div class="col-md-3 scroll-y">
-                        <h3>Master Definition for '{$ code.code_text $}'</h3>
-                        <p>{$ Code.definitions_by_code[code.code_text]["master"].text $}</p>
-                        <h3>My Definition for '{$ code.code_text  $}'</h3>
-                        <p>{$ Code.definitions_by_code[code.code_text]["user"].text $}</p>
-                    </div>
-                    <div class="col-md-3 scroll-y">
-                        <h3>My Keywords</h3>
-                    </div>
-                    <div class="col-md-6 scroll-y">
-                        <h3>My Tweets</h3>
-                        <div>
-                            <span>Show: </span>
-                            <div class="dropdown item-filter">
-                                <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                    {$ selectedFilter $}
-                                    <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="filterMenu">
-                                    <li ng-click="selectFilter('All')">All</li>
-                                    <li ng-click="selectFilter('Example')">Example</li>
-                                    <li ng-click="selectFilter('Saved')">Saved</li>
-                                    <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
-                                </ul>
+                        <div class="col-md-3 tweet-submit">
+                            <div class="tweet-submit-item">
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
+                                <span> Tag this tweet</span>
                             </div>
-                            <label>Search: <input ng-model="searchText"></label>
+
+                            <div class="tweet-submit-item">
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
+                                <span> Save as an example tweet</span>
+                            </div>
+
+                            <div class="tweet-submit-item">
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
+                                <span> Mark as an ambiguous tweet</span>
+                            </div>
+                            <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
                         </div>
-                        <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                    </div>
+                    <div class="" id="codes" data-toggle="buttons">
+                        <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
+                        <div class="btn btn-default" ng-repeat="code in codes"
+                                   ng-click="selectLabel(code)"
+                                   ng-class="{'active': code == selectedCode}"
+                                   ng-style="buttonStyle(code)">
+                            <div class="code-name">{$ code.code_text $}</div>
+                            <div class="code-definition scroll-y">
+                                <p><strong>definition: </strong>{$ code.text $}</p>
+                                <p><strong>example: </strong>{$ code.examples[0].text $}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bottom-area">
+                    <h2 ng-show="currentMessage.label">Submitted Labels</h2>
+                    <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
+                    <div class="row" id="panel" ng-repeat="code in codes" ng-style="definitionStyle(code)" ng-show="code.code_text == selectedCode.code_text">
+                        <h2>Review <span>{$ code.code_text $}</span></h2>
+                        <div class="col-md-3 scroll-y">
+                            <h3>Master Definition</h3>
+                            <p>{$ code.text $}</p>
+                            <h3>Master Example</h3>
+                            <p>{$ code.examples[0].text $}</p>
+                            <h3>My Definition</h3>
+                            <p ng-show="Code.definitions_by_code[code.code_text]['user'].text">{$ Code.definitions_by_code[code.code_text]["user"].text $}</p>
+                            <p ng-hide="Code.definitions_by_code[code.code_text]['user'].text" class="help-text">You have not provided a definition yet.</p>
+                        </div>
+                        <div class="col-md-3 scroll-y">
+                            <h3>My Keywords</h3>
+                        </div>
+                        <div class="col-md-6 scroll-y">
+                            <h3>My Tweets</h3>
                             <div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="item.is_saved=!item.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="item.is_example=!item.is_example"><span class="glyphicon glyphicon-star"></span></div>
-                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="item.is_ambiguous=!item.is_ambiguous"><span>?</span></div>
+                                <span>Show: </span>
+                                <div class="dropdown item-filter">
+                                    <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                        {$ selectedFilter $}
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="filterMenu">
+                                        <li ng-click="selectFilter('All')">All</li>
+                                        <li ng-click="selectFilter('Example')">Example</li>
+                                        <li ng-click="selectFilter('Saved')">Saved</li>
+                                        <li ng-click="selectFilter('Ambiguous')">Ambiguous</li>
+                                    </ul>
+                                </div>
+                                <label>Search: <input ng-model="searchText"></label>
                             </div>
-                            <div>{$ item.message.text $}</div>
+                            <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag(selectedFilter, searchText)" class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                                <div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="item.is_saved=!item.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="item.is_example=!item.is_example"><span class="glyphicon glyphicon-star"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="item.is_ambiguous=!item.is_ambiguous"><span>?</span></div>
+                                </div>
+                                <div>{$ item.message.text $}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -213,7 +220,7 @@
                     </div>
                     <div class="box box-right">
                         <h2>Keyword distribution</h2>
-                        <h3>User keywords</h3>
+                        <h3>My keywords</h3>
                         <div class="features" ng-repeat="(feature_text, feature) in featureList.user" id="user-features"
                             ng-click="searchFeature(feature_text)">
                             <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
