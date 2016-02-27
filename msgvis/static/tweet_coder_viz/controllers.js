@@ -114,7 +114,12 @@
         };
 
         $scope.searchFeature = function(feature_text) {
-            $scope.searchText = feature_text;
+            if ($scope.searchText != feature_text) {
+                $scope.searchText = feature_text;
+            }
+            else {
+                $scope.searchText = undefined;
+            }
         };
 
         $scope.filterTweetsFlag = function(filter, searchText) {
