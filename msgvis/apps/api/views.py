@@ -444,7 +444,7 @@ class CodeDefinitionView(APIView):
 
             definition = coding_models.CodeDefinition.objects.filter(code=code, source=user, valid=True)
             if definition.exists() and definition.filter(text=text).exists():
-                definition = definition.first()
+                definition = definition.filter(text=text).first()
             else:
                 definition.update(valid=False)
 
@@ -660,24 +660,25 @@ class DisagreementIndicatorView(APIView):
             data = input.validated_data
             type = data['type']
 
-            user_assignment = coding_models.CodeAssignment.objects.get(source=user, message=message,
-                                                                       is_user_labeled=True)
-            partner_assignment = coding_models.CodeAssignment.objects.get(source=partner, message=message,
-                                                                          is_user_labeled=True)
+            user_assignment = coding_models.CodeAssignment.objects.filter(source=user, message=message,
+                                                                       is_user_labeled=True).order_by("-last_updated").first()
+            partner_assignment = coding_models.CodeAssignment.objects.filter(source=partner, message=message,
+                                                                          is_user_labeled=True).order_by("-last_updated").first()
 
             indicator = coding_models.DisagreementIndicator.objects.filter(message=message,
                                                                         user_assignment=user_assignment,
                                                                         partner_assignment=partner_assignment,
                                                                         valid=True)
-            if indicator.exists():
+            if indicator.exists() and indicator.filter(type=type):
+                indicator = indicator.filter(type=type)
+            else:
                 indicator.update(valid=False)
-
-            indicator = coding_models.DisagreementIndicator(message=message,
+                indicator = coding_models.DisagreementIndicator(message=message,
                                                             user_assignment=user_assignment,
                                                             partner_assignment=partner_assignment,
                                                             type=type,
                                                             valid=True)
-            indicator.save()
+                indicator.save()
 
             output = serializers.DisagreementIndicatorSerializer(indicator)
             return Response(output.data, status=status.HTTP_200_OK)
@@ -728,8 +729,12 @@ class PairwiseConfusionMatrixView(APIView):
                                        code_assignments__source=partner).all()
 
             for msg in messages:
-                user_assignment = msg.code_assignments.get(is_user_labeled=True, source=user, valid=True)
-                partner_assignment = msg.code_assignments.get(is_user_labeled=True, source=partner, valid=True)
+                user_assignment = msg.code_assignments.filter(is_user_labeled=True,
+                                                              source=user,
+                                                              valid=True).order_by("-last_updated").first()
+                partner_assignment = msg.code_assignments.filter(is_user_labeled=True,
+                                                                 source=partner,
+                                                                 valid=True).order_by("-last_updated").first()
                 pairwise_count[(user_assignment.code.text, partner_assignment.code.text)] += 1
 
             pairwise = []

@@ -37,7 +37,9 @@ def get_formatted_y(source, messages):
 
     y = []
     for idx, msg in enumerate(messages):
-        code_id = msg.code_assignments.get(source=source, valid=True, is_user_labeled=True).code.id
+        code_id = msg.code_assignments.filter(source=source,
+                                              valid=True,
+                                              is_user_labeled=True).order_by("-last_updated").first().code.id
         code_index = code_map.get(code_id)
         if code_index is None:
             code_index = code_num
