@@ -113,8 +113,13 @@
             }
         };
 
+        $scope.searchFeature = function(feature_text) {
+            $scope.searchText = feature_text;
+        };
+
         $scope.filterTweetsFlag = function(filter, searchText) {
             return function(item) {
+                // Apply filters
                 var flagged = false;
                 switch (filter) {
                     case 'All':
@@ -140,7 +145,63 @@
                 var confusion = $scope.selectedConfusion;
                 var searchText = $scope.searchText;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
-                return (!searchText || searchText.length == 0 || item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
+
+                // Search for text
+                var matched = false;
+                if (searchText && searchText.length > 0){
+                    if (item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) {
+                        matched = true;
+                    }
+                    else if (searchText.indexOf("_") != -1)
+                    {
+                        var ngrams = searchText.toLowerCase().split("_");
+
+                        // iterate and search for continuous tokens
+                        var iNgram = 0;
+                        var iToken = -1;
+
+                        for (var i = 0; i < item.message.tokens.length; i++){
+                            var tokenText = item.message.tokens[i].toLowerCase();
+                            if (tokenText == ngrams[iNgram]) {
+                                // Is it ontinuous?
+                                if (iToken >= 0 && i != iToken + 1) {
+                                    break;
+                                }
+
+                                iNgram++;
+                                iToken = i;
+
+                                if (iNgram == ngrams.length) {
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else if (searchText.indexOf("&") != -1){
+                        var ngrams = searchText.toLowerCase().split("&");
+
+                        // iterate and search for tokens
+                        var iNgram = 0;
+
+                        for (var i = 0; i < item.message.tokens.length; i++){
+                            var tokenText = item.message.tokens[i].toLowerCase();
+                            if (tokenText == ngrams[iNgram]) {
+                                iNgram++;
+
+                                if (iNgram == ngrams.length) {
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                console.log(item.message.text);
+                console.log("matched: " + matched);
+                console.log("return: " + ((!searchText || searchText.length == 0 || matched) && flagged));
+                return (!searchText || searchText.length == 0 || matched) && flagged;
             }
         };
 

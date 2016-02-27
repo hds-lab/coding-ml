@@ -216,7 +216,8 @@
                     <div class="box box-right">
                         <h2>Keyword distribution</h2>
                         <h3>User keywords</h3>
-                        <div class="features" ng-repeat="(feature_text, feature) in featureList.user" id="user-features">
+                        <div class="features" ng-repeat="(feature_text, feature) in featureList.user" id="user-features"
+                            ng-click="searchFeature(feature_text)">
                             <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                             <span class="feature-text">{$ feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
@@ -226,7 +227,8 @@
                             <span class="feature-total">{$ feature.total_count $}</span>
                         </div>
                         <h3>System keywords</h3>
-                        <div class="features" ng-repeat="(feature_text, feature) in featureList.system" id="system-features">
+                        <div class="features" ng-repeat="(feature_text, feature) in featureList.system" id="system-features"
+                            ng-click="searchFeature(feature_text)">
                             <span class="feature-text">{$ feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
                                 <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
