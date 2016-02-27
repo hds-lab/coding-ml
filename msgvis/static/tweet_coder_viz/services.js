@@ -470,6 +470,8 @@
                         })
                         .error(function(err){
                             console.log(err);
+                            // try to reload the page
+                            self.init_load();
                         });
 
                 },
