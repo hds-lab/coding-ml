@@ -240,10 +240,14 @@
                     <div class="box">
                         <h2>Comparison</h2>
                         <span us-spinner="spinnerOptions" spinner-key="pairwise-spinner"></span>
-                        <div class="confusion" ng-class="{ selected: selectedConfusion==pair}" ng-repeat="pair in confusionPairs" ng-click="selectConfusion(pair)">
-                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.user_code])}">{$ pair.user_code $}</div>
-                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.partner_code])}">{$ pair.partner_code $}</div>
-                            <div class="confusion-size">{$ pair.count $}</div>
+                        <div id="confusion" ng-class="{ selected: selectedConfusion==pair}" ng-repeat="pair in confusionPairs" ng-click="selectConfusion(pair)">
+                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.user_code])}">
+                                <span>{$ pair.user_code $}</span>
+                            </div>
+                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.partner_code])}">
+                                <span>{$ pair.partner_code $}</span>
+                            </div>
+                            <div class="confusion-total">{$ pair.count $}</div>
                         </div>
                     </div>
                 </div>

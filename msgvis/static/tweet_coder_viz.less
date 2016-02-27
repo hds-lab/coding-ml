@@ -4,9 +4,13 @@
 // http://blog.stevensanderson.com/2011/10/05/full-height-app-layouts-a-css-trick-to-make-it-easier/
 
 /* Colors */
+@item-background-color: rgba(0,0,0,0.02);
+@item-background-color-hover: rgba(0,0,0,0.04);
+@item-background-color-selected: rgba(0,0,0,0.1);
 
 /* Offsets */
 @review-top-height: 225px;
+
 
 html, body {
     width: 100%;
@@ -228,7 +232,7 @@ th:hover{
         }
 
         .features {
-            background: rgba(0,0,0,0.02);
+            background: @item-background-color;
             margin: 5px 0;
             padding: 5px;
             width: 100%;
@@ -238,7 +242,7 @@ th:hover{
             cursor: pointer;
 
             &:hover {
-                background: rgba(0,0,0,0.04);
+                background: @item-background-color-hover;
             }
 
             .btn {
@@ -293,6 +297,56 @@ th:hover{
         #user-features .feature-text {
             width: calc(60% ~"-" 20px);
         }
+
+        #confusion {
+            background: @item-background-color;
+            margin: 5px 0;
+            padding: 5px;
+            width: 100%;
+            height: 30px;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+
+            &:hover {
+                background: @item-background-color-hover;
+            }
+
+            &.selected {
+                background: @item-background-color-selected;
+            }
+
+            .confusion-box {
+                width: 40%;
+                height: 20px;
+                display: inline-block;
+                line-height: 30px;
+                text-align: center;
+                color: white;
+                font-size: 12px;
+
+                span {
+                    vertical-align: middle;
+                    display: inline-block;
+                    margin-top: -12px;
+                }
+
+                &.feature-empty {
+                    width: 30%;
+                    height: 20px;
+                    background: #eee;
+                }
+            }
+
+            .confusion-total {
+                display: inline-block;
+                height: 100%;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                padding-left: 5px;
+            }
+        }
     }
 }
 
@@ -302,30 +356,6 @@ th:hover{
     margin: 5px;
 }
 
-.confusion {
-    padding: 5px;
-    line-height: 10px;
-}
-
-.confusion.selected, .confusion:hover.selected {
-    background: #aaa;
-}
-
-.confusion:hover {
-    background: #eee;
-}
-
-.confusion-box {
-    display:inline-block;
-    width: 40%;
-    height: 20px;
-}
-.confusion-size {
-    display: inline-block;
-    width: 10%;
-    vertical-align: top;
-    margin: 6px 5px;
-}
 .btn-toggle {
     width:24px;
     height:24px;
