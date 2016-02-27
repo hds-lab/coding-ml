@@ -246,7 +246,13 @@
         };
 
         $scope.next_step = function(){
-            Progress.next_step();
+            var request = Progress.next_step();
+            if (request) {
+                usSpinnerService.spin('label-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('label-spinner');
+                });
+            }
         };
 
         
