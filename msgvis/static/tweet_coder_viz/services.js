@@ -220,15 +220,15 @@
                         characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
                         charToToken: charToToken,
                         tokens: tokenItems,
-                        charStyle: charStyle
-                       // is_ambiguous: messageData.is_ambiguous || false,
-                       // is_saved: messageData.is_saved || false,
-                       // is_example: messageData.is_example || false
+                        charStyle: charStyle,
+                        is_ambiguous: (messageData.is_ambiguous || false),
+                        is_saved: (messageData.is_saved || false),
+                        is_example: (messageData.is_example || false)
                     });
                 },
                 submit: function (code_id) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('assignment', {message_id: self.current_message.id});
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: self.current_message.message.id});
 
                     var request = {
                         code: code_id,
@@ -385,8 +385,10 @@
                     var self = this;
                     var apiUrl = djangoUrl.reverse('definition', {code_id: code.code_id});
 
+
+
                     var request = {
-                        text: self.definitions_by_code[code.code_text]["user"].text
+                        text: self.definitions_by_code[code.code_text]["user"].text.trim()
                     };
 
 

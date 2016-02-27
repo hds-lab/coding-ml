@@ -443,11 +443,13 @@ class CodeDefinitionView(APIView):
             text = data['text']
 
             definition = coding_models.CodeDefinition.objects.filter(code=code, source=user, valid=True)
-            if definition.exists():
+            if definition.exists() and definition.filter(text=text).exists():
+                definition = definition.first()
+            else:
                 definition.update(valid=False)
 
-            definition = coding_models.CodeDefinition(code=code, source=user, text=text)
-            definition.save()
+                definition = coding_models.CodeDefinition(code=code, source=user, text=text)
+                definition.save()
 
             output = serializers.CodeDefinitionSerializer(definition)
             return Response(output.data, status=status.HTTP_200_OK)
@@ -718,14 +720,16 @@ class PairwiseConfusionMatrixView(APIView):
             else:
                 messages = corpus_models.Message.objects.all()
 
-            messages = messages.filter(code_assignments__valid=True,
+            messages = messages.filter(code_assignments__is_user_labeled=True,
+                                       code_assignments__valid=True,
                                        code_assignments__source=user).all()
-            messages = messages.filter(code_assignments__valid=True,
+            messages = messages.filter(code_assignments__is_user_labeled=True,
+                                       code_assignments__valid=True,
                                        code_assignments__source=partner).all()
 
             for msg in messages:
-                user_assignment = msg.code_assignments.get(source=user, valid=True)
-                partner_assignment = msg.code_assignments.get(source=partner, valid=True)
+                user_assignment = msg.code_assignments.get(is_user_labeled=True, source=user, valid=True)
+                partner_assignment = msg.code_assignments.get(is_user_labeled=True, source=partner, valid=True)
                 pairwise_count[(user_assignment.code.text, partner_assignment.code.text)] += 1
 
             pairwise = []

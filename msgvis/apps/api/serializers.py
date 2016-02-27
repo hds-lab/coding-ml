@@ -160,7 +160,7 @@ class CodeDefinitionSerializer(serializers.Serializer):
     code_id = serializers.IntegerField(required=False)
     code_text = serializers.CharField(required=False)
     source = UserSerializer(required=False)
-    text = serializers.CharField()
+    text = serializers.CharField(allow_blank=True)
     examples = MessageSerializer(many=True, required=False)
 
 
