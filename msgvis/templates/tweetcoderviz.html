@@ -208,26 +208,31 @@
 
             <div id="bottom-area">
                 <div class="col-md-4 scroll-y">
-                    <h2>Code distribution</h2>
                     <span us-spinner="spinnerOptions" spinner-key="feature-spinner"></span>
-                    <h3>User features</h3>
-                    <div ng-repeat="(feature_text, feature) in featureList.user" id="user-features">
-                        <span class="feature-text">{$ feature_text $}</span>
-                        <div ng-if="feature.total_count > 0" class="feature-distribution">
-                            <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+
+                    <h2>Code distribution</h2>
+
+                    <h2>Keyword distribution</h2>
+                    <div>
+                        <h3>User keywords</h3>
+                        <div ng-repeat="(feature_text, feature) in featureList.user" id="user-features">
+                            <span class="feature-text">{$ feature_text $}</span>
+                            <div ng-if="feature.total_count > 0" class="feature-distribution">
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                            </div>
+                            <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                            <span class="feature-total">{$ feature.total_count $}</span>
+                            <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove"></span></button>
                         </div>
-                        <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
-                        <span class="feature-total">{$ feature.total_count $}</span>
-                        <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove"></span></button>
-                    </div>
-                    <h3>System features</h3>
-                    <div ng-repeat="(feature_text, feature) in featureList.system" id="system-features">
-                        <span class="feature-text">{$ feature_text $}</span>
-                        <div ng-if="feature.total_count > 0" class="feature-distribution">
-                            <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                        <h3>System keywords</h3>
+                        <div ng-repeat="(feature_text, feature) in featureList.system" id="system-features">
+                            <span class="feature-text">{$ feature_text $}</span>
+                            <div ng-if="feature.total_count > 0" class="feature-distribution">
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                            </div>
+                            <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                            <span class="feature-total">{$ feature.total_count $}</span>
                         </div>
-                        <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
-                        <span class="feature-total">{$ feature.total_count $}</span>
                     </div>
                 </div>
                 <div class="col-md-2 scroll-y">
