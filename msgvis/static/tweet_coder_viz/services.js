@@ -220,7 +220,7 @@
                         characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
                         charToToken: charToToken,
                         tokens: tokenItems,
-                        charStyle: charStyle,
+                        charStyle: charStyle
                        // is_ambiguous: messageData.is_ambiguous || false,
                        // is_saved: messageData.is_saved || false,
                        // is_example: messageData.is_example || false
@@ -243,6 +243,38 @@
                             self.last_message = data;
                         });
 
+                },
+                update_flags: function (item) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: item.message.id});
+
+                    var request = {
+                        code: item.code,
+                        is_example: item.is_example,
+                        is_ambiguous: item.is_ambiguous,
+                        is_saved: item.is_saved
+                    };
+
+
+                    return $http.put(apiUrl, request)
+                        .success(function (data) {
+                            console.log("Update flags", data);
+                        });
+
+                },
+                update_disagreement_indicator: function(message_id, type){
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('disagreement', {message_id: message_id});
+
+                    var request = {
+                        type: type
+                    };
+
+
+                    return $http.put(apiUrl, request)
+                        .success(function (data) {
+                            console.log("Update disagreement indicator", data);
+                        });
                 },
                 load_coded_messages: function(source){
                     var self = this;

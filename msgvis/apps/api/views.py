@@ -248,7 +248,8 @@ class UserFeatureView(APIView):
             for code in corpus_models.Code.objects.all():
                 item["distribution"][code.text] = 0
 
-            counts = enhance_models.Feature.objects.filter(id=feature.id, messages__code_assignments__isnull=False)\
+            counts = enhance_models.Feature.objects\
+                .filter(id=feature.id, messages__code_assignments__isnull=False, messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                                     .annotate(count=Count('messages')).order_by('id', 'count').all()
             for count in counts:
@@ -340,7 +341,7 @@ class FeatureCodeDistributionView(APIView):
                 distributions.append(item)
                 distribution_map[feature.index] = item
 
-            counts = features.filter(messages__code_assignments__isnull=False)\
+            counts = features.filter(messages__code_assignments__isnull=False, messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                 .annotate(count=Count('messages')).order_by('id', 'count').all()
             for count in counts:
@@ -506,44 +507,23 @@ class CodeAssignmentView(APIView):
                     if assignments.exists():
                         assignments.update(valid=False)
 
-                    code_assignment, created = coding_models.CodeAssignment.objects.get_or_create(
+                    code_assignment = coding_models.CodeAssignment(
                                                                     is_user_labeled=True, source=user,
                                                                     message=message, code=code, valid=True)
 
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
                     code_assignment.is_ambiguous=data['is_ambiguous']
-
-                    output = serializers.CodeAssignmentSerializer(code_assignment)
-                    return Response(output.data, status=status.HTTP_200_OK)
-
-        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, format=None):
-
-        input = serializers.CodeAssignmentSerializer(data=request.data)
-        if input.is_valid():
-            data = input.validated_data
-            message = data['message']
-            code = data['code']
-
-            if self.request.user is not None:
-                user_dict = self.request.user
-                if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
-                    user = User.objects.get(id=self.request.user.id)
-
-                    code_assignment = coding_models.CodeAssignment.objects.get(
-                                                                    source=user, message=message, code=code, valid=True)
-                    code_assignment.is_example=data['is_example']
-                    code_assignment.is_saved=data['is_saved']
-                    code_assignment.is_ambiguous=data['is_ambiguous']
-
                     code_assignment.save()
 
                     output = serializers.CodeAssignmentSerializer(code_assignment)
                     return Response(output.data, status=status.HTTP_200_OK)
 
         return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, message_id, format=None):
+
+        return self.post(request, message_id, format)
 
 
 class CodeMessageView(APIView):
@@ -639,6 +619,7 @@ class AllCodedMessageView(APIView):
                                                                           is_user_labeled=True,
                                                                           valid=True).all()
 
+            assignments = assignments.order_by('message_id')
             output = serializers.CodeAssignmentSerializer(assignments, many=True)
 
             return Response(output.data, status=status.HTTP_200_OK)

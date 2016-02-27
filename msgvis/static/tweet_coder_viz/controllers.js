@@ -84,7 +84,13 @@
             partner: {}
         };
 
-
+        $scope.indicators = ['N', 'U', 'D', 'P'];
+        $scope.indicator_mapping = {
+            'N': 'Not specified',
+            'U': 'My code is correct',
+            'D': 'My partner and I are both right',
+            'P': 'My partner\'s code is correct'
+        };
 
 
         $scope.selectLabel = function(code){
@@ -241,18 +247,29 @@
 
         
 
-        $scope.updateItem = function(item, saved, example, ambiguous){
-            // TODO: Need service call
-            item.saved = saved;
-            item.example = example;
-            item.ambiguous = ambiguous;
-            //console.log("Item updated: " + JSON.stringify(item));
+        $scope.updateItem = function(item, is_saved, is_example, is_ambiguous){
+            item.is_saved = is_saved;
+            item.is_example = is_example;
+            item.is_ambiguous = is_ambiguous;
+            var request = Message.update_flags(item);
+            if (request) {
+                usSpinnerService.spin('submitted-label-spinner');
+                request.then(function () {
+                    usSpinnerService.stop('submitted-label-spinner');
+                });
+            }
         };
 
-        $scope.updateAnalysis = function(item, analysis){
-            // TODO: Need service call
-            item.analysis = analysis;
-            //console.log("Item analyzed: " + item.analysis);
+        $scope.updateIndicator = function(item){
+
+            var request = Message.update_disagreement_indicator(item.message.id, item.disagreement_indicator);
+            if (request) {
+                usSpinnerService.spin('submitted-label-spinner');
+                request.then(function () {
+                    usSpinnerService.stop('submitted-label-spinner');
+                });
+            }
+
         };
 
 

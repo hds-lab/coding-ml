@@ -49,8 +49,12 @@ class CodeAssignment(models.Model):
     @property
     def disagreement_indicator(self):
         partner_assignment = self.partner_assignment()
-        return self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
-
+        indicator =  self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
+        if indicator is None and self.code != partner_assignment.code:
+            indicator = DisagreementIndicator(message=self.message, user_assignment=self,
+                                              partner_assignment=partner_assignment)
+            indicator.save()
+        return indicator
 
 
 
@@ -91,9 +95,9 @@ class DisagreementIndicator(models.Model):
     partner_assignment = models.ForeignKey(CodeAssignment, related_name="partner_disagreement_indicators")
     TYPE_CHOICES = (
         ('N', 'Not specified'),
-        ('U', 'I am correct'),
+        ('U', 'My code is correct'),
         ('D', 'My partner and I disagree'),
-        ('P', 'My partner is correct'),
+        ('P', 'My partner\'s code is correct'),
     )
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='N')
 

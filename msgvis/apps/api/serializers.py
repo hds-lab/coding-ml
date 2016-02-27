@@ -135,9 +135,9 @@ class IndicatorSerializer(serializers.ModelSerializer):
         model = coding_models.DisagreementIndicator
 
 class CodeAssignmentSerializer(serializers.ModelSerializer):
-    user_code = CodeSerializer(source="code")
-    partner_code = CodeSerializer()
-    disagreement_indicator = IndicatorSerializer()
+    user_code = CodeSerializer(source="code", required=False)
+    partner_code = CodeSerializer(required=False)
+    disagreement_indicator = IndicatorSerializer(required=False)
 
     message = MessageSerializer(required=False)
     class Meta:

@@ -235,26 +235,24 @@
                 </div>
                 <div class="col-md-6 scroll-y">
                     <h2>Submitted labels</h2>
+                    <span us-spinner="spinnerOptions" spinner-key="submitted-label-spinner"></span>
                     <div>
                         <label>Search: <input ng-model="searchText"></label>
                     </div>
                     <div ng-repeat="item in allItems | filter:filterTweetsConfusion()" class="label-item" ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }" ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)">
-                        <div ng-if="hoveredItem==item">
+                        <div ng-show="hoveredItem==item">
                             <div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
                                 <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"><span>?</span></div>
-                                <span ng-show="item.analysis">Analysis: </span>
-                                <div class="dropdown inline" ng-show="item.indicator">
-                                    <button class="btn btn-default dropdown-toggle" type="button" id="analysisMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                        {$ item.indicator $}
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="analysisMenu">
-                                        <li ng-click="updateAnalysis(item,'I am right')">I am right</li>
-                                        <li ng-click="updateAnalysis(item,'I am wrong')">I am wrong</li>
-                                        <li ng-click="updateAnalysis(item,'We are both right')">We are both right</li>
-                                    </ul>
+                                <div class="inline" ng-show="item.disagreement_indicator">
+                                    <label for="indicator">Disagreement Indicator: </label>
+                                    <select name="indicator" ng-model="item.disagreement_indicator"
+                                            ng-init="item.disagreement_indicator=item.disagreement_indicator"
+                                            ng-change="updateIndicator(item)">
+                                        <option ng-repeat="indicator in indicators" value="{$ indicator $}" >{$ indicator_mapping[indicator] $}</option>
+                                    </select>
+
                                 </div>
                             </div>
                             <div class="tweet-selectable"><span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
