@@ -287,7 +287,11 @@
             }
         };
 
-        $scope.updateIndicator = function(item){
+        $scope.updateIndicator = function(item, disagreement){
+
+            if (disagreement) {
+                item.disagreement_indicator = disagreement;
+            }
 
             var request = Message.update_disagreement_indicator(item.message.id, item.disagreement_indicator);
             if (request) {
@@ -545,7 +549,7 @@
         $scope.charStyle = function(item, charIndex) {
             var style = {};
             if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
-                style["background"] = "#eee";
+                style["background"] = "rgba(0,0,0,0.1)";
             }
 
             if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {

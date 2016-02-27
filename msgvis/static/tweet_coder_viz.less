@@ -347,35 +347,132 @@ th:hover{
                 padding-left: 5px;
             }
         }
+
+        #labels {
+            font-weight: 300;
+
+            label {
+                font-weight: 500;
+                font-size: 12px;
+            }
+
+            #search {
+                label {
+                    width: 50px;
+                }
+
+                input {
+                    width: calc(100% ~"-" 50px);
+                    padding: 5px;
+                }
+            }
+
+            .label-item {
+                border: solid 1px transparent;
+                margin: 5px 0;
+                font-size: 14px;
+
+                &:hover {
+                    background: @item-background-color;
+                }
+
+                &.hovered {
+                    background: @item-background-color-hover;
+                }
+
+                .confusion {
+                    width: 100%;
+                    position: relative;
+
+                    .confusion-box {
+                        position: absolute;
+                        width: 50%;
+                        height: 10px;
+                        left: 50%;
+
+                        &:first-child {
+                            left: 0;
+                        }
+                    }
+                }
+
+                .content {
+                    padding: 5px;
+                    padding-top: 15px;
+
+                    .item-message {
+
+                        &.item-selectable {
+                            font-size: 16px;
+                            margin: 20px;
+                            -webkit-touch-callout: none;
+                            -webkit-user-select: none;
+                            -khtml-user-select: none;
+                            -moz-user-select: none;
+                            -ms-user-select: none;
+                            user-select: none;
+
+                            span {
+                                cursor: pointer;
+                            }
+                        }
+                    }
+
+                    .btn-toggle {
+                        width: 20px;
+                        height: 20px;
+                        background: transparent;
+                        padding: 2px;
+                        border-radius: 100%;
+                        border: solid #333 1px;
+                        color: #333;
+                        text-align: center;
+                        font-size: 10px;
+                        cursor: pointer;
+                        margin: 2px;
+
+                        &:hover {
+                            background: @item-background-color-hover;
+                        }
+
+                        &.active {
+                            color: white;
+                            background: #333;
+                        }
+                    }
+
+                    .dropdown {
+                        display: inline-block;
+
+                        .dropdown-toggle {
+                            font-size: 12px;
+                            font-weight: 300;
+                            padding: 2px 5px;
+                            width: 200px;
+                            border: none;
+                            text-align: left;
+
+                            .caret {
+                                margin-top: 7px;
+                                float: right;
+                            }
+                        }
+
+                        .dropdown-menu {
+                            font-size: 12px;
+                            font-weight: 300;
+                            padding: 2px 5px;
+                            border: none;
+                        }
+                    }
+
+                }
+            }
+        }
     }
 }
 
-#reviewing .label-item {
-    border: solid 1px transparent;
-    padding: 5px;
-    margin: 5px;
-}
 
-.btn-toggle {
-    width:24px;
-    height:24px;
-    background: transparent;
-    padding: 2px;
-    border-radius: 100%;
-    border: solid #333 1px;
-    color: #333;
-    text-align:center;
-    font-size:14px;
-    cursor: pointer;
-    margin: 2px;
-}
-.btn-toggle:hover {
-    background: #eee;
-}
-.btn-toggle.active {
-    background: #333;
-    color: white;
-}
 
 .no-padding{
     padding: 0;
@@ -404,17 +501,3 @@ h3 {
 }
 
 
-.tweet-selectable {
-    font-size: 16px;
-    margin: 20px;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-
-    span {
-        cursor: pointer;
-    }
-}
