@@ -3,12 +3,23 @@
 /* Full page application */
 // http://blog.stevensanderson.com/2011/10/05/full-height-app-layouts-a-css-trick-to-make-it-easier/
 
+/* Colors */
+@item-background-color: rgba(0,0,0,0.02);
+@item-background-color-hover: rgba(0,0,0,0.04);
+@item-background-color-selected: rgba(0,0,0,0.1);
+
+/* Offsets */
+@coding-top-height: 320px;
+@coding-top-labeling-height: 140px;
+@review-top-height: 225px;
+
 
 html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
     min-width: 1200px;
+    background: #eee;
 }
 body {
     font-family: 'Open Sans', "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -57,173 +68,19 @@ th:hover{
     }
 }
 #content {
-    margin: 10px;
     height: ~'calc(100% - 75px)';
 }
 
-#coding {
-    height: 100%;
-}
-#coding #top-area {
-    height: 300px;
-}
 
-#coding #bottom-area{
-    height: ~'calc(100% - 300px)';
-}
 
-#reviewing{
-    height: 100%;
-}
-#reviewing #top-area {
-    height: 220px;
-}
 
-#reviewing #bottom-area{
-    height: ~'calc(100% - 220px)';
-}
-
-#labeling .tweet-main {
-    font-size: 18px;
-    font-weight: 300;
-    margin: 10px 0;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-
-    span {
-        cursor: pointer;
-    }
-}
-#labeling .tweet-submit {
-    margin: 0;
-    margin-bottom: 10px;
-}
+/* START Shared between coding and reviewing */
 .btn {
     border-radius: 0;
 }
-#codes .btn {
-    margin: 0 5px;
-}
-#codes .btn.active {
-    color: white;
-    background-color: #AA3333;
-}
-#codes .btn.active > .code-name {
-    font-weight:600;
-}
 
-#codes .btn > .code-definition {
-    text-align: justify;
-    white-space: normal;
-    font-size: 12px;
-    height: 100px;
-}
-
-#panel {
-    margin: 5px -10px;
-    padding: 10px;
-    height: 100%;
-}
-
-#panel .label-item {
-    border: solid 1px transparent;
-    padding: 5px;
-    margin: 5px;
-}
-
-#panel .item-filter {
-    display: inline;
-}
-
-#panel .item-filter .btn {
-    background: transparent;
-    border: solid 0 transparent;
-}
-
-#definitions {
-    height: 150px;
-}
-
-#definitions > div {
-    height: 100%;
-}
-
-#definitions .code-definition {
-    text-align: justify;
-    white-space: normal;
-    font-size: 12px;
-    height: 100px;
-    overflow-y: auto;
-}
-
-#definitions textarea {
-    resize: none;
-    width: 100%;
-    background: transparent;
-}
-#reviewing #bottom-area{
-    padding-bottom: 50px;
-}
-
-#reviewing .label-item {
-    border: solid 1px transparent;
-    padding: 5px;
-    margin: 5px;
-}
-
-#reviewing .next-step{
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-}
-
-.confusion {
-    padding: 5px;
-    line-height: 10px;
-}
-
-.confusion.selected, .confusion:hover.selected {
-    background: #aaa;
-}
-
-.confusion:hover {
-    background: #eee;
-}
-
-.confusion-box {
-    display:inline-block;
-    width: 40%;
-    height: 20px;
-}
-.confusion-size {
-    display: inline-block;
-    width: 10%;
-    vertical-align: top;
-    margin: 6px 5px;
-}
-.btn-toggle {
-    width:24px;
-    height:24px;
-    background: transparent;
-    padding: 2px;
-    border-radius: 100%;
-    border: solid #333 1px;
-    color: #333;
-    text-align:center;
-    font-size:14px;
-    cursor: pointer;
-    margin: 2px;
-}
-.btn-toggle:hover {
-    background: #eee;
-}
-.btn-toggle.active {
-    background: #333;
-    color: white;
+.dropdown-menu {
+    border-radius: 0;
 }
 
 .no-padding{
@@ -236,16 +93,16 @@ th:hover{
 }
 
 h2 {
-    font-weight: 600;
-    font-size: 16px;
+    font-weight: 800;
+    font-size: 14px;
     text-transform: uppercase;
-    margin: 0;
+    margin: 0 0 10px 0;
 }
 
 h3 {
     font-weight: 600;
     font-size: 14px;
-    margin: 0;
+    margin: 10px 0 5px 0;
 }
 
 .inline {
@@ -253,110 +110,531 @@ h3 {
 }
 
 
-.tweet-selectable {
-    font-size: 16px;
-    margin: 20px;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
 
-    span {
-        cursor: pointer;
-    }
-}
+#codes {
+    .btn {
+        margin: 0;
+        opacity: 0.7;
 
-#system-features {
-    padding: 5px;
-    width: 100%;
+        &:hover {
+            opacity: 1;
+        }
 
-    .feature-text {
-        width: 60%;
-        height: 100%;
-        display: inline-block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-
-    .feature-distribution {
-        width: 30%;
-        height: 20px;
-        display: inline-block;
-
-        div {
-            display: inline-block;
-            height: 100%;
+        > .code-definition {
+            text-align: justify;
+            white-space: normal;
+            font-size: 12px;
+            height: 100px;
         }
     }
 
-    .feature-distribution.feature-empty {
-        width: 30%;
-        height: 20px;
-        background: #eee;
-    }
+    .btn.active {
+        opacity: 1;
+        color: white;
+        background-color: #AA3333;
+        -webkit-box-shadow: none;
+        box-shadow: none;
 
-    .feature-total {
-        display: inline-block;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        padding-left: 5px;
+        > .code-name {
+            font-weight: 600;
+        }
     }
 }
 
-#user-features {
+.box {
+    padding: 10px;
+    background: white;
+
+    &.box-top {
+        margin-top: 10px;
+    }
+
+    &.box-bottom {
+        margin-bottom: 10px;
+    }
+
+    &.box-left {
+        margin-left: 10px;
+    }
+
+    &.box-right {
+        margin-right: 10px;
+    }
+}
+
+
+
+.features {
+    background: @item-background-color;
+    margin: 5px 0;
     padding: 5px;
     width: 100%;
+    height: 30px;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
 
-    .feature-text {
-        width: 60%;
-        height: 100%;
-        display: inline-block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-
-    .feature-distribution {
-        width: 30%;
-        height: 20px;
-        display: inline-block;
-
-        div {
-            display: inline-block;
-            height: 100%;
-        }
-    }
-
-    .feature-distribution.feature-empty {
-        width: 30%;
-        height: 20px;
-        background: #eee;
-    }
-
-    .feature-total {
-        display: inline-block;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        padding-left: 5px;
+    &:hover {
+        background: @item-background-color-hover;
     }
 
     .btn {
-        border-radius: 100%;
-        width: 20px;
+        border: none;
+        width: 18px;
         height: 20px;
-        font-size: 12px;
+        font-size: 16px;
         padding: 0;
         margin: 0;
         vertical-align: top;
         display: inline;
         color: #777;
-        border-color: #777;
+        background: transparent;
+    }
+
+    .feature-text {
+        width: 60%;
+        height: 100%;
+        display: inline-block;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .feature-distribution {
+        width: 30%;
+        height: 20px;
+        display: inline-block;
+
+        div {
+            display: inline-block;
+            height: 100%;
+        }
+
+        &.feature-empty {
+            width: 30%;
+            height: 20px;
+            background: #eee;
+        }
+    }
+
+    .feature-total {
+        display: inline-block;
+        height: 100%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        padding-left: 5px;
     }
 }
+
+.label-item {
+    border: solid 1px transparent;
+    margin: 5px 0;
+    font-size: 14px;
+
+    &:hover {
+        background: @item-background-color;
+    }
+
+    &.hovered {
+        background: @item-background-color-hover;
+    }
+
+    .content {
+        padding: 5px;
+
+        .item-message {
+            &.item-selectable {
+                font-size: 16px;
+                margin: 20px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+
+                span {
+                    cursor: pointer;
+                }
+            }
+        }
+
+        .btn-toggle {
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            padding: 2px;
+            border-radius: 100%;
+            border: solid #333 1px;
+            color: #333;
+            text-align: center;
+            font-size: 10px;
+            cursor: pointer;
+            margin: 2px;
+
+            &:hover {
+                background: @item-background-color-hover;
+            }
+
+            &.active {
+                color: white;
+                background: #333;
+            }
+        }
+
+        .dropdown {
+            display: inline-block;
+
+            .dropdown-toggle {
+                font-size: 12px;
+                font-weight: 300;
+                padding: 2px 5px;
+                width: 200px;
+                border: none;
+                text-align: left;
+
+                .caret {
+                    margin-top: 7px;
+                    float: right;
+                }
+            }
+
+            .dropdown-menu {
+                font-size: 12px;
+                font-weight: 300;
+                padding: 2px 5px;
+                border: none;
+            }
+        }
+
+    }
+}
+/* END Shared between coding and reviewing */
+
+
+/* START Coding interface styles */
+#coding {
+    height: 100%;
+
+    &>div {
+        height: 100%;
+    }
+
+    div[class^="col-"] {
+        padding: 0;
+        height: 100%;
+    }
+
+    #top-area {
+        height: @coding-top-height;
+
+        #labeling {
+            height: @coding-top-labeling-height;
+
+            .tweet-item {
+                font-size: 24px;
+                font-weight: 300;
+                padding-right: 20px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+
+                span {
+                    cursor: pointer;
+                }
+            }
+
+            .tweet-submit {
+                font-size: 14px;
+
+                .tweet-submit-item {
+                    margin: 0;
+                    margin-bottom: 10px;
+
+                    .btn-toggle {
+                        width: 25px;
+                        height: 25px;
+                        background: transparent;
+                        padding: 3px;
+                        border-radius: 100%;
+                        border: solid #333 1px;
+                        color: #333;
+                        text-align: center;
+                        font-size: 12px;
+                        cursor: pointer;
+                        margin-right: 5px;
+
+                        &:hover {
+                            background: @item-background-color-hover;
+                        }
+
+                        &.active {
+                            color: white;
+                            background: #333;
+                        }
+                    }
+                }
+
+                .btn-default {
+                    width: 100%;
+                }
+            }
+        }
+
+        #codes {
+            height: calc(@coding-top-height ~ "-" @coding-top-labeling-height ~ "-" 25px);
+            padding-top: 10px;
+
+            .btn-default {
+                height: 100%;
+                vertical-align: top;
+
+                .code-definition {
+                    text-align: left;
+                    white-space: normal;
+                    font-weight: 300;
+                    font-size: 12px;
+                    height: calc(100% ~ "-" 20px);
+                    overflow-y: auto;
+
+                    & > p {
+                        margin: 0;
+                    }
+                }
+            }
+        }
+    }
+
+    #bottom-area {
+        height: calc(100% ~ "-" @coding-top-height);
+
+        .box {
+            background: rgba(255,255,255,0.5);
+        }
+
+        #panel {
+            margin: 0;
+            padding: 10px;
+            height: 100%;
+            font-weight: 300;
+
+            .label-item {
+                border: solid 1px transparent;
+                padding: 5px;
+                margin: 5px;
+            }
+
+            .help-text {
+                color: #777;
+            }
+        }
+
+        #search {
+            .search-label {
+                width: 50px;
+                display: inline-block;
+            }
+
+            .dropdown {
+                display: inline-block;
+                width: 20%;
+
+                .dropdown-toggle {
+                    font-size: 12px;
+                    font-weight: 300;
+                    padding: 2px 5px;
+                    width: 100%;
+                    border: none;
+                    text-align: left;
+
+                    .caret {
+                        margin-top: 7px;
+                        float: right;
+                    }
+                }
+
+                .dropdown-menu {
+                    font-size: 12px;
+                    font-weight: 300;
+                    padding: 2px 5px;
+                    border: none;
+                }
+            }
+
+            input {
+                width: calc(80% ~ "-" 107px);
+                padding: 5px;
+            }
+        }
+    }
+}
+/* END Coding interface styles */
+
+
+/* START Reviewing interface styles */
+#reviewing {
+    height: 100%;
+
+    .next-step {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    #top-area {
+        height: @review-top-height;
+
+        #definitions {
+            height: calc(@review-top-height ~"-" 77px);
+
+            > div {
+                height: 100%;
+            }
+
+            p {
+                margin: 0;
+            }
+
+            .code-definition {
+                text-align: justify;
+                white-space: normal;
+                font-weight: 300;
+                font-size: 14px;
+                height: calc(100% ~"-" 40px);
+                overflow-y: auto;
+
+                &.help-text {
+                    color: #777;
+                }
+            }
+
+            textarea {
+                resize: none;
+                width: 100%;
+                background: transparent;
+            }
+        }
+    }
+
+    #bottom-area {
+        height: calc(100% ~"-" @review-top-height);
+        padding-bottom: 50px;
+        padding-top: 10px;
+
+        div[class^="col-"]{
+            padding: 0;
+            height: 100%;
+        }
+
+        #user-features .feature-text {
+            width: calc(60% ~"-" 20px);
+        }
+
+        #confusion {
+            background: @item-background-color;
+            margin: 5px 0;
+            padding: 5px;
+            width: 100%;
+            height: 30px;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+
+            &:hover {
+                background: @item-background-color-hover;
+            }
+
+            &.selected {
+                background: @item-background-color-selected;
+            }
+
+            .confusion-box {
+                width: 40%;
+                height: 20px;
+                display: inline-block;
+                line-height: 30px;
+                text-align: center;
+                color: white;
+                font-size: 12px;
+
+                span {
+                    vertical-align: middle;
+                    display: inline-block;
+                    margin-top: -12px;
+                }
+
+                &.feature-empty {
+                    width: 30%;
+                    height: 20px;
+                    background: #eee;
+                }
+            }
+
+            .confusion-total {
+                display: inline-block;
+                height: 100%;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                padding-left: 5px;
+            }
+        }
+
+        #labels {
+            font-weight: 300;
+
+            label {
+                font-weight: 500;
+                font-size: 12px;
+            }
+
+            .help-text {
+                padding-top: 20px;
+                color: #777;
+                font-size: 14px;
+            }
+
+            #search {
+                div {
+                    width: 50px;
+                    display: inline-block;
+                }
+
+                input {
+                    width: calc(100% ~"-" 50px);
+                    padding: 5px;
+                }
+            }
+
+            .label-item {
+
+                .confusion {
+                    width: 100%;
+                    position: relative;
+
+                    .confusion-box {
+                        position: absolute;
+                        width: 50%;
+                        height: 10px;
+                        left: 50%;
+
+                        &:first-child {
+                            left: 0;
+                        }
+                    }
+                }
+
+                .content {
+                    padding-top: 15px;
+                }
+            }
+        }
+    }
+}
+/* End Reviewing interface styles */
+
+

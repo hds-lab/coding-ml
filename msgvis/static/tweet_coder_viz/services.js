@@ -100,7 +100,7 @@
                     return $http.get(apiUrl, request)
                         .success(function (data) {
 
-                            self.distributions[source] = {};
+                            self.distributions[source] = data;
                             data.forEach(function(feature){
                                 // Add to the dict
                                 self.distributions[source][feature.feature_text] = feature;
