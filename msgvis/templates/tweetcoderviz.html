@@ -91,9 +91,10 @@
                     <h2>New Label</h2>
                     <div class="" id="labeling">
                         <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                        <div class="col-md-9 tweet-item">
-                            <span ng-repeat="char in currentMessage.characters track by $index"
-                                   ng-style="char.style">{$char.char$}</span>
+                        <div class="col-md-9 tweet-item" ng-bind-html="currentMessage.message.embedded_html">
+{#                            Use this for feature highlights#}
+{#                            <span ng-repeat="char in currentMessage.characters track by $index"#}
+{#                                   ng-style="char.style">{$char.char$}</span>#}
                         </div>
                         <div class="col-md-3 tweet-submit">
                             <div class="tweet-submit-item">
@@ -203,9 +204,9 @@
                                                 <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
                                                 <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"><span>?</span></div>
                                             </div>
-                                            <div>{$ item.message.text $}</div>
+                                            <div ng-bind-html="item.message.embedded_html"></div>
                                         </div>
-                                        <div class="item-message" ng-hide="hoveredItem==item">{$ item.message.text $}</div>
+                                        <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
                                     </div>
                                 </div>
 
@@ -347,7 +348,7 @@
                                 <button class="btn btn-default" ng-click="addFeature(item)">Add Feature</button>
                             </div>
 
-                                <div class="item-message" ng-hide="hoveredItem==item">{$ item.message.text $}</div>
+                                <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
                             </div>
                         </div>
                         <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsConfusion()).length==0" class="help-text">No tweets were found.</p>
