@@ -265,6 +265,12 @@
 
                     <div class="box box-right box-bottom">
                         <h2>Code distribution</h2>
+                        <div id="code-distribution">
+                            <div class="distribution-chart">
+                                <div ng-repeat="(code, percentage) in normalized_code_distribution" ng-style="distributionStyle(code, percentage)"></div>
+                            </div>
+                            <div class="distribution-total">{$ allItems.length $}</div>
+                        </div>
                     </div>
                     <div class="box box-right">
                         <h2>Keyword distribution</h2>

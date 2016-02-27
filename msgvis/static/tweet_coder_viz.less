@@ -560,6 +560,31 @@ h3 {
             height: 100%;
         }
 
+        #code-distribution{
+            width: 100%;
+            height: 20px;
+
+            .distribution-chart {
+                width: 90%;
+                display: inline-block;
+
+                & > div {
+                    display: inline-block;
+                    height: 20px;
+                }
+            }
+
+            .distribution-total {
+                display: inline-block;
+                height: 100%;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                padding-left: 5px;
+                font-size: 14px;
+            }
+        }
+
         #user-features .feature-text {
             width: calc(60% ~"-" 20px);
         }

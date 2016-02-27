@@ -415,6 +415,7 @@
                 request.then(function () {
                     usSpinnerService.stop('label-spinner');
                     $scope.allItems = Message.all_coded_messages;
+                    $scope.normalized_code_distribution = Message.normalized_code_distribution;
 
                     for (var i = 0; i < $scope.allItems.length; i++) {
                         var prototype = $scope.allItems[i];
