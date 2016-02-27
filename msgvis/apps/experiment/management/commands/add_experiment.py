@@ -61,6 +61,7 @@ class Command(BaseCommand):
             with transaction.atomic(savepoint=False):
                 # create an experiment
                 experiment = experiment_models.Experiment(name=experiment_name,
+                                                          saved_path_root=output_folder,
                                                           dictionary_id=dictionary_id)
                 experiment.save()
 

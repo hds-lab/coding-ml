@@ -307,7 +307,7 @@ class Message(models.Model):
                 vector.append({"text": feature_score.feature.text,
                                "feature_index": feature_score.feature_index,
                                "count": feature_score.count,
-                               "source": feature_score.feature.source })
+                               "source": "user" })
         return vector
 
     @property

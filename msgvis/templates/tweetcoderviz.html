@@ -82,6 +82,7 @@
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
         <div id="Initialization" ng-show="!(is_status('C') || is_status('R'))">
             Waiting for the other participant... (Wait for a while and then refresh)
+            <button class="btn btn-success next-step" ng-click="next_step()">Try to go to the next stage</button>
         </div>
 
         <div id="coding" ng-show="is_status('C')">
@@ -122,7 +123,7 @@
                         <div class="code-name">{$ code.code_text $}</div>
                         <div class="code-definition scroll-y">
                             <p><strong>definition: </strong>{$ code.text $}</p>
-                            <p><strong>example: </strong>{$ code.is_examples[0].text $}</p>
+                            <p><strong>example: </strong>{$ code.examples[0].text $}</p>
                         </div>
                     </div>
                 </div>
@@ -172,6 +173,7 @@
         </div>
 
         <div id="reviewing" ng-show="is_status('R')">
+            <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
             <div id="top-area">
                 <h2>Review Code Definitions</h2>
                 <div class="row" data-toggle="buttons" id="codes">

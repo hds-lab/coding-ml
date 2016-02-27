@@ -240,9 +240,13 @@
                     $scope.coded_messages['user'][$scope.selectedCode.code_text].push(Message.last_message);
                     $scope.selectedCode = undefined;
 
-                    Progress.next_step();
+                    $scope.next_step();
                 });
             }
+        };
+
+        $scope.next_step = function(){
+            Progress.next_step();
         };
 
         
@@ -321,6 +325,7 @@
                     Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
+                        $scope.selectedCode = $scope.codes[0];
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();

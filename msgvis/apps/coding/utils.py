@@ -1,17 +1,30 @@
 import numpy
 from sklearn import svm
 from sklearn.externals import joblib
+from django.db.models import Q
+from operator import or_
 
 
-def get_formatted_X(messages, features, use_tfidf=False):
-    feature_num = len(features)
+def get_formatted_X(dictionary, source, messages, feature_index_map, feature_num, use_tfidf=False):
+
     message_num = len(messages)
+
+    source_list = ["system", source]
+    filter_ors = []
+    for source in source_list:
+        if source == "system":
+            filter_ors.append(("feature__source__isnull", True))
+        else:
+            filter_ors.append(("feature__source", source))
 
     X = numpy.zeros((message_num, feature_num), dtype=numpy.float64)
 
     for idx, msg in enumerate(messages):
-        for feature in features:
-            X[idx, feature.feature_index] = feature.tfidf if use_tfidf else feature.count
+        message_feature_scores = msg.feature_scores.filter(feature__dictionary=dictionary, feature__valid=True)
+        message_feature_scores = message_feature_scores.filter(reduce(or_, [Q(x) for x in filter_ors])).all()
+        for feature_score in message_feature_scores:
+            index = feature_index_map[feature_score.feature_index]
+            X[idx, index] = feature_score.tfidf if use_tfidf else feature_score.count
 
 
     return X
@@ -36,8 +49,8 @@ def get_formatted_y(source, messages):
 
     return y, code_map_inverse
 
-def get_formatted_data(source, messages, features, use_tfidf=False):
-    X = get_formatted_X(messages, features)
+def get_formatted_data(dictionary, source, messages, feature_index_map, feature_num, use_tfidf=False):
+    X = get_formatted_X(dictionary, source, messages, feature_index_map, feature_num, use_tfidf)
     y, code_map_inverse = get_formatted_y(source, messages)
 
     return X, y, code_map_inverse

@@ -284,7 +284,7 @@ class StageAssignment(models.Model):
     def initialize_stage(self, selected_num=5):
         stage = self.stage
         message_count = self.stage.messages.count()
-        messages = map(lambda x: x, self.stage.messages.all())
+        messages = self.stage.messages.all()
 
         if stage.type == 'R':
             # Random select messages from the messages that associate with the stage
@@ -302,7 +302,7 @@ class StageAssignment(models.Model):
                 codes = []
                 probs = []
                 for user in users:
-                    code_assignment = message.code_assignment.get(is_user_labeled=False, source=user, valid=True)
+                    code_assignment = message.code_assignments.filter(is_user_labeled=False, source=user, valid=True).first()
                     codes.append(code_assignment.code)
                     probs.append(code_assignment.probability)
 
@@ -314,57 +314,80 @@ class StageAssignment(models.Model):
                 message_with_disagreement_levels.append(message_with_disagreement_level)
 
             message_with_disagreement_levels.sort(key=itemgetter('disagreement'), reverse=True)
-            messages = message_with_disagreement_levels
 
         selected_messages = []
-        for idx, message in enumerate(messages[:selected_num]):
-            selected_messages.append(MessageSelection(stage_assignment=self, message=message, order=idx))
+        for idx, item in enumerate(message_with_disagreement_levels[:selected_num]):
+            selected_messages.append(MessageSelection(stage_assignment=self, message=item["message"], order=idx))
         MessageSelection.objects.bulk_create(selected_messages)
 
     def process_stage(self, use_tfidf=False):
         experiment = self.assignment.experiment
         dictionary = experiment.dictionary
-        for source in self.assignment.pair.users.all():
-            features = dictionary.get_feature_list(source=None)
-            features += dictionary.get_feature_list(source=source)  # Get user features
-            messages = self.selected_messages.all()
+        try:
+            for source in self.assignment.pair.users.all():
+                sources = ["system", source]
+                features = list(dictionary.get_feature_list(sources))
+                messages = self.selected_messages.all()
 
-            model_save_path = "%s/%s_stage%d/" % (experiment.saved_path_root, source.username, self.order)
-            check_or_create_dir(model_save_path)
+                feature_index_map = {}
+                for idx, feature in enumerate(features):
+                    feature_index_map[feature.index] = idx
 
-            X, y, code_map_inverse = coding_utils.get_formatted_data(source=source, messages=messages,
-                                                                     features=features, use_tfidf=use_tfidf)
-            lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
+                model_save_path = "%s/%s_stage%d/" % (experiment.saved_path_root, source.username, self.order)
+                check_or_create_dir(model_save_path)
 
-            svm_model = SVMModel(user=source, source_stage=self, saved_path=model_save_path)
-            svm_model.save()
+                X, y, code_map_inverse = coding_utils.get_formatted_data(dictionary=dictionary,
+                                                                         source=source,
+                                                                         messages=messages,
+                                                                         feature_index_map=feature_index_map,
+                                                                         feature_num=len(features),
+                                                                         use_tfidf=use_tfidf)
+                lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
 
-            weights = []
-            for code_index, code_id in code_map_inverse.iteritems():
-                for feature_index, feature in enumerate(features):
-                    weight = lin_clf.coef_[code_index][feature_index]
+                svm_model = SVMModel(source=source, source_stage=self, saved_path=model_save_path)
+                svm_model.save()
 
-                    model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
-                                                  feature=feature, weight=weight)
+                weights = []
+                for code_index, code_id in code_map_inverse.iteritems():
+                    for feature_index, feature in enumerate(features):
+                        weight = lin_clf.coef_[code_index][feature_index]
 
-                    weights.append(model_weight)
+                        model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
+                                                      feature=feature, weight=weight)
 
-            SVMModelWeight.objects.bulk_create(weights)
+                        weights.append(model_weight)
 
-            next_stage = self.get_next_stage()
-            next_message_set = next_stage.stage.messages.all()
-            next_message_num = next_message_set.count()
+                SVMModelWeight.objects.bulk_create(weights)
 
-            code_assignments = []
-            next_X = coding_utils.get_formatted_X(messages=next_message_set, features=features)
-            predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
-            for idx, message in enumerate(next_message_set):
-                code_id = code_map_inverse[predict_y[idx]]
-                probability = prob[idx]
-                code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
-                                                               is_user_label=False, probability=probability)
-                code_assignments.append(code_assignment)
-            coding_models.CodeAssignment.objects.bulk_create(code_assignments)
+                next_stage = self.get_next_stage()
+                next_message_set = next_stage.stage.messages.all()
+                next_message_num = next_message_set.count()
+
+                code_assignments = []
+                next_X = coding_utils.get_formatted_X(messages=next_message_set,
+                                                      dictionary=dictionary,
+                                                      source=source,
+                                                      feature_index_map=feature_index_map,
+                                                      feature_num=len(features),
+                                                      use_tfidf=use_tfidf)
+                predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
+                for idx, message in enumerate(next_message_set):
+                    code_index = predict_y[idx]
+                    code_id = code_map_inverse[code_index]
+
+                    probability = prob[idx, code_index]
+
+                    code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
+                                                                   is_user_labeled=False, probability=probability)
+                    code_assignments.append(code_assignment)
+
+                coding_models.CodeAssignment.objects.bulk_create(code_assignments)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
 
 
 class MessageSelection(models.Model):
@@ -484,8 +507,10 @@ class Progress(models.Model):
                     current_stage = self.get_current_stage()
                     current_stage.process_stage()
                     self.current_status = 'N'
+                    self.current_stage_index = self.get_next_stage().order
                     self.save()
                     partner_progress.current_status = 'N'
+                    partner_progress.current_stage_index = partner_progress.get_next_stage().order
                     partner_progress.save()
 
                 return True
@@ -499,8 +524,11 @@ class SVMModel(models.Model):
     """
     A model for svm model
     """
-    source = models.ForeignKey(User, related_name="svm_models", unique=True)
-    source_stage = models.ForeignKey(StageAssignment, related_name="svm_models", unique=True)
+    class Meta:
+        unique_together = ("source", "source_stage")
+
+    source = models.ForeignKey(User, related_name="svm_models")
+    source_stage = models.ForeignKey(StageAssignment, related_name="svm_models")
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The svm model created time"""

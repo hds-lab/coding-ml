@@ -198,11 +198,11 @@
                             }
                         }
                     };
-                    // TODO: Integrate with service. Make up some user feature data
+                    // TODO: Fix showing feature vector
                     if (messageData.feature_vector && messageData.feature_vector.length > 0){
                         var features = messageData.feature_vector;
                         var featureCount = features.length;
-                        for (i = 0; i < featureCount; i++){
+                        /*for (i = 0; i < featureCount; i++){
                             var tokenIndex = Math.floor((Math.random() * (tokenItems.length - 1)) + 1);
                             var codeIndex = Math.floor((Math.random() * ($scope.codes.length - 1)));
 
@@ -211,7 +211,7 @@
                                 endCharIndex: tokenItems[tokenIndex].endIndex,
                                 codeIndex: codeIndex
                             });
-                        }
+                        }*/
                     }
 
                     return angular.extend(messageData, {
