@@ -416,6 +416,7 @@
                     usSpinnerService.stop('label-spinner');
                     $scope.allItems = Message.all_coded_messages;
                     $scope.normalized_code_distribution = Message.normalized_code_distribution;
+                    $scope.code_distribution = Message.code_distribution;
 
                     for (var i = 0; i < $scope.allItems.length; i++) {
                         var prototype = $scope.allItems[i];
@@ -769,5 +770,11 @@
         'usSpinnerService'
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);
+
+    module.directive('popover', function() {
+        return function(scope, elem){
+            elem.popover({ container: 'body' });
+        }
+    });
 
 })();

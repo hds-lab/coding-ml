@@ -7,6 +7,7 @@
 @item-background-color: rgba(0,0,0,0.02);
 @item-background-color-hover: rgba(0,0,0,0.04);
 @item-background-color-selected: rgba(0,0,0,0.1);
+@popover-color: #eee;
 
 /* Offsets */
 @coding-top-height: 320px;
@@ -26,6 +27,32 @@ body {
     font-weight: 400;
     font-size: 9pt;
     min-width: 1200px;
+
+    .popover {
+        background: @popover-color;
+        border-radius: 0;
+        font-size: 12px;
+
+        .collapse.in {
+            overflow: visible;
+        }
+
+        &.right {
+            & > .arrow:after {
+                border-right-color: @popover-color;
+            }
+        }
+
+        &.top {
+            & > .arrow:after {
+                border-top-color: @popover-color;
+            }
+        }
+
+        .popover-content {
+            padding: 5px;
+        }
+    }
 }
 th:hover{
     cursor: pointer;

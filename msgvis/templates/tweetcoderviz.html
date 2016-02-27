@@ -162,7 +162,10 @@
                                     <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
                                     </div>
                                     <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
@@ -173,7 +176,10 @@
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
                                     </div>
                                     <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
@@ -267,7 +273,10 @@
                         <h2>Code distribution</h2>
                         <div id="code-distribution">
                             <div class="distribution-chart">
-                                <div ng-repeat="(code, percentage) in normalized_code_distribution" ng-style="distributionStyle(code, percentage)"></div>
+                                <div ng-repeat="(code, percentage) in normalized_code_distribution" ng-style="distributionStyle(code, percentage)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ code_distribution[code] + ' tweet' + (code_distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
                             </div>
                             <div class="distribution-total">{$ allItems.length $}</div>
                         </div>
@@ -281,7 +290,10 @@
                             <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                             <span class="feature-text">{$ feature.feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
                             </div>
                             <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
@@ -291,7 +303,10 @@
                             ng-click="searchFeature(feature.feature_text)">
                             <span class="feature-text">{$ feature.feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
                             </div>
                             <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
