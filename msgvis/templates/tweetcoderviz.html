@@ -91,10 +91,14 @@
                     <h2>New Label</h2>
                     <div class="" id="labeling">
                         <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                        <div class="col-md-9 tweet-item" ng-bind-html="currentMessage.message.embedded_html">
+                        <div class="col-md-9 tweet-item">
 {#                            Use this for feature highlights#}
 {#                            <span ng-repeat="char in currentMessage.characters track by $index"#}
 {#                                   ng-style="char.style">{$char.char$}</span>#}
+                            <img ng-if="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
+                                 class="img-responsive center-block" ng-src="{$ currentMessage.message.media_url $}">
+
+                            <div ng-bind-html="currentMessage.message.embedded_html"></div>
                         </div>
                         <div class="col-md-3 tweet-submit">
                             <div class="tweet-submit-item">

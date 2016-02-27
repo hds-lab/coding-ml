@@ -333,9 +333,21 @@ h3 {
             height: @coding-top-labeling-height;
 
             .tweet-item {
-                font-size: 24px;
-                font-weight: 300;
-                padding-right: 20px;
+                &>div {
+                    font-size: 24px;
+                    font-weight: 300;
+                    margin-right: 20px;
+                    overflow: hidden;
+                    overflow-y: auto;
+                    height: 100%;
+                }
+
+                &>img {
+                    max-height: 100%;
+                    padding-right: 20px;
+                    max-width: 250px;
+                    float: left;
+                }
 
                 // Style for when feature highlights are enabled
                 //-webkit-touch-callout: none;
