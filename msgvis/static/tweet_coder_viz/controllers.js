@@ -203,9 +203,6 @@
                     }
                 }
 
-                console.log(item.message.text);
-                console.log("matched: " + matched);
-                console.log("return: " + ((!searchText || searchText.length == 0 || matched) && flagged));
                 return (!searchText || searchText.length == 0 || matched) && flagged;
             }
         };
