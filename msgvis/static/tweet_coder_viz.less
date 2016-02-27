@@ -6,7 +6,7 @@
 /* Colors */
 
 /* Offsets */
-@review-top-height: 225px;
+@review-top-height: 100px;
 
 html, body {
     width: 100%;
@@ -125,14 +125,38 @@ th:hover{
 #reviewing {
     height: 100%;
 
-    #top-area {
-        height: @review-top-height;
+    .next-step {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .box {
         padding: 10px;
-        margin-top: 10px;
         background: white;
 
+        &.box-top {
+            margin-top: 10px;
+        }
+
+        &.box-bottom {
+            margin-bottom: 10px;
+        }
+
+        &.box-left {
+            margin-left: 10px;
+        }
+
+        &.box-right {
+            margin-right: 10px;
+        }
+    }
+
+    #top-area {
+        height: @review-top-height;
+
         #definitions {
-            height: 150px;
+            height: calc(@review-top-height ~"-" 77px);
 
             > div {
                 height: 100%;
@@ -196,9 +220,78 @@ th:hover{
     #bottom-area {
         height: calc(100% ~"-" @review-top-height);
         padding-bottom: 50px;
+        padding-top: 10px;
 
         div[class^="col-"]{
             padding: 0;
+            height: 100%;
+        }
+
+        .features {
+            background: rgba(0,0,0,0.02);
+            margin: 5px 0;
+            padding: 5px;
+            width: 100%;
+            height: 30px;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+
+            &:hover {
+                background: rgba(0,0,0,0.04);
+            }
+
+            .btn {
+                border: none;
+                width: 18px;
+                height: 20px;
+                font-size: 16px;
+                padding: 0;
+                margin: 0;
+                vertical-align: top;
+                display: inline;
+                color: #777;
+                background: transparent;
+            }
+
+            .feature-text {
+                width: 60%;
+                height: 100%;
+                display: inline-block;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+
+            .feature-distribution {
+                width: 30%;
+                height: 20px;
+                display: inline-block;
+
+                div {
+                    display: inline-block;
+                    height: 100%;
+                }
+
+                &.feature-empty {
+                    width: 30%;
+                    height: 20px;
+                    background: #eee;
+                }
+            }
+
+            .feature-total {
+                display: inline-block;
+                height: 100%;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                padding-left: 5px;
+            }
+        }
+
+        #user-features .feature-text {
+            width: calc(60% ~"-" 20px);
         }
     }
 }
@@ -207,12 +300,6 @@ th:hover{
     border: solid 1px transparent;
     padding: 5px;
     margin: 5px;
-}
-
-#reviewing .next-step{
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
 }
 
 .confusion {
@@ -299,98 +386,5 @@ h3 {
 
     span {
         cursor: pointer;
-    }
-}
-
-#system-features {
-    padding: 5px;
-    width: 100%;
-
-    .feature-text {
-        width: 60%;
-        height: 100%;
-        display: inline-block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-
-    .feature-distribution {
-        width: 30%;
-        height: 20px;
-        display: inline-block;
-
-        div {
-            display: inline-block;
-            height: 100%;
-        }
-    }
-
-    .feature-distribution.feature-empty {
-        width: 30%;
-        height: 20px;
-        background: #eee;
-    }
-
-    .feature-total {
-        display: inline-block;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        padding-left: 5px;
-    }
-}
-
-#user-features {
-    padding: 5px;
-    width: 100%;
-
-    .feature-text {
-        width: 60%;
-        height: 100%;
-        display: inline-block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-
-    .feature-distribution {
-        width: 30%;
-        height: 20px;
-        display: inline-block;
-
-        div {
-            display: inline-block;
-            height: 100%;
-        }
-    }
-
-    .feature-distribution.feature-empty {
-        width: 30%;
-        height: 20px;
-        background: #eee;
-    }
-
-    .feature-total {
-        display: inline-block;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        padding-left: 5px;
-    }
-
-    .btn {
-        border-radius: 100%;
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
-        padding: 0;
-        margin: 0;
-        vertical-align: top;
-        display: inline;
-        color: #777;
-        border-color: #777;
     }
 }
