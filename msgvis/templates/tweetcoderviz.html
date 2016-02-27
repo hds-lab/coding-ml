@@ -91,10 +91,17 @@
                     <h2>New Label</h2>
                     <div class="" id="labeling">
                         <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                        <div class="col-md-9 tweet-item" ng-bind-html="currentMessage.message.embedded_html">
+                        <div class="col-md-9 tweet-item">
 {#                            Use this for feature highlights#}
 {#                            <span ng-repeat="char in currentMessage.characters track by $index"#}
 {#                                   ng-style="char.style">{$char.char$}</span>#}
+                            <div class="btn btn-image" ng-if="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
+                                 data-toggle="modal" data-target="#image-modal"
+                                 ng-click="selectMedia(currentMessage.message.media_url)">
+                                <img class="img-responsive center-block" ng-src="{$ currentMessage.message.media_url $}">
+                            </div>
+
+                            <div class="tweet-text" ng-bind-html="currentMessage.message.embedded_html"></div>
                         </div>
                         <div class="col-md-3 tweet-submit">
                             <div class="tweet-submit-item">
@@ -155,7 +162,10 @@
                                     <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
                                     </div>
                                     <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
@@ -166,7 +176,10 @@
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
                                     </div>
                                     <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
@@ -258,6 +271,15 @@
 
                     <div class="box box-right box-bottom">
                         <h2>Code distribution</h2>
+                        <div id="code-distribution">
+                            <div class="distribution-chart">
+                                <div ng-repeat="(code, percentage) in normalized_code_distribution" ng-style="distributionStyle(code, percentage)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ code_distribution[code] + ' tweet' + (code_distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
+                            </div>
+                            <div class="distribution-total">{$ allItems.length $}</div>
+                        </div>
                     </div>
                     <div class="box box-right">
                         <h2>Keyword distribution</h2>
@@ -268,7 +290,10 @@
                             <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                             <span class="feature-text">{$ feature.feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
                             </div>
                             <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
@@ -278,7 +303,10 @@
                             ng-click="searchFeature(feature.feature_text)">
                             <span class="feature-text">{$ feature.feature_text $}</span>
                             <div ng-if="feature.total_count > 0" class="feature-distribution">
-                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"></div>
+                                <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                     data-placement="auto top"></div>
                             </div>
                             <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
@@ -357,7 +385,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title">Embedded image</h2>
+                    </div>
+                    <div class="modal-body">
+                        <img class="img-responsive center-block" ng-src="{$ selectedMedia $}">
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
     </div>
+
 </div>
 {% endblock %}
 {% block footer %}

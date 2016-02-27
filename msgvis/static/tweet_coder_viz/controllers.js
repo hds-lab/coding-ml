@@ -72,6 +72,7 @@
         $scope.codeItems = undefined;
         $scope.selectedFilter = 'All';
         $scope.searchText = undefined;
+        $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
         $scope.hoveredItem = undefined;
@@ -103,6 +104,10 @@
             if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text].length > 0){
                 $scope.hoveredItem = $scope.coded_messages['user'][code.code_text][0];
             }
+        };
+
+        $scope.selectMedia = function(media_url){
+            $scope.selectedMedia = media_url;
         };
 
         $scope.selectFilter = function(filter){
@@ -410,6 +415,8 @@
                 request.then(function () {
                     usSpinnerService.stop('label-spinner');
                     $scope.allItems = Message.all_coded_messages;
+                    $scope.normalized_code_distribution = Message.normalized_code_distribution;
+                    $scope.code_distribution = Message.code_distribution;
 
                     for (var i = 0; i < $scope.allItems.length; i++) {
                         var prototype = $scope.allItems[i];
@@ -763,5 +770,11 @@
         'usSpinnerService'
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);
+
+    module.directive('popover', function() {
+        return function(scope, elem){
+            elem.popover({ container: 'body' });
+        }
+    });
 
 })();

@@ -317,6 +317,22 @@
                     return $http.get(apiUrl, request)
                         .success(function (data) {
                             self.all_coded_messages = data.map(function(d){ return self.format_tweet_item(d);});
+
+                            // compute code distribution
+                            self.normalized_code_distribution = {};
+                            self.code_distribution = {};
+                            self.all_coded_messages.forEach(function (item){
+                               if (self.code_distribution[item.user_code.text] == undefined){
+                                   self.code_distribution[item.user_code.text] = 0;
+                               }
+
+                                self.code_distribution[item.user_code.text]++;
+                            });
+
+                            for (var key in self.code_distribution){
+                                self.normalized_code_distribution[key] = self.code_distribution[key] / self.all_coded_messages.length;
+                            }
+
                             $rootScope.$broadcast("messages::load_all_coded_messages", data);
                         });
 

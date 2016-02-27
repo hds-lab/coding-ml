@@ -7,6 +7,7 @@
 @item-background-color: rgba(0,0,0,0.02);
 @item-background-color-hover: rgba(0,0,0,0.04);
 @item-background-color-selected: rgba(0,0,0,0.1);
+@popover-color: #eee;
 
 /* Offsets */
 @coding-top-height: 320px;
@@ -26,6 +27,32 @@ body {
     font-weight: 400;
     font-size: 9pt;
     min-width: 1200px;
+
+    .popover {
+        background: @popover-color;
+        border-radius: 0;
+        font-size: 12px;
+
+        .collapse.in {
+            overflow: visible;
+        }
+
+        &.right {
+            & > .arrow:after {
+                border-right-color: @popover-color;
+            }
+        }
+
+        &.top {
+            & > .arrow:after {
+                border-top-color: @popover-color;
+            }
+        }
+
+        .popover-content {
+            padding: 5px;
+        }
+    }
 }
 th:hover{
     cursor: pointer;
@@ -69,10 +96,11 @@ th:hover{
 }
 #content {
     height: ~'calc(100% - 75px)';
+
+    .modal-content {
+        border-radius: 0;
+    }
 }
-
-
-
 
 /* START Shared between coding and reviewing */
 .btn {
@@ -333,9 +361,36 @@ h3 {
             height: @coding-top-labeling-height;
 
             .tweet-item {
-                font-size: 24px;
-                font-weight: 300;
-                padding-right: 20px;
+                .tweet-text {
+                    font-size: 24px;
+                    font-weight: 300;
+                    margin-right: 20px;
+                    overflow: hidden;
+                    overflow-y: auto;
+                    height: 100%;
+                }
+
+                .btn-image {
+                    margin-right: 20px;
+                    padding: 0;
+                    max-width: 250px;
+                    float: left;
+                    height: 100%;
+                    box-shadow: none;
+                    border: 2px solid transparent;
+
+                    &:active {
+                        box-shadow: none;
+                    }
+
+                    &:hover {
+                        border-color: #777;
+                    }
+
+                    &>img {
+                        max-height: 100%;
+                    }
+                }
 
                 // Style for when feature highlights are enabled
                 //-webkit-touch-callout: none;
@@ -530,6 +585,31 @@ h3 {
         div[class^="col-"]{
             padding: 0;
             height: 100%;
+        }
+
+        #code-distribution{
+            width: 100%;
+            height: 20px;
+
+            .distribution-chart {
+                width: 90%;
+                display: inline-block;
+
+                & > div {
+                    display: inline-block;
+                    height: 20px;
+                }
+            }
+
+            .distribution-total {
+                display: inline-block;
+                height: 100%;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                padding-left: 5px;
+                font-size: 14px;
+            }
         }
 
         #user-features .feature-text {
