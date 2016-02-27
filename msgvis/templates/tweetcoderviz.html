@@ -195,7 +195,7 @@
                     </div>
                     <div class="col-md-4 scroll-y">
                         <h3>My Definition</h3>
-                        <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text" ng-change="saveDefinition(code)"></textarea>
+                        <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text" ng-blur="saveDefinition(code)"></textarea>
                     </div>
                 </div>
             </div>

@@ -356,7 +356,7 @@
 
                 load_definitions: function (sources) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('definition');
+                    var apiUrl = djangoUrl.reverse('definitions');
 
                     var request = {
                         params: {
@@ -371,7 +371,7 @@
                                 def_set.definitions.forEach(function(def){
                                     if (typeof(self.definitions_by_code[def.code_text]) === "undefined")
                                         self.definitions_by_code[def.code_text] = {};
-                                    self.definitions_by_code[def.code_text][def.source] = def;
+                                    self.definitions_by_code[def.code_text][def_set.source] = def;
                                 });
                             });
 
@@ -381,12 +381,19 @@
                         });
 
                 },
-                get_definitions: function(source){
+                update_definition: function(code){
                     var self = this;
-                    if ( typeof(self.definitions[source]) !== "undefined" ){
-                        return self.definitions[source];
-                    }
-                    return "Error: No definition has been loaded";
+                    var apiUrl = djangoUrl.reverse('definition', {code_id: code.code_id});
+
+                    var request = {
+                        text: self.definitions_by_code[code.code_text]["user"].text
+                    };
+
+
+                    return $http.put(apiUrl, request)
+                        .success(function (data) {
+                            console.log("Update definition for ", code);
+                        });
 
 
                 },

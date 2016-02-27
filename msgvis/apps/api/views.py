@@ -414,7 +414,7 @@ class CodeDefinitionView(APIView):
                     code_definition = code.get_definition(source_user)
                     if code_definition:
                         code_definitions.append(code_definition)
-                code_def_set.append({"source": source_user, "definitions":code_definitions})
+                code_def_set.append({"source": source, "definitions":code_definitions})
 
             output = serializers.CodeDefinitionSetSerializer(code_def_set, many=True)
 
@@ -442,13 +442,11 @@ class CodeDefinitionView(APIView):
             data = input.validated_data
             text = data['text']
 
-            definition, created = coding_models.CodeDefinition.objects.get_or_create(code=code, source=user, valid=True)
-            if not created:
-                definition.valid = False
-                definition.save()
-                definition = coding_models.CodeDefinition(code=code, source=user)
+            definition = coding_models.CodeDefinition.objects.filter(code=code, source=user, valid=True)
+            if definition.exists():
+                definition.update(valid=False)
 
-            definition.text = text
+            definition = coding_models.CodeDefinition(code=code, source=user, text=text)
             definition.save()
 
             output = serializers.CodeDefinitionSerializer(definition)
@@ -458,30 +456,7 @@ class CodeDefinitionView(APIView):
 
     def put(self, request, code_id, format=None):
 
-        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
-            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
-
-        user = User.objects.get(id=self.request.user.id)
-
-        code_id = int(code_id)
-        code = corpus_models.Code.objects.get(id=code_id)
-
-        input = serializers.CodeDefinitionSerializer(data=request.data)
-        if input.is_valid():
-            data = input.validated_data
-            text = data['text']
-
-            definition = coding_models.CodeDefinition.objects.get(code=code, source=user, valid=True)
-            definition.valid = False
-            definition.save()
-
-            definition = coding_models.CodeDefinition(code=code, source=user, text=text)
-            definition.save()
-
-            output = serializers.CodeDefinitionSerializer(definition)
-            return Response(output.data, status=status.HTTP_200_OK)
-
-        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+        return self.post(request, code_id, format)
 
 class CodeAssignmentView(APIView):
     """

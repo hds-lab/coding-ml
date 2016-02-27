@@ -165,7 +165,7 @@ class CodeDefinitionSerializer(serializers.Serializer):
 
 
 class CodeDefinitionSetSerializer(serializers.Serializer):
-    source = UserSerializer(required=False)
+    source = serializers.CharField(required=False)
     definitions = CodeDefinitionSerializer(many=True, required=False)
 
 class CodeMessageSerializer(serializers.Serializer):

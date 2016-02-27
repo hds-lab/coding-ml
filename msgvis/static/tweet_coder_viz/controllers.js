@@ -275,8 +275,13 @@
 
         $scope.saveDefinition = function(code){
             // TODO: call service on every character change?? on focus out?
-            console.log("saving definition for " + code.code_text);
-            console.log("saving definition for " + code.user_def);
+            var request = Code.update_definition(code);
+            if (request) {
+                usSpinnerService.spin('code-detail-spinner');
+                request.then(function () {
+                    usSpinnerService.stop('code-detail-spinner');
+                });
+            }
         };
 
         $scope.getAllMessages = function() {
