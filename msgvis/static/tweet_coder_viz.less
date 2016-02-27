@@ -3,6 +3,10 @@
 /* Full page application */
 // http://blog.stevensanderson.com/2011/10/05/full-height-app-layouts-a-css-trick-to-make-it-easier/
 
+/* Colors */
+
+/* Offsets */
+@review-top-height: 220px;
 
 html, body {
     width: 100%;
@@ -72,16 +76,7 @@ th:hover{
     height: ~'calc(100% - 300px)';
 }
 
-#reviewing{
-    height: 100%;
-}
-#reviewing #top-area {
-    height: 220px;
-}
 
-#reviewing #bottom-area{
-    height: ~'calc(100% - 220px)';
-}
 
 #labeling .tweet-main {
     font-size: 18px;
@@ -128,8 +123,10 @@ th:hover{
 }
 
 #reviewing {
+    height: 100%;
 
     #top-area {
+        height: @review-top-height;
 
         #definitions {
             height: 150px;
@@ -147,7 +144,7 @@ th:hover{
                 white-space: normal;
                 font-weight: 300;
                 font-size: 14px;
-                height: 110px;
+                height: calc(100% ~"-" 40px);
                 overflow-y: auto;
 
                 &.help-text {
@@ -192,10 +189,15 @@ th:hover{
             }
         }
     }
-}
 
-#reviewing #bottom-area{
-    padding-bottom: 50px;
+    #bottom-area {
+        height: calc(100% ~"-" @review-top-height);
+        padding-bottom: 50px;
+
+        div[class^="col-"]{
+            padding: 0;
+        }
+    }
 }
 
 #reviewing .label-item {
