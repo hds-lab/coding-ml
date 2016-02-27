@@ -98,6 +98,11 @@
                 //$scope.currentMessage.user_code.text = code.code_text;
             }
             $scope.selectedCode = code;
+
+            // set hover state on the first tweet
+            if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text].length > 0){
+                $scope.hoveredItem = $scope.coded_messages['user'][code.code_text][0];
+            }
         };
 
         $scope.selectFilter = function(filter){
@@ -122,8 +127,11 @@
             }
         };
 
-        $scope.filterTweetsFlag = function(filter, searchText) {
+        $scope.filterTweetsFlag = function() {
             return function(item) {
+                var searchText = $scope.searchText;
+                var filter = $scope.selectedFilter;
+
                 // Apply filters
                 var flagged = false;
                 switch (filter) {
@@ -141,7 +149,10 @@
                         break;
                 }
 
-                return (!searchText || searchText.length == 0 || item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) && flagged;
+                // Search for text
+                var matched = $scope.matchText(item.message, searchText);
+
+                return (!searchText || searchText.length == 0 || matched) && flagged;
             }
         };
 
@@ -152,61 +163,72 @@
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
 
                 // Search for text
-                var matched = false;
-                if (searchText && searchText.length > 0){
-                    if (item.message.text.toLowerCase().search(searchText.toLowerCase()) != -1) {
-                        matched = true;
-                    }
-                    else if (searchText.indexOf("_") != -1)
-                    {
-                        var ngrams = searchText.toLowerCase().split("_");
-
-                        // iterate and search for continuous tokens
-                        var iNgram = 0;
-                        var iToken = -1;
-
-                        for (var i = 0; i < item.message.tokens.length; i++){
-                            var tokenText = item.message.tokens[i].toLowerCase();
-                            if (tokenText == ngrams[iNgram]) {
-                                // Is it ontinuous?
-                                if (iToken >= 0 && i != iToken + 1) {
-                                    break;
-                                }
-
-                                iNgram++;
-                                iToken = i;
-
-                                if (iNgram == ngrams.length) {
-                                    matched = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    else if (searchText.indexOf("&") != -1){
-                        var ngrams = searchText.toLowerCase().split("&");
-
-                        // iterate and search for tokens
-                        var iNgram = 0;
-
-                        for (var i = 0; i < item.message.tokens.length; i++){
-                            var tokenText = item.message.tokens[i].toLowerCase();
-                            if (tokenText == ngrams[iNgram]) {
-                                iNgram++;
-
-                                if (iNgram == ngrams.length) {
-                                    matched = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                var matched = $scope.matchText(item.message, searchText);
 
                 return (!searchText || searchText.length == 0 || matched) && flagged;
             }
         };
 
+        $scope.matchText = function(message, searchText) {
+            // Search for text
+            var matched = false;
+            if (searchText && searchText.length > 0) {
+                if (message.text.toLowerCase().search(searchText.toLowerCase()) != -1) {
+                    matched = true;
+                }
+                else if (searchText.indexOf("_") != -1) {
+                    var ngrams = searchText.toLowerCase().split("_");
+
+                    // iterate and search for continuous tokens
+                    var iNgram = 0;
+                    var iToken = -1;
+
+                    for (var i = 0; i < message.tokens.length; i++) {
+                        var tokenText = message.tokens[i].toLowerCase();
+                        if (tokenText == ngrams[iNgram]) {
+                            // Is it ontinuous?
+                            if (iToken >= 0 && i != iToken + 1) {
+                                break;
+                            }
+
+                            iNgram++;
+                            iToken = i;
+
+                            if (iNgram == ngrams.length) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (searchText.indexOf("&") != -1) {
+                    var ngrams = searchText.toLowerCase().split("&");
+
+                    // iterate and search for tokens
+                    var iNgram = 0;
+
+                    for (var i = 0; i < message.tokens.length; i++) {
+                        var tokenText = message.tokens[i].toLowerCase();
+                        if (tokenText == ngrams[iNgram]) {
+                            iNgram++;
+
+                            if (iNgram == ngrams.length) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return matched;
+        };
+
+        $scope.filterFeatures = function(code){
+            return function(feature){
+                return feature.distribution[code.code_text] > 0;
+            }
+        };
 
         $scope.codeColor = function(code){
             var colorIndex = code.code_id;
@@ -421,7 +443,10 @@
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
-
+                    }
+                    else {
+                        $scope.load_distribution("user");
+                        $scope.load_distribution("system");
                     }
                 });
             }
@@ -590,7 +615,7 @@
         };
 
         $scope.onItemHover = function(item){
-            if ($scope.hoveredItem && $scope.hoveredItem != item) {
+            if ($scope.hoveredItem && $scope.hoveredItem != item && $scope.hoveredItem.selectedTokenIndices) {
                 $scope.hoveredItem.selectedTokens = undefined;
                 $scope.hoveredItem.selectedTokenIndices.clear();
             }
