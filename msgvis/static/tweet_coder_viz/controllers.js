@@ -263,7 +263,13 @@
         };
 
         $scope.next_step = function(){
-            Progress.next_step();
+            var request = Progress.next_step();
+            if (request) {
+                usSpinnerService.spin('label-spinner');
+                request.then(function() {
+                    usSpinnerService.stop('label-spinner');
+                });
+            }
         };
 
         
@@ -563,9 +569,9 @@
 
                 var request = Feature.add(tokens);
                 if (request) {
-                    usSpinnerService.spin('vector-spinner');
+                    usSpinnerService.spin('submitted-label-spinner');
                     request.then(function() {
-                        usSpinnerService.stop('vector-spinner');
+                        usSpinnerService.stop('submitted-label-spinner');
                     //    var feature = Feature.latest_data;
                    //     $scope.message_featureList[key] = feature; // TODO: make sure this is correct
                     });

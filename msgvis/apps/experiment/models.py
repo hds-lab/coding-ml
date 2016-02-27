@@ -284,7 +284,7 @@ class StageAssignment(models.Model):
     def initialize_stage(self, selected_num=5):
         stage = self.stage
         message_count = self.stage.messages.count()
-        messages = self.stage.messages.all()
+        messages = list(self.stage.messages.all())
 
         if stage.type == 'R':
             # Random select messages from the messages that associate with the stage
@@ -314,10 +314,11 @@ class StageAssignment(models.Model):
                 message_with_disagreement_levels.append(message_with_disagreement_level)
 
             message_with_disagreement_levels.sort(key=itemgetter('disagreement'), reverse=True)
+            messages = map(lambda x: x["message"], message_with_disagreement_levels)
 
         selected_messages = []
-        for idx, item in enumerate(message_with_disagreement_levels[:selected_num]):
-            selected_messages.append(MessageSelection(stage_assignment=self, message=item["message"], order=idx))
+        for idx, msg in enumerate(messages[:selected_num]):
+            selected_messages.append(MessageSelection(stage_assignment=self, message=msg, order=idx))
         MessageSelection.objects.bulk_create(selected_messages)
 
     def process_stage(self, use_tfidf=False):

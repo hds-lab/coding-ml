@@ -25,7 +25,7 @@ class Code(models.Model):
         if not self.definitions.filter(source=source).exists():
             return None
 
-        definition = self.definitions.get(source=source, valid=True)
+        definition = self.definitions.filter(source=source, valid=True).order_by("-last_updated").first()
         return {
             "code_id": self.id,
             "code_text": self.text,

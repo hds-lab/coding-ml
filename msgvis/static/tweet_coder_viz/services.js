@@ -220,15 +220,15 @@
                         characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
                         charToToken: charToToken,
                         tokens: tokenItems,
-                        charStyle: charStyle
-                       // is_ambiguous: messageData.is_ambiguous || false,
-                       // is_saved: messageData.is_saved || false,
-                       // is_example: messageData.is_example || false
+                        charStyle: charStyle,
+                        is_ambiguous: (messageData.is_ambiguous || false),
+                        is_saved: (messageData.is_saved || false),
+                        is_example: (messageData.is_example || false)
                     });
                 },
                 submit: function (code_id) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('assignment', {message_id: self.current_message.id});
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: self.current_message.message.id});
 
                     var request = {
                         code: code_id,
@@ -385,13 +385,10 @@
                     var self = this;
                     var apiUrl = djangoUrl.reverse('definition', {code_id: code.code_id});
 
-                    var text = self.definitions_by_code[code.code_text]["user"].text;
-                    if (!text || text.length == 0)
-                        // TODO: Sending empty string is invalid input. Need to handle clearing of the definition.
-                        text = " ";
+
 
                     var request = {
-                        text: text
+                        text: self.definitions_by_code[code.code_text]["user"].text.trim()
                     };
 
 
@@ -473,6 +470,8 @@
                         })
                         .error(function(err){
                             console.log(err);
+                            // try to reload the page
+                            self.init_load();
                         });
 
                 },
