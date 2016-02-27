@@ -105,23 +105,6 @@ th:hover{
 .btn {
     border-radius: 0;
 }
-#codes .btn {
-    margin: 0 5px;
-}
-#codes .btn.active {
-    color: white;
-    background-color: #AA3333;
-}
-#codes .btn.active > .code-name {
-    font-weight:600;
-}
-
-#codes .btn > .code-definition {
-    text-align: justify;
-    white-space: normal;
-    font-size: 12px;
-    height: 100px;
-}
 
 #panel {
     margin: 5px -10px;
@@ -144,27 +127,73 @@ th:hover{
     border: solid 0 transparent;
 }
 
-#definitions {
-    height: 150px;
+#reviewing {
+
+    #top-area {
+
+        #definitions {
+            height: 150px;
+
+            > div {
+                height: 100%;
+            }
+
+            p {
+                margin: 0;
+            }
+
+            .code-definition {
+                text-align: justify;
+                white-space: normal;
+                font-weight: 300;
+                font-size: 14px;
+                height: 110px;
+                overflow-y: auto;
+
+                &.help-text {
+                    color: #777;
+                }
+            }
+
+            textarea {
+                resize: none;
+                width: 100%;
+                background: transparent;
+            }
+        }
+
+        #codes {
+            .btn {
+                margin: 0;
+                opacity: 0.7;
+
+                &:hover {
+                    opacity: 1;
+                }
+
+                > .code-definition {
+                    text-align: justify;
+                    white-space: normal;
+                    font-size: 12px;
+                    height: 100px;
+                }
+            }
+
+            .btn.active {
+                opacity: 1;
+                color: white;
+                background-color: #AA3333;
+                -webkit-box-shadow: none;
+                box-shadow: none;
+
+                > .code-name {
+                    font-weight: 600;
+                }
+            }
+        }
+    }
 }
 
-#definitions > div {
-    height: 100%;
-}
-
-#definitions .code-definition {
-    text-align: justify;
-    white-space: normal;
-    font-size: 12px;
-    height: 100px;
-    overflow-y: auto;
-}
-
-#definitions textarea {
-    resize: none;
-    width: 100%;
-    background: transparent;
-}
 #reviewing #bottom-area{
     padding-bottom: 50px;
 }
@@ -239,13 +268,13 @@ h2 {
     font-weight: 600;
     font-size: 16px;
     text-transform: uppercase;
-    margin: 0;
+    margin: 15px 0 10px 0;
 }
 
 h3 {
     font-weight: 600;
     font-size: 14px;
-    margin: 0;
+    margin: 10px 0 5px 0;
 }
 
 .inline {

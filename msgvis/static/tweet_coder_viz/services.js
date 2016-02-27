@@ -385,8 +385,13 @@
                     var self = this;
                     var apiUrl = djangoUrl.reverse('definition', {code_id: code.code_id});
 
+                    var text = self.definitions_by_code[code.code_text]["user"].text;
+                    if (!text || text.length == 0)
+                        // TODO: Sending empty string is invalid input. Need to handle clearing of the definition.
+                        text = " ";
+
                     var request = {
-                        text: self.definitions_by_code[code.code_text]["user"].text
+                        text: text
                     };
 
 

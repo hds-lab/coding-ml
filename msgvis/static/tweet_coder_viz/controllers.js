@@ -161,10 +161,11 @@
 
             var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
+            var colorLight = $scope.colorsLight[colorIndex % $scope.colors.length];
 
             var css = {
-                border: 'solid 1px ' + color,
-                width: 'calc(' + (100 / $scope.codes.length) + '% - 10px)'
+                border: 'none',
+                width: (100 / $scope.codes.length) + '%'
             };
 
             if ($scope.selectedCode == code){
@@ -172,7 +173,23 @@
             }
             else {
                 css['color'] = color;
+                css['background-color'] = colorLight;
+
             }
+
+            return css;
+        };
+
+        $scope.definitionStyle = function(code){
+
+            var colorIndex = code.code_id;
+            var color = $scope.colors[colorIndex % $scope.colors.length];
+            var colorLight = $scope.colorsLight[colorIndex % $scope.colors.length];
+
+            var css = {
+                'background-color': colorLight,
+                'border': 'solid 2px ' + color
+            };
 
             return css;
         };
@@ -278,13 +295,15 @@
 
 
         $scope.saveDefinition = function(code){
-            // TODO: call service on every character change?? on focus out?
-            var request = Code.update_definition(code);
-            if (request) {
-                usSpinnerService.spin('code-detail-spinner');
-                request.then(function () {
-                    usSpinnerService.stop('code-detail-spinner');
-                });
+            if (Code.definitions_by_code[code.code_text]["user"]) {
+                // TODO: call service on every character change?? on focus out?
+                var request = Code.update_definition(code);
+                if (request) {
+                    usSpinnerService.spin('code-detail-spinner');
+                    request.then(function () {
+                        usSpinnerService.stop('code-detail-spinner');
+                    });
+                }
             }
         };
 
@@ -614,6 +633,8 @@
                         break;
                     case 'R':  // review
                         $scope.getCodeDetail();
+
+                        // TODO: Need to get codes before getting messages and features and others
                         $scope.getAllMessages();
                         break;
                 }

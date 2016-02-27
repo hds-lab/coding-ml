@@ -176,8 +176,8 @@
             <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
             <div id="top-area">
                 <h2>Review Code Definitions</h2>
-                <div class="row" data-toggle="buttons" id="codes">
-                <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
+                <div class="" data-toggle="buttons" id="codes">
+                    <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
                                ng-click="selectLabel(code)"
                                ng-class="{'active': code==selectedCode}"
@@ -185,7 +185,7 @@
                         <div class="code-name">{$ code.code_text $}</div>
                     </div>
                 </div>
-                <div class="row" id="definitions" ng-repeat="code in codes" ng-style="{ 'background-color': codeColorLight(code) }" ng-show="code.code_id == selectedCode.code_id">
+                <div class="" id="definitions" ng-repeat="code in codes" ng-style="definitionStyle(code)" ng-show="code.code_id == selectedCode.code_id">
                     <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                     <div class="col-md-4 scroll-y">
                         <h3>Master Definition</h3>
@@ -193,11 +193,15 @@
                     </div>
                     <div class="col-md-4 scroll-y">
                         <h3>Partner Definition</h3>
-                        <p class="code-definition">{$ Code.definitions_by_code[code.code_text]["partner"].text $}</p>
+                        <p ng-show="Code.definitions_by_code[code.code_text]['partner'].text" class="code-definition">{$ Code.definitions_by_code[code.code_text]["partner"].text $}</p>
+                        <p ng-hide="Code.definitions_by_code[code.code_text]['partner'].text" class="code-definition help-text">Your partner has not provided a definition yet.</p>
                     </div>
                     <div class="col-md-4 scroll-y">
                         <h3>My Definition</h3>
-                        <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text" ng-blur="saveDefinition(code)"></textarea>
+                        <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text"
+                                  ng-blur="saveDefinition(code)"
+                                  ng-style="{ 'border-color': codeColor(code) }"
+                                  placeholder="Please provide your own definition if necessary."></textarea>
                     </div>
                 </div>
             </div>
