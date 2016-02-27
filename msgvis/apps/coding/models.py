@@ -1,7 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
+
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
-from django.contrib.auth.models import User
 from msgvis.apps.base import models as base_models
 
 
