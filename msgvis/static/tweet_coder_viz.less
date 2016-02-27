@@ -9,6 +9,8 @@
 @item-background-color-selected: rgba(0,0,0,0.1);
 
 /* Offsets */
+@coding-top-height: 330px;
+@coding-top-labeling-height: 140px;
 @review-top-height: 225px;
 
 
@@ -69,41 +71,6 @@ th:hover{
     height: ~'calc(100% - 75px)';
 }
 
-#coding {
-    height: 100%;
-}
-#coding #top-area {
-    height: 300px;
-}
-
-#coding #bottom-area{
-    height: ~'calc(100% - 300px)';
-}
-
-
-
-#labeling .tweet-main {
-    font-size: 18px;
-    font-weight: 300;
-    margin: 10px 0;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-
-    span {
-        cursor: pointer;
-    }
-}
-#labeling .tweet-submit {
-    margin: 0;
-    margin-bottom: 10px;
-}
-.btn {
-    border-radius: 0;
-}
 
 #panel {
     margin: 5px -10px;
@@ -126,6 +93,195 @@ th:hover{
     border: solid 0 transparent;
 }
 
+
+/* START Shared between coding and reviewing */
+.btn {
+    border-radius: 0;
+}
+
+.no-padding{
+    padding: 0;
+}
+
+.scroll-y{
+    overflow-y: auto;
+    height: 100%;
+}
+
+h2 {
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    margin: 0 0 10px 0;
+}
+
+h3 {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 10px 0 5px 0;
+}
+
+.inline {
+    display: inline;
+}
+
+
+
+#codes {
+    .btn {
+        margin: 0;
+        opacity: 0.7;
+
+        &:hover {
+            opacity: 1;
+        }
+
+        > .code-definition {
+            text-align: justify;
+            white-space: normal;
+            font-size: 12px;
+            height: 100px;
+        }
+    }
+
+    .btn.active {
+        opacity: 1;
+        color: white;
+        background-color: #AA3333;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+
+        > .code-name {
+            font-weight: 600;
+        }
+    }
+}
+
+.box {
+    padding: 10px;
+    background: white;
+
+    &.box-top {
+        margin-top: 10px;
+    }
+
+    &.box-bottom {
+        margin-bottom: 10px;
+    }
+
+    &.box-left {
+        margin-left: 10px;
+    }
+
+    &.box-right {
+        margin-right: 10px;
+    }
+}
+
+/* END Shared between coding and reviewing */
+
+
+/* START Coding interface styles */
+#coding {
+    height: 100%;
+
+    div[class^="col-"] {
+        padding: 0;
+        height: 100%;
+    }
+
+    #top-area {
+        height: @coding-top-height;
+
+        #labeling {
+            height: @coding-top-labeling-height;
+
+            .tweet-item {
+                font-size: 24px;
+                font-weight: 300;
+                padding-right: 20px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+
+
+                span {
+                    cursor: pointer;
+                }
+            }
+
+            .tweet-submit {
+                font-size: 14px;
+
+                .tweet-submit-item {
+                    margin: 0;
+                    margin-bottom: 10px;
+
+                    .btn-toggle {
+                        width: 25px;
+                        height: 25px;
+                        background: transparent;
+                        padding: 3px;
+                        border-radius: 100%;
+                        border: solid #333 1px;
+                        color: #333;
+                        text-align: center;
+                        font-size: 12px;
+                        cursor: pointer;
+                        margin-right: 5px;
+
+                        &:hover {
+                            background: @item-background-color-hover;
+                        }
+
+                        &.active {
+                            color: white;
+                            background: #333;
+                        }
+                    }
+                }
+
+                .btn-default {
+                    width: 100%;
+                }
+            }
+        }
+
+        #codes {
+            height: calc(@coding-top-height ~"-" @coding-top-labeling-height ~"-" 45px);
+            padding-top: 10px;
+
+            .btn-default {
+                height: 100%;
+                vertical-align: top;
+
+                .code-definition {
+                    text-align: left;
+                    white-space: normal;
+                    font-weight: 300;
+                    font-size: 12px;
+                    height: calc(100% ~ "-" 20px);
+                    overflow-y: auto;
+
+                    &>p {
+                        margin: 0;
+                    }
+                }
+            }
+        }
+    }
+
+    #bottom-area {
+        height: calc(100% ~"-" @coding-top-height);
+    }
+}
+/* END Coding interface styles */
+
+
+/* START Reviewing interface styles */
 #reviewing {
     height: 100%;
 
@@ -133,27 +289,6 @@ th:hover{
         position: absolute;
         right: 10px;
         bottom: 10px;
-    }
-
-    .box {
-        padding: 10px;
-        background: white;
-
-        &.box-top {
-            margin-top: 10px;
-        }
-
-        &.box-bottom {
-            margin-bottom: 10px;
-        }
-
-        &.box-left {
-            margin-left: 10px;
-        }
-
-        &.box-right {
-            margin-right: 10px;
-        }
     }
 
     #top-area {
@@ -187,36 +322,6 @@ th:hover{
                 resize: none;
                 width: 100%;
                 background: transparent;
-            }
-        }
-
-        #codes {
-            .btn {
-                margin: 0;
-                opacity: 0.7;
-
-                &:hover {
-                    opacity: 1;
-                }
-
-                > .code-definition {
-                    text-align: justify;
-                    white-space: normal;
-                    font-size: 12px;
-                    height: 100px;
-                }
-            }
-
-            .btn.active {
-                opacity: 1;
-                color: white;
-                background-color: #AA3333;
-                -webkit-box-shadow: none;
-                box-shadow: none;
-
-                > .code-name {
-                    font-weight: 600;
-                }
             }
         }
     }
@@ -477,33 +582,6 @@ th:hover{
         }
     }
 }
-
-
-
-.no-padding{
-    padding: 0;
-}
-
-.scroll-y{
-    overflow-y: auto;
-    height: 100%;
-}
-
-h2 {
-    font-weight: 800;
-    font-size: 14px;
-    text-transform: uppercase;
-    margin: 0 0 10px 0;
-}
-
-h3 {
-    font-weight: 600;
-    font-size: 14px;
-    margin: 10px 0 5px 0;
-}
-
-.inline {
-    display: inline;
-}
+/* End Reviewing interface styles */
 
 

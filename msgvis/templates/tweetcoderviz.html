@@ -86,35 +86,33 @@
         </div>
 
         <div id="coding" ng-show="is_status('C')">
-            <div id="top-area">
+            <div class="box box-top" id="top-area">
                 <h2>New Label</h2>
-                <div class="row" id="labeling">
+                <div class="" id="labeling">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                    <div class="col-md-9 tweet-main">
-                            <span ng-repeat="char in currentMessage.characters track by $index"
+                    <div class="col-md-9 tweet-item">
+                        <span ng-repeat="char in currentMessage.characters track by $index"
                                ng-style="char.style">{$char.char$}</span>
                     </div>
                     <div class="col-md-3 tweet-submit">
-                        <div class="">
-                            <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
-                                <span> Tag this tweet</span>
-                            </div>
-
-                            <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
-                                <span> Save as an example tweet</span>
-                            </div>
-
-                            <div>
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
-                                <span> Mark as an ambiguous tweet</span>
-                            </div>
-                            <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
+                        <div class="tweet-submit-item">
+                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
+                            <span> Tag this tweet</span>
                         </div>
+
+                        <div class="tweet-submit-item">
+                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
+                            <span> Save as an example tweet</span>
+                        </div>
+
+                        <div class="tweet-submit-item">
+                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
+                            <span> Mark as an ambiguous tweet</span>
+                        </div>
+                        <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
                     </div>
                 </div>
-                <div class="row" id="codes" data-toggle="buttons">
+                <div class="" id="codes" data-toggle="buttons">
                     <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
                                ng-click="selectLabel(code)"
