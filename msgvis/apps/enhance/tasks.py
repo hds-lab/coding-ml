@@ -17,16 +17,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ['get_twitter_context', 'get_chat_context', 'Dictionary']
 
-_stoplist = None
-
-
-def get_stoplist():
-    global _stoplist
-    if not _stoplist:
-        from nltk.corpus import stopwords
-
-        _stoplist = stopwords.words('english')
-    return _stoplist
+from msgvis.apps.base.utils import get_stoplist
 
 
 class DbTextIterator(object):

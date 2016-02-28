@@ -317,6 +317,10 @@ class Message(models.Model):
     @property
     def lemmatized_tokens(self):
         # using lemmatized words
+        from msgvis.apps.base.utils import get_stoplist
         tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
+        
+        stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
+        tokens = filter(lambda x: x not in stop_words, tokens)
         tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
         return tokens
