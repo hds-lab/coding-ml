@@ -341,7 +341,9 @@ class FeatureCodeDistributionView(APIView):
                 distributions.append(item)
                 distribution_map[feature.index] = item
 
-            counts = features.filter(messages__code_assignments__isnull=False, messages__code_assignments__valid=True)\
+            counts = features.filter(messages__code_assignments__isnull=False,
+                                     messages__code_assignments__is_user_labeled=True,
+                                     messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                 .annotate(count=Count('messages')).order_by('id', 'count').all()
             for count in counts:
