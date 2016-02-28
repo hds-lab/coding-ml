@@ -313,3 +313,10 @@ class Message(models.Model):
     @property
     def tokens(self):
         return map(lambda x: x.tweet_word.original_text, self.tweetword_connections.all())
+
+    @property
+    def lemmatized_tokens(self):
+        # using lemmatized words
+        tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
+        tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
+        return tokens

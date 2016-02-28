@@ -188,8 +188,8 @@
                     var iNgram = 0;
                     var iToken = -1;
 
-                    for (var i = 0; i < message.tokens.length; i++) {
-                        var tokenText = message.tokens[i].toLowerCase();
+                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
                         if (tokenText == ngrams[iNgram]) {
                             // Is it ontinuous?
                             if (iToken >= 0 && i != iToken + 1) {
@@ -212,8 +212,8 @@
                     // iterate and search for tokens
                     var iNgram = 0;
 
-                    for (var i = 0; i < message.tokens.length; i++) {
-                        var tokenText = message.tokens[i].toLowerCase();
+                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
                         if (tokenText == ngrams[iNgram]) {
                             iNgram++;
 

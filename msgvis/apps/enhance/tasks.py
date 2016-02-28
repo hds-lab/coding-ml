@@ -190,8 +190,8 @@ class TweetParserTokenizer(Tokenizer):
 
         words = []
 
-        for word in message.tweet_words.all():
-            word = word.text
+        for word in message.tweetword_connections.order_by('order').all():
+            word = word.tweet_word.text
 
             filter_out = False
             for f in self.filters:

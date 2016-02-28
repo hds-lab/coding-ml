@@ -342,6 +342,7 @@ class FeatureCodeDistributionView(APIView):
                 distribution_map[feature.index] = item
 
             counts = features.filter(messages__code_assignments__isnull=False,
+                                     messages__code_assignments__source=user,
                                      messages__code_assignments__is_user_labeled=True,
                                      messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
