@@ -484,11 +484,6 @@
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;
                         })
-                        .error(function(err){
-                            console.log(err);
-                            // try to reload the page
-                            self.init_load();
-                        });
 
                 },
             });

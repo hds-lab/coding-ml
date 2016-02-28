@@ -81,8 +81,11 @@
     <div id="content" class="ng-cloak" ng-cloak  ng-controller="TweetCoderViz.controllers.ViewController" >
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
         <div id="Initialization" ng-show="!(is_status('C') || is_status('R'))">
-            Waiting for the other participant... (Wait for a while and then refresh)
+            <div class="stage-prompt">Waiting for the other participant... (Wait for a while and then refresh)<br />
+            Current status: {$ stage_desc[Progress.current_status] $}
+            <br />
             <button class="btn btn-success next-step" ng-click="next_step()">Try to go to the next stage</button>
+            </div>
         </div>
 
         <div id="coding" ng-show="is_status('C')">
@@ -95,7 +98,7 @@
 {#                            Use this for feature highlights#}
 {#                            <span ng-repeat="char in currentMessage.characters track by $index"#}
 {#                                   ng-style="char.style">{$char.char$}</span>#}
-                            <div class="btn btn-image" ng-if="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
+                            <div class="btn btn-image" ng-show="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
                                  data-toggle="modal" data-target="#image-modal"
                                  ng-click="selectMedia(currentMessage.message.media_url)">
                                 <img class="img-responsive center-block" ng-src="{$ currentMessage.message.media_url $}">
@@ -139,7 +142,7 @@
                 <div id="bottom-area">
                     <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                     <div class="row" id="panel" ng-repeat="code in codes" ng-style="definitionStyle(code)"
-                         ng-if="code.code_text == selectedCode.code_text">
+                         ng-show="code.code_text == selectedCode.code_text">
                         <div class="col-md-3 scroll-y">
                             <div class="box box-right">
                                 <h2>Review <span>{$ code.code_text $}</span></h2>
@@ -161,13 +164,13 @@
                                     ng-click="searchFeature(feature.feature_text)">
                                     <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                                     <span class="feature-text">{$ feature.feature_text $}</span>
-                                    <div ng-if="feature.total_count > 0" class="feature-distribution">
+                                    <div ng-show="feature.total_count > 0" class="feature-distribution">
                                         <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
                                     </div>
-                                    <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                                    <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
@@ -175,13 +178,13 @@
                                 <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code)" id="system-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
-                                    <div ng-if="feature.total_count > 0" class="feature-distribution">
+                                    <div ng-show="feature.total_count > 0" class="feature-distribution">
                                         <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
                                     </div>
-                                    <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                                    <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                             </div>
@@ -204,7 +207,7 @@
                                             <li><a ng-click="selectFilter('Ambiguous')">Ambiguous</a></li>
                                         </ul>
                                     </div>
-                                    <div class="search-label">Search: </div><input type="text" ng-model="searchText" placeholder="Type in search keywords">
+                                    <div class="search-label">Search: </div><input type="text" ng-model="search.text" placeholder="Type in search keywords">
                                 </div>
                                 <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag()"
                                      class="label-item" ng-style="{ 'border-color': codeColor(code) }"
@@ -223,7 +226,7 @@
                                     </div>
                                 </div>
 
-                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweetsFlag(selectedFilter, searchText)).length==0" class="help-text">No tweets were found.</p>
+                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweetsFlag()).length==0" class="help-text">No tweets were found.</p>
                             </div>
                         </div>
                     </div>
@@ -289,26 +292,26 @@
                             ng-click="searchFeature(feature.feature_text)">
                             <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
                             <span class="feature-text">{$ feature.feature_text $}</span>
-                            <div ng-if="feature.total_count > 0" class="feature-distribution">
+                            <div ng-show="feature.total_count > 0" class="feature-distribution">
                                 <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
                                      popover data-toggle="popover" data-trigger="hover" data-html="true"
                                      ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                      data-placement="auto top"></div>
                             </div>
-                            <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                            <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
                         </div>
                         <h3>System keywords</h3>
                         <div class="features" ng-repeat="feature in featureList.system" id="system-features"
                             ng-click="searchFeature(feature.feature_text)">
                             <span class="feature-text">{$ feature.feature_text $}</span>
-                            <div ng-if="feature.total_count > 0" class="feature-distribution">
+                            <div ng-show="feature.total_count > 0" class="feature-distribution">
                                 <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
                                      popover data-toggle="popover" data-trigger="hover" data-html="true"
                                      ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                      data-placement="auto top"></div>
                             </div>
-                            <div ng-if="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                            <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                             <span class="feature-total">{$ feature.total_count $}</span>
                         </div>
                     </div>
@@ -333,7 +336,7 @@
                         <h2>Submitted labels</h2>
                         <span us-spinner="spinnerOptions" spinner-key="submitted-label-spinner"></span>
                         <div id="search">
-                            <div>Search: </div><input ng-model="searchText" placeholder="Type in search keywords">
+                            <div>Search: </div><input ng-model="search.text" placeholder="Type in search keywords">
                         </div>
                         <div ng-repeat="item in allItems | filter:filterTweetsConfusion()" class="label-item"
                              ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }"

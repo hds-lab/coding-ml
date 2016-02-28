@@ -450,6 +450,8 @@ class CodeDefinitionView(APIView):
                 definition = definition.filter(text=text).first()
             else:
                 definition.update(valid=False)
+                for defi in definition:
+                    defi.save()
 
                 definition = coding_models.CodeDefinition(code=code, source=user, text=text)
                 definition.save()
@@ -486,10 +488,11 @@ class CodeAssignmentView(APIView):
                                                                               message=message, valid=True)
                     if assignments.exists():
                         assignments.update(valid=False)
+                        for assignment in assignments:
+                            assignment.save()
 
-                    code_assignment = coding_models.CodeAssignment(
-                                                                    is_user_labeled=True, source=user,
-                                                                    message=message, code=code, valid=True)
+                    code_assignment = coding_models.CodeAssignment(is_user_labeled=True, source=user,
+                                                                   message=message, code=code, valid=True)
 
                     code_assignment.is_example=data['is_example']
                     code_assignment.is_saved=data['is_saved']
@@ -528,7 +531,7 @@ class CodeMessageView(APIView):
 
             stage = None
             if request.query_params.get('stage'):
-                stage = user.progress.current_stage
+                stage = user.progress.get_current_stage()
 
             source = request.query_params.get('source', "user")
             if source == "user":
@@ -587,12 +590,12 @@ class AllCodedMessageView(APIView):
         try:
             stage = None
             if request.query_params.get('stage'):
-                stage = user.progress.current_stage
+                stage = user.progress.get_current_stage()
 
             if stage:
                 assignments = coding_models.CodeAssignment.objects.filter(source=user,
                                                                           is_user_labeled=True,
-                                                                          message__selection__stage=stage,
+                                                                          message__selection__stage_assignment=stage,
                                                                           valid=True).all()
             else:
                 assignments = coding_models.CodeAssignment.objects.filter(source=user,
@@ -676,6 +679,8 @@ class DisagreementIndicatorView(APIView):
                 indicator = indicator.filter(type=type)
             else:
                 indicator.update(valid=False)
+                for ind in indicator:
+                    ind.save()
                 indicator = coding_models.DisagreementIndicator(message=message,
                                                             user_assignment=user_assignment,
                                                             partner_assignment=partner_assignment,
@@ -813,10 +818,10 @@ class ProgressView(APIView):
                         time.sleep(1)
             if success:
                 progress = user.progress
-                output = serializers.ProgressSerializer(progress)
-                return Response(output.data, status=status.HTTP_200_OK)
-            else:
-                return Response("No progress can be made.", status=status.HTTP_400_BAD_REQUEST)
+            output = serializers.ProgressSerializer(progress)
+            return Response(output.data, status=status.HTTP_200_OK)
+           # else:
+           #     return Response("No progress can be made.", status=status.HTTP_200_OK)
         except:
             import traceback
             traceback.print_exc()
