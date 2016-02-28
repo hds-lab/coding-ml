@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 else:
                     print "Reading file %s" % corpus_filename
 
-                csvreader = csv.reader(fp, delimiter=',', quotechar='"')
+                csvreader = csv.reader(fp, delimiter=',')
                 importer = Importer(csvreader, dataset_obj, user_obj)
                 importer.run()
 
