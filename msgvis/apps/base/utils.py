@@ -35,3 +35,14 @@ def entropy(items):
 class AttributeDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
+
+
+_stoplist = None
+
+def get_stoplist():
+    global _stoplist
+    if not _stoplist:
+        from nltk.corpus import stopwords
+
+        _stoplist = stopwords.words('english')
+    return _stoplist

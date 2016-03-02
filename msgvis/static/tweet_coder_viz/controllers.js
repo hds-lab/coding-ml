@@ -71,7 +71,7 @@
         // Tweets
         $scope.codeItems = undefined;
         $scope.selectedFilter = 'All';
-        $scope.searchText = undefined;
+        $scope.search = {text: ""};
         $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
@@ -91,6 +91,15 @@
             'U': 'My code is correct',
             'D': 'My partner and I are both right',
             'P': 'My partner\'s code is correct'
+        };
+
+        $scope.stage_desc = {
+            N: 'Not yet start',
+            I: 'Initialization',
+            C: 'Coding',
+            W: 'Waiting',
+            R: 'Review',
+            S: 'Switching stage'
         };
 
 
@@ -124,17 +133,17 @@
         };
 
         $scope.searchFeature = function(feature_text) {
-            if ($scope.searchText != feature_text) {
-                $scope.searchText = feature_text;
+            if ($scope.search.text != feature_text) {
+                $scope.search.text = feature_text;
             }
             else {
-                $scope.searchText = undefined;
+                $scope.search.text = undefined;
             }
         };
 
         $scope.filterTweetsFlag = function() {
             return function(item) {
-                var searchText = $scope.searchText;
+                var searchText = $scope.search.text;
                 var filter = $scope.selectedFilter;
 
                 // Apply filters
@@ -144,13 +153,13 @@
                         flagged = true;
                         break;
                     case 'Example':
-                        flagged = item.example;
+                        flagged = item.is_example;
                         break;
                     case 'Saved':
-                        flagged = item.saved;
+                        flagged = item.is_saved;
                         break;
                     case 'Ambiguous':
-                        flagged = item.ambiguous;
+                        flagged = item.is_ambiguous;
                         break;
                 }
 
@@ -164,7 +173,7 @@
         $scope.filterTweetsConfusion = function() {
             return function(item) {
                 var confusion = $scope.selectedConfusion;
-                var searchText = $scope.searchText;
+                var searchText = $scope.search.text;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
 
                 // Search for text
@@ -188,8 +197,8 @@
                     var iNgram = 0;
                     var iToken = -1;
 
-                    for (var i = 0; i < message.tokens.length; i++) {
-                        var tokenText = message.tokens[i].toLowerCase();
+                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
                         if (tokenText == ngrams[iNgram]) {
                             // Is it ontinuous?
                             if (iToken >= 0 && i != iToken + 1) {
@@ -212,8 +221,8 @@
                     // iterate and search for tokens
                     var iNgram = 0;
 
-                    for (var i = 0; i < message.tokens.length; i++) {
-                        var tokenText = message.tokens[i].toLowerCase();
+                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
                         if (tokenText == ngrams[iNgram]) {
                             iNgram++;
 
@@ -353,13 +362,25 @@
         };
 
         $scope.next_step = function(){
-            var request = Progress.next_step();
-            if (request) {
-                usSpinnerService.spin('label-spinner');
-                request.then(function() {
-                    usSpinnerService.stop('label-spinner');
-                });
+            if (Progress.current_status == 'W'){
+                var request = Progress.init_load();
+                if (request) {
+                    usSpinnerService.spin('page-spinner');
+                    request.then(function() {
+                        usSpinnerService.stop('page-spinner');
+                    });
+                }
             }
+            else{
+                var request = Progress.next_step();
+                if (request) {
+                    usSpinnerService.spin('page-spinner');
+                    request.then(function() {
+                        usSpinnerService.stop('page-spinner');
+                    });
+                }
+            }
+
         };
 
         
@@ -409,7 +430,7 @@
 
         $scope.getAllMessages = function() {
 
-            var request = Message.load_all_coded_messages();
+            var request = Message.load_all_coded_messages("current");
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function () {
