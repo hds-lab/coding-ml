@@ -170,6 +170,31 @@
             }
         };
 
+        $scope.filterTweets = function(filter) {
+            return function(item) {
+                var searchText = $scope.search.text;
+
+                // Apply filters
+                var flagged = false;
+                switch (filter) {
+                    case 'All':
+                        flagged = true;
+                        break;
+                    case 'Example':
+                        flagged = item.is_example;
+                        break;
+                    case 'Saved':
+                        flagged = item.is_saved;
+                        break;
+                    case 'Ambiguous':
+                        flagged = item.is_ambiguous;
+                        break;
+                }
+
+                return flagged;
+            }
+        };
+
         $scope.filterTweetsConfusion = function() {
             return function(item) {
                 var confusion = $scope.selectedConfusion;

@@ -153,6 +153,15 @@
                                 <h3>My Definition</h3>
                                 <p ng-show="Code.definitions_by_code[code.code_text]['user'].text">{$ Code.definitions_by_code[code.code_text]["user"].text $}</p>
                                 <p ng-hide="Code.definitions_by_code[code.code_text]['user'].text" class="help-text">You have not provided a definition yet.</p>
+                                <h3>My Examples</h3>
+                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweets('Example')).length==0"
+                                   class="help-text">You have not saved any tweets as exemplar of '<span>{$ code.code_text $}</span>'.</p>
+                                <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweets('Example')"
+                                     class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                                    <div class="content">
+                                        <div class="item-message" ng-bind-html="item.message.embedded_html"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3 scroll-y">
