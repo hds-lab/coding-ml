@@ -108,17 +108,23 @@
                         </div>
                         <div class="col-md-3 tweet-submit">
                             <div class="tweet-submit-item">
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}" ng-click="currentMessage.is_saved=!currentMessage.is_saved"><span class="glyphicon glyphicon-tag"></span></div>
-                                <span> Tag this tweet</span>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}"
+                                     ng-click="currentMessage.is_saved=!currentMessage.is_saved"
+                                     data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
+                                <span> Save this tweet</span>
                             </div>
 
                             <div class="tweet-submit-item">
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}" ng-click="currentMessage.is_example=!currentMessage.is_example"><span class="glyphicon glyphicon-star"></span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}"
+                                     ng-click="currentMessage.is_example=!currentMessage.is_example"
+                                     data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
                                 <span> Save as an example tweet</span>
                             </div>
 
                             <div class="tweet-submit-item">
-                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}" ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"><span>?</span></div>
+                                <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}"
+                                     ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"
+                                     data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                 <span> Mark as an ambiguous tweet</span>
                             </div>
                             <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit Code</button>
@@ -171,7 +177,7 @@
                                 <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ code.code_text$}</span>'. You can do so in the review stage.</p>
                                 <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code)" id="user-features"
                                     ng-click="searchFeature(feature.feature_text)">
-                                    <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
+                                    <button class="btn btn-default" ng-click="removeFeature(feature)" data-toggle="tooltip" title="Remove this keyword"><span class="glyphicon glyphicon-remove-circle"></span></button>
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
                                         <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
@@ -225,9 +231,15 @@
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
                                             <div>
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"><span>?</span></div>
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
+                                                     ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
+                                                     ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
+                                                     ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                             </div>
                                             <div ng-bind-html="item.message.embedded_html"></div>
                                         </div>
@@ -299,7 +311,8 @@
                         <p ng-hide="featureList.user.length > 0" class="help-text">Please select keywords from your tweets.</p>
                         <div class="features" ng-repeat="feature in featureList.user" id="user-features"
                             ng-click="searchFeature(feature.feature_text)">
-                            <button class="btn btn-default" ng-click="removeFeature(feature)"><span class="glyphicon glyphicon-remove-circle"></span></button>
+                            <button class="btn btn-default" ng-click="removeFeature(feature)"
+                                     data-toggle="tooltip" title="Remove this keyword"><span class="glyphicon glyphicon-remove-circle"></span></button>
                             <span class="feature-text">{$ feature.feature_text $}</span>
                             <div ng-show="feature.total_count > 0" class="feature-distribution">
                                 <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
@@ -358,9 +371,15 @@
                             <div class="content">
                                 <div ng-show="hoveredItem==item">
                                 <div>
-                                    <div class='btn btn-toggle' ng-class="{'active': item.is_saved}" ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-tag"></span></div>
-                                    <div class='btn btn-toggle' ng-class="{'active': item.is_example}" ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"><span class="glyphicon glyphicon-star"></span></div>
-                                    <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}" ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"><span>?</span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
+                                         ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
+                                         ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
+                                         ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
+                                                     data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                     <div class="inline" ng-show="item.disagreement_indicator">
                                         <label for="indicator">Disagreement indicator: </label>
                                         <div class="dropdown">
