@@ -2,13 +2,20 @@ from django.core.management.base import BaseCommand, make_option, CommandError
 import os
 from math import log
 
+def _mkdir_recursive( path):
+    sub_path = os.path.dirname(path)
+    if not os.path.exists(sub_path):
+        _mkdir_recursive(sub_path)
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 def check_or_create_dir(dir_path):
     if os.path.exists(dir_path):
             if not os.path.isdir(dir_path):
                 raise CommandError("The given path is not a folder.")
     else:
         try:
-            os.mkdir(dir_path)
+            _mkdir_recursive(dir_path)
         except OSError:
             raise CommandError("Weird path error happens.")
 
