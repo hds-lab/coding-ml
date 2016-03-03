@@ -88,7 +88,11 @@
             </div>
         </div>
 
-        <div id="coding" ng-if="is_status('C')">
+        <div id="Initialization" ng-show="statusText">
+            <div class="stage-prompt">{$ statusText $}</div>
+        </div>
+
+        <div id="coding" ng-if="is_status('C') && !statusText">
             <div class="box box-top">
                 <div id="top-area">
                     <h2>New Label</h2>
@@ -255,7 +259,7 @@
             </div>
         </div>
 
-        <div id="reviewing" ng-if="is_status('R')">
+        <div id="reviewing" ng-if="is_status('R') && !statusText">
             <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
             <div class="box box-top" id="top-area">
                 <h2>Review Code Definitions</h2>

@@ -37,6 +37,8 @@
         $scope.Message = Message;
         $scope.Code = Code;
 
+        $scope.statusText = "Initializing...";
+
         $scope.is_status = function(status){
             return Progress.current_status == status
         };
@@ -486,18 +488,22 @@
 
             var request = Code.init_load();
             if (request) {
-                usSpinnerService.spin('code-detail-spinner');
+                usSpinnerService.spin('page-spinner');
                 request.then(function() {
-                    usSpinnerService.stop('code-detail-spinner');
+                    usSpinnerService.stop('page-spinner');
+                    $scope.statusText = undefined;
+
                     Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
+                        $scope.getAllMessages();
                         $scope.selectedCode = $scope.codes[0];
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
                     }
                     else {
+                        $scope.getMessageDetail();
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                     }
@@ -766,25 +772,19 @@
             }
         });
 
-        //$scope.$watch('selectedCode', function(newVal, oldVal) {
-        //    if (newVal && (newVal !== oldVal)) {
-        //        $scope.getCodeDetail();
-        //    }
-        //});
-
         $scope.$watch('Progress.current_status', function(newVal, oldVal) {
             if (newVal && (newVal != oldVal)) {
                 switch (newVal) {
                     case 'C':  // coding
-                        $scope.getMessageDetail();
+                        $scope.statusText = "Initializing coding interface...";
                         $scope.getCodeDetail();
                         break;
                     case 'R':  // review
+                        $scope.statusText = "Initializing review interface...";
                         $scope.getCodeDetail();
-
-                        // TODO: Need to get codes before getting messages and features and others
-                        $scope.getAllMessages();
                         break;
+                    default:
+                        $scope.statusText = undefined;
                 }
             }
         });
