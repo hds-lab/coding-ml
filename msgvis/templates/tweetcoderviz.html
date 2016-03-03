@@ -95,16 +95,16 @@
                     <div class="" id="labeling">
                         <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                         <div class="col-md-9 tweet-item">
-{#                            Use this for feature highlights#}
-{#                            <span ng-repeat="char in currentMessage.characters track by $index"#}
-{#                                   ng-style="char.style">{$char.char$}</span>#}
                             <div class="btn btn-image" ng-show="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
                                  data-toggle="modal" data-target="#image-modal"
                                  ng-click="selectMedia(currentMessage.message.media_url)">
                                 <img class="img-responsive center-block" ng-src="{$ currentMessage.message.media_url $}">
                             </div>
 
-                            <div class="tweet-text" ng-bind-html="currentMessage.message.embedded_html"></div>
+                            <div class="tweet-text">
+                                <span ng-repeat="char in currentMessage.characters track by $index"
+                                   ng-style="char.style">{$char.char$}</span>
+                            </div>
                         </div>
                         <div class="col-md-3 tweet-submit">
                             <div class="tweet-submit-item">
