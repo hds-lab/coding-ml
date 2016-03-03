@@ -142,12 +142,9 @@ class Importer(object):
                     code_assignments.update(valid=False)
 
                     CodeAssignment.objects.create(message=message, source=self.source,
-<<<<<<< HEAD
                                                   code=code, is_ambiguous=is_ambiguous,
                                                   is_example=True)
-=======
-                                                  code=code, is_ambiguous=is_ambiguous)
->>>>>>> 6fa45f93790dc139c07e1c8417812edd8a6d9681
+
 
                     flag = True
 
