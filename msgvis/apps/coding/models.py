@@ -69,7 +69,7 @@ class CodeDefinition(models.Model):
 
     @property
     def examples(self):
-        return map(lambda x: x.message, CodeAssignment.objects.filter(valid=True, is_example=True, source=self.source, code=self.code).all())
+        return map(lambda x: x.message, CodeAssignment.objects.filter(valid=True, is_example=True, source=self.source, code=self.code)[:10])
 
 
     valid = models.BooleanField(default=True)
