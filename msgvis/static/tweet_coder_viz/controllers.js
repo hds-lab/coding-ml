@@ -37,6 +37,8 @@
         $scope.Message = Message;
         $scope.Code = Code;
 
+        $scope.statusText = "Initializing...";
+
         $scope.is_status = function(status){
             return Progress.current_status == status
         };
@@ -167,6 +169,31 @@
                 var matched = $scope.matchText(item.message, searchText);
 
                 return (!searchText || searchText.length == 0 || matched) && flagged;
+            }
+        };
+
+        $scope.filterTweets = function(filter) {
+            return function(item) {
+                var searchText = $scope.search.text;
+
+                // Apply filters
+                var flagged = false;
+                switch (filter) {
+                    case 'All':
+                        flagged = true;
+                        break;
+                    case 'Example':
+                        flagged = item.is_example;
+                        break;
+                    case 'Saved':
+                        flagged = item.is_saved;
+                        break;
+                    case 'Ambiguous':
+                        flagged = item.is_ambiguous;
+                        break;
+                }
+
+                return flagged;
             }
         };
 
@@ -461,9 +488,11 @@
 
             var request = Code.init_load();
             if (request) {
-                usSpinnerService.spin('code-detail-spinner');
+                usSpinnerService.spin('page-spinner');
                 request.then(function() {
-                    usSpinnerService.stop('code-detail-spinner');
+                    usSpinnerService.stop('page-spinner');
+                    $scope.statusText = undefined;
+
                     Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
@@ -474,6 +503,7 @@
                         $scope.getAllMessages();
                     }
                     else {
+                        $scope.getMessageDetail();
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                     }
@@ -681,20 +711,22 @@
                 var key = item.message.id;
                 console.log("addFeature for: " + key);
 
-                /*// check if it already exists
-                var existingTokens = $scope.message_featureList[key];
-
-                if (existingTokens) {
-                    delete $scope.message_featureList[key];
-                }*/
+                // add to the top of the list to update the UI
+                $scope.featureList.user.unshift({
+                    feature_text: tokens.join("&"),
+                    total_count: 0,
+                    distribution: undefined
+                });
 
                 var request = Feature.add(tokens, item.message.id);
                 if (request) {
                     usSpinnerService.spin('submitted-label-spinner');
                     request.then(function() {
                         usSpinnerService.stop('submitted-label-spinner');
-                    //    var feature = Feature.latest_data;
-                   //     $scope.message_featureList[key] = feature; // TODO: make sure this is correct
+                        var feature = Feature.latest_data;
+
+                        // Update the features (need to refresh the whole data so we can get the counts for this stage only)
+                        $scope.load_distribution('user');
                     });
                 }
 
@@ -711,30 +743,25 @@
         };
 
         $scope.removeFeature = function(feature){
-            if (feature){
+            if (feature) {
                 var key = feature.source.id;
                 console.log("removeFeature for: " + key);
 
-                // check if it already exists
-                //var existingTokens = $scope.featureList[key];
+                // Remove from list
+                var index = $scope.featureList.user.indexOf(feature);
+                if (index > -1){
+                    $scope.featureList.user.splice(index, 1);
+                }
 
-                //if (existingTokens) {
+                delete $scope.featureList.user[feature.feature_text];
 
-                    var request = Feature.remove(feature);
-                    if (request) {
-                        usSpinnerService.spin('vector-spinner');
-                        request.then(function() {
-                            usSpinnerService.stop('vector-spinner');
-                    //        delete $scope.featureList[key];
-                        });
-                    }
-
-                    //delete $scope.featureList[key];
-                  //  feature.source.submittedTokenIndices.clear();
-                //}
-                //else {
-                //    console.log("feature does not exist: " + key);
-                //}
+                var request = Feature.remove(feature);
+                if (request) {
+                    usSpinnerService.spin('vector-spinner');
+                    request.then(function () {
+                        usSpinnerService.stop('vector-spinner');
+                    });
+                }
             }
         };
 
@@ -745,25 +772,19 @@
             }
         });
 
-        //$scope.$watch('selectedCode', function(newVal, oldVal) {
-        //    if (newVal && (newVal !== oldVal)) {
-        //        $scope.getCodeDetail();
-        //    }
-        //});
-
         $scope.$watch('Progress.current_status', function(newVal, oldVal) {
             if (newVal && (newVal != oldVal)) {
                 switch (newVal) {
                     case 'C':  // coding
-                        $scope.getMessageDetail();
+                        $scope.statusText = "Initializing coding interface...";
                         $scope.getCodeDetail();
                         break;
                     case 'R':  // review
+                        $scope.statusText = "Initializing review interface...";
                         $scope.getCodeDetail();
-
-                        // TODO: Need to get codes before getting messages and features and others
-
                         break;
+                    default:
+                        $scope.statusText = undefined;
                 }
             }
         });
