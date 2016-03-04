@@ -232,7 +232,8 @@ class UserFeatureView(APIView):
             data = input.validated_data
 
             token_list = data["token_list"]
-            feature = dictionary.add_feature(token_list, source=user)
+            origin = data["origin"]
+            feature = dictionary.add_feature(token_list, source=user, origin=origin)
 
             item = {
                 "feature_id": feature.id,
@@ -244,6 +245,11 @@ class UserFeatureView(APIView):
                 "total_count": 0,
                 "entropy": None
             }
+            if feature.origin:
+                item["origin_message_id"] = feature.origin.id
+                code = feature.get_origin_message_code()
+                if code:
+                    item["origin_code_id"] = code.id
             item = AttributeDict(item)
             for code in corpus_models.Code.objects.all():
                 item["distribution"][code.text] = 0
@@ -311,7 +317,7 @@ class FeatureCodeDistributionView(APIView):
             "partner": partner,
             partner: "partner",
             user: "user",
-            "system": "system"
+            None: "system"
         }
         source_list = []
         for feature_source in feature_sources:
@@ -325,6 +331,7 @@ class FeatureCodeDistributionView(APIView):
 
             for feature in features:
                 source = feature.source if hasattr(feature, 'source') else "system"
+
                 item = {
                     "feature_id": feature.id,
                     "feature_index": feature.index,
@@ -335,6 +342,12 @@ class FeatureCodeDistributionView(APIView):
                     "total_count": 0,
                     "entropy": None
                 }
+
+                if feature.origin:
+                    item["origin_message_id"] = feature.origin.id
+                    code = feature.get_origin_message_code()
+                    if code:
+                        item["origin_code_id"] = code.id
                 item = AttributeDict(item)
                 for code in corpus_models.Code.objects.all():
                     item["distribution"][code.text] = 0

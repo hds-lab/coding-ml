@@ -66,7 +66,7 @@
         // Top pane
         $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
-        $scope.codes = undefined;
+        $scope.codes = [];
         $scope.code_map = {};
         $scope.coded_messages = undefined;
 
@@ -496,11 +496,11 @@
                     Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
-                        $scope.getAllMessages();
                         $scope.selectedCode = $scope.codes[0];
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
+                        $scope.getAllMessages();
                     }
                     else {
                         $scope.getMessageDetail();
@@ -718,7 +718,7 @@
                     distribution: undefined
                 });
 
-                var request = Feature.add(tokens);
+                var request = Feature.add(tokens, item.message.id);
                 if (request) {
                     usSpinnerService.spin('submitted-label-spinner');
                     request.then(function() {
