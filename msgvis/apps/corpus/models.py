@@ -304,10 +304,18 @@ class Message(models.Model):
                                "source": "system"})
         else:
             for feature_score in self.feature_scores.filter(feature__source=source, feature__valid=True).all():
+                if feature_score.feature.origin:
+                    message_id = feature_score.feature.origin.id
+                    code = feature_score.feature.get_origin_message_code()
+                    if code:
+                        code_id = code.id
+
                 vector.append({"text": feature_score.feature.text,
                                "feature_index": feature_score.feature_index,
                                "count": feature_score.count,
-                               "source": "user" })
+                               "source": "user",
+                               "origin_message_id": message_id,
+                               "origin_code_id": code_id })
         return vector
 
     @property
