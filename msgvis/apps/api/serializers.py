@@ -95,6 +95,9 @@ class FeatureCodeDistributionSerializer(serializers.Serializer):
     normalized_distribution = serializers.DictField()
     total_count = serializers.IntegerField()
     entropy = serializers.FloatField()
+    origin_message_id = serializers.IntegerField(required=False)
+    origin_code_id = serializers.IntegerField(required=False)
+
 
 
 class SVMResultSerializer(serializers.Serializer):
@@ -106,7 +109,7 @@ class FeatureSerializer(serializers.ModelSerializer):
     token_list = serializers.ListField(child=serializers.CharField(), required=False)
     class Meta:
         model = enhance_models.Feature
-        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', 'source', )
+        fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'token_list', 'source', 'origin', )
         read_only_fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'source', )
 
 

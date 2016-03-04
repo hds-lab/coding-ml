@@ -64,7 +64,7 @@
         // Top pane
         $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
-        $scope.codes = undefined;
+        $scope.codes = [];
         $scope.code_map = {};
         $scope.coded_messages = undefined;
 
@@ -471,6 +471,7 @@
                         $scope.load_distribution("user");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
+                        $scope.getAllMessages();
                     }
                     else {
                         $scope.load_distribution("user");
@@ -687,7 +688,7 @@
                     delete $scope.message_featureList[key];
                 }*/
 
-                var request = Feature.add(tokens);
+                var request = Feature.add(tokens, item.message.id);
                 if (request) {
                     usSpinnerService.spin('submitted-label-spinner');
                     request.then(function() {
@@ -761,7 +762,7 @@
                         $scope.getCodeDetail();
 
                         // TODO: Need to get codes before getting messages and features and others
-                        $scope.getAllMessages();
+
                         break;
                 }
             }
