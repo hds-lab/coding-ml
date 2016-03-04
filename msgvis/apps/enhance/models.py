@@ -394,7 +394,7 @@ class Dictionary(models.Model):
 
         return results
 
-    def add_feature(self, token_list, source=None):
+    def add_feature(self, token_list, source=None, origin=None):
 
         clean_token_list = []
         for f in token_list:
@@ -414,10 +414,13 @@ class Dictionary(models.Model):
         # 2. Create a new instance of Feature
         index = self.get_last_feature_index() + 1
         token = "&".join(clean_token_list)
+        import pdb
+        pdb.set_trace()
         feature = Feature(dictionary=self,
                         text=token,
                         index=index,
                         source=source,
+                        origin=origin,
                         document_frequency=document_freq)
         feature.save()
 
@@ -489,7 +492,10 @@ class Feature(models.Model):
     document_frequency = models.IntegerField()
 
     messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
-    source = models.ForeignKey(User, related_name="features", default=None)
+    source = models.ForeignKey(User, related_name="features", default=None, null=True)
+    """The user that add this feature; None means that is a system feature"""
+    origin = models.ForeignKey(Message, related_name="user_features", default=None, null=True)
+    """The message that this feature is added to the list from"""
 
     created_at = models.DateTimeField(auto_now_add=True, default=None)
     """The code created time"""
@@ -506,6 +512,15 @@ class Feature(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
+    def get_origin_message_code(self):
+        code = None
+        if self.origin:
+            assignment = self.origin.code_assignments.filter(source=self.source,
+                                                             is_user_labeled=True,
+                                                             valid=True).first()
+            if assignment:
+                code = assignment.code
+        return code
 
 
 class MessageFeature(models.Model):
