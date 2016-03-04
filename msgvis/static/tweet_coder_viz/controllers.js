@@ -710,7 +710,13 @@
             $scope.featureConflict = null;
 
             if (featureConflict) {
-                $scope.removeFeature(featureConflict.existingFeature);
+                if (featureConflict.existingFeatureText) {
+                    $scope.removeFeature(featureConflict.existingFeatureText);
+                }
+                else if (featureConflict.existingMessageFeature){
+                    $scope.removeFeature(featureConflict.existingMessageFeature);
+                }
+
                 $scope.addFeature(featureConflict.item);
             }
         };
@@ -720,24 +726,36 @@
                 var tokens = item.selectedTokens;
                 var key = item.message.id;
 
-                // Check if the feature already exists
+                // Check if the feature already exists.
                 var feature = {
                     feature_text: tokens.join("&"),
                     total_count: 0,
-                    distribution: undefined
+                    distribution: undefined,
+                    origin: item.message.id
                 };
 
-                var existing = $scope.featureList.user[feature.feature_text];
+                var existingFeatureText = undefined;
+                var existingMessageFeature = [];
 
-                if (existing) {
+                existingFeatureText = $scope.featureList.user[feature.feature_text];
+                if (!existingFeatureText) {
+                    existingMessageFeature = $scope.featureList.user.filter(function (f) {
+                        return f.origin == feature.origin;
+                    });
+                }
+
+                if (existingFeatureText || existingMessageFeature.length > 0) {
                     $scope.featureConflict = {
-                        existingFeature: existing,
+                        existingFeatureText: existingFeatureText,
+                        existingMessageFeature: existingMessageFeature.length > 0 ? existingMessageFeature[0] : undefined,
+                        feature_text: feature.feature_text,
                         item: item
                     };
                 }
                 else {
                     // add to the top of the list to update the UI
                     $scope.featureList.user.unshift(feature);
+                    $scope.featureList.user[feature.feature_text] = feature;
 
                     var request = Feature.add(tokens, item.message.id);
                     if (request) {
@@ -766,8 +784,6 @@
 
         $scope.removeFeature = function(feature){
             if (feature) {
-                var key = feature.source.id;
-                console.log("removeFeature for: " + key);
 
                 // Remove from list
                 var index = $scope.featureList.user.indexOf(feature);
@@ -777,12 +793,14 @@
 
                 delete $scope.featureList.user[feature.feature_text];
 
-                var request = Feature.remove(feature);
-                if (request) {
-                    usSpinnerService.spin('vector-spinner');
-                    request.then(function () {
-                        usSpinnerService.stop('vector-spinner');
-                    });
+                if (feature.feature_id) {
+                    var request = Feature.remove(feature);
+                    if (request) {
+                        usSpinnerService.spin('vector-spinner');
+                        request.then(function () {
+                            usSpinnerService.stop('vector-spinner');
+                        });
+                    }
                 }
             }
         };
