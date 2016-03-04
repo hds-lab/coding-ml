@@ -414,8 +414,6 @@ class Dictionary(models.Model):
         # 2. Create a new instance of Feature
         index = self.get_last_feature_index() + 1
         token = "&".join(clean_token_list)
-        import pdb
-        pdb.set_trace()
         feature = Feature(dictionary=self,
                         text=token,
                         index=index,
