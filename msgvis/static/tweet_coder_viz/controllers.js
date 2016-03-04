@@ -51,8 +51,8 @@
             return (previousSortOption+1) % 3;
         };
 
-        $scope.colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
-        $scope.colorsLight = ["rgba(31,119,180,0.15)", "rgba(255,127,14,0.15)", "rgba(44,160,44,0.15)", "rgba(214,39,40,0.15)",
+        $scope.colors = ["#1f77b4", "#2ca02c", "#d62728", "#ff7f0e", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
+        $scope.colorsLight = ["rgba(31,119,180,0.15)", "rgba(44,160,44,0.15)", "rgba(214,39,40,0.15)", "rgba(255,127,14,0.15)",
             "rgba(148,103,189,0.15)", "rgba(140,86,75,0.15)", "rgba(227,119,194,0.15)", "rgba(127,127,127,0.15)", "rgba(188,189,34,0.15)",
             "rgba(23,190,207,0.15)"];
 
@@ -86,6 +86,7 @@
             user: {},
             partner: {}
         };
+        $scope.featureConflict = undefined;
 
         $scope.indicators = ['N', 'U', 'D', 'P'];
         $scope.indicator_mapping = {
@@ -705,47 +706,84 @@
             return style;
         };
 
+        $scope.replaceFeature = function(featureConflict){
+            $scope.featureConflict = null;
+
+            if (featureConflict) {
+                if (featureConflict.existingFeatureText) {
+                    $scope.removeFeature(featureConflict.existingFeatureText);
+                }
+                else if (featureConflict.existingMessageFeature){
+                    $scope.removeFeature(featureConflict.existingMessageFeature);
+                }
+
+                $scope.addFeature(featureConflict.item);
+            }
+        };
+
         $scope.addFeature = function(item){
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
                 var tokens = item.selectedTokens;
                 var key = item.message.id;
-                console.log("addFeature for: " + key);
 
-                // add to the top of the list to update the UI
-                $scope.featureList.user.unshift({
+                // Check if the feature already exists.
+                var feature = {
                     feature_text: tokens.join("&"),
                     total_count: 0,
-                    distribution: undefined
-                });
+                    distribution: undefined,
+                    origin: item.message.id
+                };
 
-                var request = Feature.add(tokens, item.message.id);
-                if (request) {
-                    usSpinnerService.spin('submitted-label-spinner');
-                    request.then(function() {
-                        usSpinnerService.stop('submitted-label-spinner');
-                        var feature = Feature.latest_data;
+                var existingFeatureText = undefined;
+                var existingMessageFeature = [];
 
-                        // Update the features (need to refresh the whole data so we can get the counts for this stage only)
-                        $scope.load_distribution('user');
+                existingFeatureText = $scope.featureList.user[feature.feature_text];
+                if (!existingFeatureText) {
+                    existingMessageFeature = $scope.featureList.user.filter(function (f) {
+                        return f.origin == feature.origin;
                     });
                 }
 
+                if (existingFeatureText || existingMessageFeature.length > 0) {
+                    $scope.featureConflict = {
+                        existingFeatureText: existingFeatureText,
+                        existingMessageFeature: existingMessageFeature.length > 0 ? existingMessageFeature[0] : undefined,
+                        feature_text: feature.feature_text,
+                        item: item
+                    };
+                }
+                else {
+                    // add to the top of the list to update the UI
+                    $scope.featureList.user.unshift(feature);
+                    $scope.featureList.user[feature.feature_text] = feature;
 
-                var newMap = {};
+                    var request = Feature.add(tokens, item.message.id);
+                    if (request) {
+                        usSpinnerService.spin('submitted-label-spinner');
+                        request.then(function () {
+                            usSpinnerService.stop('submitted-label-spinner');
+                            var feature = Feature.latest_data;
 
-                item.submittedTokenIndices = new Map();
-                item.selectedTokenIndices.forEach(function (val, key) {
-                    item.submittedTokenIndices.set(key, val);
-                });
+                            // Update the features (need to refresh the whole data so we can get the counts for this stage only)
+                            $scope.load_distribution('user');
+                        });
+                    }
 
-                item.clickStartTokenItem = undefined;
+
+                    var newMap = {};
+
+                    item.submittedTokenIndices = new Map();
+                    item.selectedTokenIndices.forEach(function (val, key) {
+                        item.submittedTokenIndices.set(key, val);
+                    });
+
+                    item.clickStartTokenItem = undefined;
+                }
             }
         };
 
         $scope.removeFeature = function(feature){
             if (feature) {
-                var key = feature.source.id;
-                console.log("removeFeature for: " + key);
 
                 // Remove from list
                 var index = $scope.featureList.user.indexOf(feature);
@@ -755,12 +793,14 @@
 
                 delete $scope.featureList.user[feature.feature_text];
 
-                var request = Feature.remove(feature);
-                if (request) {
-                    usSpinnerService.spin('vector-spinner');
-                    request.then(function () {
-                        usSpinnerService.stop('vector-spinner');
-                    });
+                if (feature.feature_id) {
+                    var request = Feature.remove(feature);
+                    if (request) {
+                        usSpinnerService.spin('vector-spinner');
+                        request.then(function () {
+                            usSpinnerService.stop('vector-spinner');
+                        });
+                    }
                 }
             }
         };
@@ -818,6 +858,33 @@
         return function(scope, elem){
             elem.popover({ container: 'body' });
         }
+    });
+
+    module.directive('modal', function() {
+        var link = function (scope, elem) {
+            elem.on('hidden.bs.modal', function () {
+                scope.showModal = undefined;
+            });
+
+            scope.$watch('showModal', function (newVals, oldVals) {
+                if (newVals)
+                    elem.modal('show');
+                else
+                    elem.modal('hide');
+            }, false);
+        };
+
+        return {
+            //Use as a tag only
+            restrict: 'E',
+            replace: false,
+
+            //Directive's inner scope
+            scope: {
+                showModal: '=showModal'
+            },
+            link: link
+        };
     });
 
 })();

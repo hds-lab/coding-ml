@@ -435,6 +435,29 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
+
+        <modal show-modal="featureConflict" ng-model="featureConflict" class="modal fade" id="feature-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 ng-if="featureConflict.existingFeatureText" class="modal-title">Replace '{$ featureConflict.existingFeatureText.feature_text $}'?</h2>
+                        <h2 ng-if="featureConflict.existingMessageFeature" class="modal-title">Replace Keywords?</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p ng-if="featureConflict.existingFeatureText">
+                            The keywords <strong>'{$ featureConflict.existingFeatureText.feature_text $}'</strong> you wish to add already exist. Would you like to replace the existing ones with the new ones?</p>
+                        <p ng-if="featureConflict.existingMessageFeature">
+                            You have already added keywords <strong>'{$ featureConflict.existingMessageFeature.feature_text $}'</strong> from the same tweet.
+                            Would you like to replace it with <strong>'{$ featureConflict.feature_text $}'</strong>?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" ng-click="replaceFeature(featureConflict)">Replace</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
     </div>
 
 </div>
