@@ -60,11 +60,12 @@
                             self.latest_data = data;
                         });
                 },
-                add: function (tokens) {
+                add: function (tokens, origin_message_id) {
                     var self = this;
 
                     var request = {
-                        token_list: tokens
+                        token_list: tokens,
+                        origin: origin_message_id
                     };
 
                     return $http.post(listApiUrl, request)
