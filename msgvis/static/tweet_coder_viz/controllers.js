@@ -86,6 +86,7 @@
             user: {},
             partner: {}
         };
+        $scope.featureConflict = undefined;
 
         $scope.indicators = ['N', 'U', 'D', 'P'];
         $scope.indicator_mapping = {
@@ -705,40 +706,61 @@
             return style;
         };
 
+        $scope.replaceFeature = function(featureConflict){
+            $scope.featureConflict = null;
+
+            if (featureConflict) {
+                $scope.removeFeature(featureConflict.existingFeature);
+                $scope.addFeature(featureConflict.item);
+            }
+        };
+
         $scope.addFeature = function(item){
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
                 var tokens = item.selectedTokens;
                 var key = item.message.id;
-                console.log("addFeature for: " + key);
 
-                // add to the top of the list to update the UI
-                $scope.featureList.user.unshift({
+                // Check if the feature already exists
+                var feature = {
                     feature_text: tokens.join("&"),
                     total_count: 0,
                     distribution: undefined
-                });
+                };
 
-                var request = Feature.add(tokens);
-                if (request) {
-                    usSpinnerService.spin('submitted-label-spinner');
-                    request.then(function() {
-                        usSpinnerService.stop('submitted-label-spinner');
-                        var feature = Feature.latest_data;
+                var existing = $scope.featureList.user[feature.feature_text];
 
-                        // Update the features (need to refresh the whole data so we can get the counts for this stage only)
-                        $scope.load_distribution('user');
-                    });
+                if (existing) {
+                    $scope.featureConflict = {
+                        existingFeature: existing,
+                        item: item
+                    };
                 }
+                else {
+                    // add to the top of the list to update the UI
+                    $scope.featureList.user.unshift(feature);
+
+                    var request = Feature.add(tokens);
+                    if (request) {
+                        usSpinnerService.spin('submitted-label-spinner');
+                        request.then(function () {
+                            usSpinnerService.stop('submitted-label-spinner');
+                            var feature = Feature.latest_data;
+
+                            // Update the features (need to refresh the whole data so we can get the counts for this stage only)
+                            $scope.load_distribution('user');
+                        });
+                    }
 
 
-                var newMap = {};
+                    var newMap = {};
 
-                item.submittedTokenIndices = new Map();
-                item.selectedTokenIndices.forEach(function (val, key) {
-                    item.submittedTokenIndices.set(key, val);
-                });
+                    item.submittedTokenIndices = new Map();
+                    item.selectedTokenIndices.forEach(function (val, key) {
+                        item.submittedTokenIndices.set(key, val);
+                    });
 
-                item.clickStartTokenItem = undefined;
+                    item.clickStartTokenItem = undefined;
+                }
             }
         };
 
@@ -818,6 +840,33 @@
         return function(scope, elem){
             elem.popover({ container: 'body' });
         }
+    });
+
+    module.directive('modal', function() {
+        var link = function (scope, elem) {
+            elem.on('hidden.bs.modal', function () {
+                scope.showModal = undefined;
+            });
+
+            scope.$watch('showModal', function (newVals, oldVals) {
+                if (newVals)
+                    elem.modal('show');
+                else
+                    elem.modal('hide');
+            }, false);
+        };
+
+        return {
+            //Use as a tag only
+            restrict: 'E',
+            replace: false,
+
+            //Directive's inner scope
+            scope: {
+                showModal: '=showModal'
+            },
+            link: link
+        };
     });
 
 })();
