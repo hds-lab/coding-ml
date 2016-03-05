@@ -145,11 +145,14 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
     disagreement_indicator = IndicatorSerializer(required=False)
 
     message = MessageSerializer(required=False)
+    feature_vector = serializers.ListField(child=serializers.DictField(), required=False)
+
     class Meta:
         model = coding_models.CodeAssignment
         fields = ('id', 'source', 'message', 'is_example', 'is_ambiguous',
-                  'is_saved', 'code', 'user_code', 'partner_code', 'disagreement_indicator', )
-        read_only_fields = ('id', 'source', 'message', 'user_code', 'partner_code', 'disagreement_indicator', )
+                  'is_saved', 'code', 'user_code', 'partner_code', 'disagreement_indicator', 'feature_vector')
+        read_only_fields = ('id', 'source', 'message', 'user_code', 'partner_code', 'disagreement_indicator',
+                            'feature_vector')
 
 
 #class CodeDefinitionSerializer(serializers.ModelSerializer):
