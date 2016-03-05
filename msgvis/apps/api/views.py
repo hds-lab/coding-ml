@@ -537,6 +537,7 @@ class CodeMessageView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        dictionary = user.pair.first().assignment.experiment.dictionary
 
         try:
             code_id = int(request.query_params.get('code'))
@@ -566,11 +567,16 @@ class CodeMessageView(APIView):
                                                                           is_user_labeled=True,
                                                                           code=code,
                                                                           valid=True).all()
+
+            for assignment in assignments:
+                message = corpus_models.Message.objects.get(id=assignment.message_id)
+                assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
+
             code_messages = {
                 "code_id": code.id,
                 "code_text": code.text,
                 "source": source_user,
-                "assignments": assignments,
+                "assignments": assignments
             }
 
             output = serializers.CodeMessageSerializer(code_messages)
@@ -599,6 +605,7 @@ class AllCodedMessageView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        dictionary = user.pair.first().assignment.experiment.dictionary
 
         try:
             stage = None
@@ -616,6 +623,10 @@ class AllCodedMessageView(APIView):
                                                                           valid=True).all()
 
             assignments = assignments.order_by('message_id')
+
+            for assignment in assignments:
+                message = corpus_models.Message.objects.get(id=assignment.message_id)
+                assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
             output = serializers.CodeAssignmentSerializer(assignments, many=True)
 
             return Response(output.data, status=status.HTTP_200_OK)

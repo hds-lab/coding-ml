@@ -52,9 +52,12 @@
         };
 
         $scope.colors = ["#1f77b4", "#2ca02c", "#d62728", "#ff7f0e", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
-        $scope.colorsLight = ["rgba(31,119,180,0.15)", "rgba(44,160,44,0.15)", "rgba(214,39,40,0.15)", "rgba(255,127,14,0.15)",
-            "rgba(148,103,189,0.15)", "rgba(140,86,75,0.15)", "rgba(227,119,194,0.15)", "rgba(127,127,127,0.15)", "rgba(188,189,34,0.15)",
-            "rgba(23,190,207,0.15)"];
+        $scope.colorsLight = ["rgba(31,119,180,0.2)", "rgba(44,160,44,0.2)", "rgba(214,39,40,0.2)", "rgba(255,127,14,0.2)",
+            "rgba(148,103,189,0.2)", "rgba(140,86,75,0.2)", "rgba(227,119,194,0.2)", "rgba(127,127,127,0.2)", "rgba(188,189,34,0.2)",
+            "rgba(23,190,207,0.2)"];
+        $scope.colorsLighter = ["rgba(31,119,180,0.1)", "rgba(44,160,44,0.1)", "rgba(214,39,40,0.1)", "rgba(255,127,14,0.1)",
+            "rgba(148,103,189,0.1)", "rgba(140,86,75,0.1)", "rgba(227,119,194,0.1)", "rgba(127,127,127,0.1)", "rgba(188,189,34,0.1)",
+            "rgba(23,190,207,0.1)"];
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -77,6 +80,7 @@
         $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
+        $scope.allItemsMap = new Map();
         $scope.hoveredItem = undefined;
         $scope.confusionPairs = undefined;
         $scope.distribution = undefined;
@@ -212,58 +216,9 @@
         };
 
         $scope.matchText = function(message, searchText) {
-            // Search for text
-            var matched = false;
-            if (searchText && searchText.length > 0) {
-                if (message.text.toLowerCase().search(searchText.toLowerCase()) != -1) {
-                    matched = true;
-                }
-                else if (searchText.indexOf("_") != -1) {
-                    var ngrams = searchText.toLowerCase().split("_");
+            var matchedTokenIndices = Message.match_text(message, searchText);
 
-                    // iterate and search for continuous tokens
-                    var iNgram = 0;
-                    var iToken = -1;
-
-                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
-                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
-                        if (tokenText == ngrams[iNgram]) {
-                            // Is it ontinuous?
-                            if (iToken >= 0 && i != iToken + 1) {
-                                break;
-                            }
-
-                            iNgram++;
-                            iToken = i;
-
-                            if (iNgram == ngrams.length) {
-                                matched = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                else if (searchText.indexOf("&") != -1) {
-                    var ngrams = searchText.toLowerCase().split("&");
-
-                    // iterate and search for tokens
-                    var iNgram = 0;
-
-                    for (var i = 0; i < message.lemmatized_tokens.length; i++) {
-                        var tokenText = message.lemmatized_tokens[i].toLowerCase();
-                        if (tokenText == ngrams[iNgram]) {
-                            iNgram++;
-
-                            if (iNgram == ngrams.length) {
-                                matched = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return matched;
+            return (matchedTokenIndices && matchedTokenIndices.length > 0);
         };
 
         $scope.filterFeatures = function(code){
@@ -281,6 +236,12 @@
         $scope.codeColorLight = function(code){
             var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
+            return color;
+        };
+
+        $scope.codeColorLighter = function(code){
+            var colorIndex = code.code_id;
+            var color = $scope.colorsLighter[colorIndex % $scope.colorsLighter.length];
             return color;
         };
 
@@ -353,6 +314,39 @@
             };
 
             return css;
+        };
+
+        $scope.charStyle = function(item, charIndex) {
+
+            var tokenIndex = item.charToToken[charIndex];
+            var lemmatized = item.message.fullToLemmatized.get(tokenIndex);
+
+            if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
+                return { 'background' : "rgba(0,0,0,0.1)" };
+            }
+            else if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
+                if (lemmatized) {
+                    return {'background': $scope.codeColorLight($scope.code_map[item.user_code.text])};
+                }
+                else {
+                    return {'background': $scope.codeColorLighter($scope.code_map[item.user_code.text])};
+                }
+            }
+            else if (item.selectedTokens == undefined || item.selectedTokens.length == 0) {
+                for (var i = 0; item.active_features && i < item.active_features.length; i++) {
+                    var feature = item.active_features[i];
+                    if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
+                        if (lemmatized) {
+                            return {'background': $scope.colorsLight[feature.codeIndex % $scope.colors.length] };
+                        }
+                        else {
+                            return {'background': $scope.colorsLighter[feature.codeIndex % $scope.colors.length] };
+                        }
+                    }
+                }
+
+                return { 'background': 'transparent' };
+            }
         };
 
         $scope.getMessageDetail = function(){
@@ -456,30 +450,46 @@
             }
         };
 
-        $scope.getAllMessages = function() {
+        $scope.getAllMessages = function(updateFeaturesOnly) {
 
             var request = Message.load_all_coded_messages("current");
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function () {
                     usSpinnerService.stop('label-spinner');
-                    $scope.allItems = Message.all_coded_messages;
-                    $scope.normalized_code_distribution = Message.normalized_code_distribution;
-                    $scope.code_distribution = Message.code_distribution;
 
-                    for (var i = 0; i < $scope.allItems.length; i++) {
-                        var prototype = $scope.allItems[i];
-                        // Update all message items
-                        prototype.characters = prototype.message.text.split("");
-                        //prototype.analysis = myLabel != partnerLabel ? "Who's right?" : undefined;
+                    if (!updateFeaturesOnly) {
+                        $scope.allItems = Message.all_coded_messages;
+                        $scope.allItems.forEach(function(item){
+                            $scope.allItemsMap.set(item.id, item);
+                        });
 
-                        // Interaction states
-                        prototype.hoveredCharStart = -1;
-                        prototype.hoveredCharEnd = -1;
-                        prototype.clickStartTokenItem = undefined;
-                        prototype.selectedTokens = undefined;
-                        prototype.selectedTokenIndices = new Map();
+                        $scope.normalized_code_distribution = Message.normalized_code_distribution;
+                        $scope.code_distribution = Message.code_distribution;
 
+                        for (var i = 0; i < $scope.allItems.length; i++) {
+                            var prototype = $scope.allItems[i];
+                            // Update all message items
+                            prototype.characters = prototype.message.text.split("");
+
+                            // Interaction states
+                            prototype.hoveredCharStart = -1;
+                            prototype.hoveredCharEnd = -1;
+                            prototype.clickStartTokenItem = undefined;
+                            prototype.selectedTokens = undefined;
+                            prototype.selectedTokenIndices = new Map();
+
+                        }
+                    }
+                    else {
+                        // Iterate through all messages and update the features
+                        Message.all_coded_messages.forEach(function(newItem){
+                            var item = $scope.allItemsMap.get(newItem.id);
+
+                            if (item){
+                                item.active_features = newItem.active_features;
+                            }
+                        });
                     }
                 });
             }
@@ -563,7 +573,7 @@
         };
 
         var isTokenSelectedAtCharIndex = function (item, charIndex){
-            if (item) {
+            if (item && item.selectedTokenIndices) {
                 var tokenIndex = item.charToToken[charIndex];
                 if (tokenIndex != undefined && item.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
                     return true;
@@ -683,27 +693,15 @@
             if ($scope.hoveredItem != item) {
                 $scope.hoveredItem = item;
                 //console.log("onItemHover");
-                if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
-                    item.submittedTokenIndices.forEach(function (tokenIndex) {
-                        updateSelection(item, tokenIndex, tokenIndex, true, false);
-                    });
-                }
+                //if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
+                //    item.submittedTokenIndices.forEach(function (tokenIndex) {
+                //        updateSelection(item, tokenIndex, tokenIndex, true, false);
+                //    });
+                //}
             }
         };
 
         $scope.onItemLeave = function(item){
-        };
-
-        $scope.charStyle = function(item, charIndex) {
-            var style = {};
-            if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
-                style["background"] = "rgba(0,0,0,0.1)";
-            }
-
-            if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
-                style["background"] = $scope.codeColorLight($scope.code_map[item.user_code.text]);
-            }
-            return style;
         };
 
         $scope.replaceFeature = function(featureConflict){
@@ -723,7 +721,15 @@
 
         $scope.addFeature = function(item){
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
-                var tokens = item.selectedTokens;
+
+                var tokens = [];
+                item.selectedTokenIndices.forEach(function (tokenIndex){
+                    var lemIndex = item.message.fullToLemmatized.get(tokenIndex);
+                    if (lemIndex){
+                        tokens.push(item.message.lemmatized_tokens[lemIndex]);
+                    }
+                });
+
                 var key = item.message.id;
 
                 // Check if the feature already exists.
@@ -731,7 +737,7 @@
                     feature_text: tokens.join("&"),
                     total_count: 0,
                     distribution: undefined,
-                    origin: item.message.id
+                    origin_message_id: item.message.id
                 };
 
                 var existingFeatureText = undefined;
@@ -740,7 +746,7 @@
                 existingFeatureText = $scope.featureList.user[feature.feature_text];
                 if (!existingFeatureText) {
                     existingMessageFeature = $scope.featureList.user.filter(function (f) {
-                        return f.origin == feature.origin;
+                        return f.origin_message_id == feature.origin_message_id;
                     });
                 }
 
@@ -766,16 +772,19 @@
 
                             // Update the features (need to refresh the whole data so we can get the counts for this stage only)
                             $scope.load_distribution('user');
+
+                            // Update the message level features
+                            $scope.getAllMessages(true);
                         });
                     }
 
 
                     var newMap = {};
 
-                    item.submittedTokenIndices = new Map();
-                    item.selectedTokenIndices.forEach(function (val, key) {
-                        item.submittedTokenIndices.set(key, val);
-                    });
+                    //item.submittedTokenIndices = new Map();
+                    //item.selectedTokenIndices.forEach(function (val, key) {
+                    //    item.submittedTokenIndices.set(key, val);
+                    //});
 
                     item.clickStartTokenItem = undefined;
                 }
@@ -799,6 +808,9 @@
                         usSpinnerService.spin('vector-spinner');
                         request.then(function () {
                             usSpinnerService.stop('vector-spinner');
+
+                            // Update the message level features
+                            $scope.getAllMessages(true);
                         });
                     }
                 }
@@ -839,7 +851,6 @@
             });
 
         });
-
     };
 
     ViewController.$inject = [

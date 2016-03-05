@@ -107,7 +107,7 @@
 
                             <div class="tweet-text">
                                 <span ng-repeat="char in currentMessage.characters track by $index"
-                                   ng-style="char.style">{$char.char$}</span>
+                                   ng-style="charStyle(currentMessage, $index)">{$ char $}</span>
                             </div>
                         </div>
                         <div class="col-md-3 tweet-submit">
@@ -409,7 +409,7 @@
                                        ng-mouseup="onCharMouseUp(item, $index, $event)"
                                        ng-style="charStyle(item, $index)">{$ char $}</span>
                                 </div>
-                                <button class="btn btn-default" ng-click="addFeature(item)">Add Feature</button>
+                                <button class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
                             </div>
 
                                 <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>

@@ -135,11 +135,11 @@
             };
 
             angular.extend(Message.prototype, {
-                load_message_details: function (source) {
+                load_message_details: function (source, message_id) {
                     var self = this;
 
                     var request = {
-                        message_id: Progress.current_message_id,
+                        message_id: message_id || Progress.current_message_id,
                         params: {
                             source: source || "user"
                         }
@@ -154,17 +154,26 @@
 
                 },
                 format_tweet_item: function(messageData) {
+                    var self = this;
+
                     var text = messageData.message.text;
                     var characters = text.split("");
                     var tokens = messageData.message.tokens;
+                    var lemmatized_tokens = messageData.message.lemmatized_tokens;
+                    var feature_vector = messageData.feature_vector;
 
                     var tokenItems = [];
                     var charToToken = [];
+                    var lemmatizedToFull = new Map(); // Mapping between lemmatized token id to full token id
+                    var fullToLemmatized = new Map(); // Mapping between full token id to lemmatized token id
 
                     var lowerText = text.toLowerCase();
                     var currentIndex = 0;
+                    var currentLemmatizedIndex = 0;
                     for (var i = 0; i < tokens.length; i++) {
                         var token = tokens[i];
+
+                        // Find the character indices of the token
                         if (token != null && token.length > 0) {
                             var foundIndex = lowerText.substr(currentIndex).indexOf(token) + currentIndex;
 
@@ -184,47 +193,49 @@
                                 charToToken[j] = i;
                             }
                         }
-                    }
-                    var charStyle = function(charIndex) {
-                        for (var i = 0; features && i < features.length; i++) {
-                            var feature = features[i];
-                            if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
-                                var color = $scope.colorsLight[feature.codeIndex % $scope.colors.length];
 
-                                var css = {
-                                    'background': color
-                                };
-
-                                return css;
-                            }
+                        // Find the mapping between the token index and lemmatized token index
+                        if (token == lemmatized_tokens[currentLemmatizedIndex]){
+                            lemmatizedToFull.set(currentLemmatizedIndex, i);
+                            fullToLemmatized.set(i, currentLemmatizedIndex);
+                            currentLemmatizedIndex++;
                         }
-                    };
-                    // TODO: Fix showing feature vector
-                    if (messageData.feature_vector && messageData.feature_vector.length > 0){
-                        var features = messageData.feature_vector;
-                        var featureCount = features.length;
-                        /*for (i = 0; i < featureCount; i++){
-                            var tokenIndex = Math.floor((Math.random() * (tokenItems.length - 1)) + 1);
-                            var codeIndex = Math.floor((Math.random() * ($scope.codes.length - 1)));
+                    }
 
-                            features.push({
-                                startCharIndex: tokenItems[tokenIndex - 1].startIndex,
-                                endCharIndex: tokenItems[tokenIndex].endIndex,
-                                codeIndex: codeIndex
+                    messageData.message.lemmatizedToFull = lemmatizedToFull;
+                    messageData.message.fullToLemmatized = fullToLemmatized;
+
+                    // Extract token level features
+                    var features = [];
+                    if (feature_vector && feature_vector.length > 0){
+                        for (i = 0; i < messageData.feature_vector.length; i++) {
+                            var feature_text = messageData.feature_vector[i].text;
+                            var code_id = messageData.feature_vector[i].origin_code_id;
+
+                            var matchedTokenIndices = self.match_text(messageData.message, feature_text, charToToken);
+
+                            // TODO: For now, treat all as non-continuous token features
+                            matchedTokenIndices.forEach(function (tokenIndex) {
+                                var tokenItem = tokenItems[tokenIndex];
+                                features.push({
+                                    startCharIndex: tokenItem.startIndex,
+                                    endCharIndex: tokenItem.endIndex,
+                                    codeIndex: code_id
+                                });
                             });
-                        }*/
+                        }
                     }
 
                     return angular.extend(messageData, {
                        // id: messageData.message.id,
                        // text: text,
-                        characters: characters.map(function(c, i) { return { char: c, style: charStyle(i) }}),
+                        characters: characters,
                         charToToken: charToToken,
                         tokens: tokenItems,
-                        charStyle: charStyle,
                         is_ambiguous: (messageData.is_ambiguous || false),
                         is_saved: (messageData.is_saved || false),
-                        is_example: (messageData.is_example || false)
+                        is_example: (messageData.is_example || false),
+                        active_features: features
                     });
                 },
                 submit: function (code_id) {
@@ -297,7 +308,7 @@
 
                         return $http.get(apiUrl, request)
                             .success(function (data) {
-                                self.coded_messages[source][code.code_text] = data.assignments;
+                                self.coded_messages[source][code.code_text] = data.assignments.map(function(d){ return self.format_tweet_item(d);});
                                 $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
                             });
                     });
@@ -337,6 +348,80 @@
                             $rootScope.$broadcast("messages::load_all_coded_messages", data);
                         });
 
+                },
+                match_text: function(message, searchText, charToToken) {
+                    // Search for text
+                    var matchedTokenIndices = [];
+                    if (searchText && searchText.length > 0) {
+
+                        if (searchText.indexOf("_") != -1) {
+                            var ngrams = searchText.toLowerCase().split("_").filter(Boolean);
+
+                            // iterate and search for continuous tokens
+                            var iNgram = 0;
+                            var iToken = -1;
+
+                            for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                                var tokenText = message.lemmatized_tokens[i].toLowerCase();
+                                if (tokenText == ngrams[iNgram]) {
+                                    // Is it ontinuous?
+                                    if (iToken >= 0 && i != iToken + 1) {
+                                        matchedTokenIndices = [];
+                                        break;
+                                    }
+
+                                    matchedTokenIndices.push(message.lemmatizedToFull.get(i));
+                                    iNgram++;
+                                    iToken = i;
+
+                                    if (iNgram == ngrams.length) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (searchText.indexOf("&") != -1) {
+                            var ngrams = searchText.toLowerCase().split("&").filter(Boolean);
+
+                            // iterate and search for tokens
+                            var iNgram = 0;
+
+                            var tempIndices = [];
+                            for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                                var tokenText = message.lemmatized_tokens[i].toLowerCase();
+                                if (tokenText == ngrams[iNgram]) {
+                                    tempIndices.push(message.lemmatizedToFull.get(i));
+                                    iNgram++;
+
+                                    if (iNgram == ngrams.length) {
+                                        matchedTokenIndices = tempIndices;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            // Search the text in lemmetized tokens in case it's a unigram feature
+                            message.lemmatized_tokens.forEach(function(t, i) {
+                                if(t == searchText.toLowerCase()){
+                                    matchedTokenIndices.push(message.lemmatizedToFull.get(i));
+                                }
+                            });
+
+                            if (matchedTokenIndices.length == 0) {
+                                // Then search the text in the full text
+                                var charIndex = message.text.toLowerCase().search(searchText.toLowerCase());
+
+                                if (charIndex != -1) {
+                                    // A little hacky here. If charToToken is provided, return the token index.
+                                    // If it's not provided, we just need to add something to the returned list to indicate we found the match
+                                    matchedTokenIndices.push(charToToken ? charToToken[charIndex] : charIndex);
+                                }
+                            }
+                        }
+                    }
+
+                    return matchedTokenIndices;
                 }
             });
 
