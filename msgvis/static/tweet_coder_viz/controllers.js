@@ -215,6 +215,26 @@
             }
         };
 
+        $scope.filterTweetsByConfusionAndCode = function(){
+            return function(item) {
+                var confusion = $scope.selectedConfusion;
+                var searchText = $scope.search.text;
+                var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
+                var rightCode = item.user_code.id == $scope.selectedCode.code_id;
+
+                // Search for text
+                var matched = $scope.matchText(item.message, searchText);
+
+                return (!searchText || searchText.length == 0 || matched) && flagged && rightCode;
+            }
+        };
+
+        $scope.filterConfusionByCode = function() {
+            return function(confusion){
+                return confusion.count > 0 && confusion.user_code == $scope.selectedCode.code_text;
+            }
+        };
+
         $scope.matchText = function(message, searchText) {
             var matchedTokenIndices = Message.match_text(message, searchText);
 
@@ -851,6 +871,7 @@
             });
 
         });
+
     };
 
     ViewController.$inject = [
