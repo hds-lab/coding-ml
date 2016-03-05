@@ -5,14 +5,15 @@
 
 /* Colors */
 @item-background-color: rgba(0,0,0,0.02);
-@item-background-color-hover: rgba(0,0,0,0.04);
+@item-background-color-hover: rgba(255,255,255,0.5);
 @item-background-color-selected: rgba(0,0,0,0.1);
 @popover-color: #eee;
 
 /* Offsets */
 @coding-top-height: 320px;
 @coding-top-labeling-height: 140px;
-@review-top-height: 225px;
+@review-top-height: 145px;
+@review-bottom-bar-height: 40px;
 
 
 html, body {
@@ -99,6 +100,11 @@ th:hover{
 
     .modal-content {
         border-radius: 0;
+
+        .modal-body {
+            font-size: 14px;
+            font-weight: 300;
+        }
     }
 }
 
@@ -133,6 +139,7 @@ th:hover{
 .help-text {
     color: #777;
     font-size: 14px;
+    font-weight: 300;
 }
 
 h2 {
@@ -202,6 +209,14 @@ h3 {
 
     &.box-right {
         margin-right: 10px;
+    }
+
+    &.box-light {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    &.box-full {
+        height: 100%;
     }
 }
 
@@ -484,10 +499,6 @@ h3 {
     #bottom-area {
         height: calc(100% ~ "-" @coding-top-height);
 
-        .box {
-            background: rgba(255,255,255,0.5);
-        }
-
         #panel {
             margin: 0;
             padding: 10px;
@@ -558,175 +569,188 @@ h3 {
     }
 
     #top-area {
-        height: @review-top-height;
+        height: calc(100% ~ "-" @review-bottom-bar-height);
 
-        #definitions {
-            height: calc(@review-top-height ~"-" 77px);
+        #tab-area {
+            height: calc(100% ~ "-" 55px);
 
-            > div {
-                height: 100%;
-            }
+            #definitions {
+                height: @review-top-height;
+                padding: 10px;
 
-            p {
-                margin: 0;
-            }
-
-            .code-definition {
-                text-align: justify;
-                white-space: normal;
-                font-weight: 300;
-                font-size: 14px;
-                height: calc(100% ~"-" 40px);
-                overflow-y: auto;
-
-                &.help-text {
-                    color: #777;
-                }
-            }
-
-            textarea {
-                resize: none;
-                width: 100%;
-                background: transparent;
-            }
-        }
-    }
-
-    #bottom-area {
-        height: calc(100% ~"-" @review-top-height);
-        padding-bottom: 50px;
-        padding-top: 10px;
-
-        div[class^="col-"]{
-            padding: 0;
-            height: 100%;
-        }
-
-        #code-distribution{
-            width: 100%;
-            height: 20px;
-
-            .distribution-chart {
-                width: 90%;
-                display: inline-block;
-
-                & > div {
-                    display: inline-block;
-                    height: 20px;
-                }
-            }
-
-            .distribution-total {
-                display: inline-block;
-                height: 100%;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                overflow: hidden;
-                padding-left: 5px;
-                font-size: 14px;
-            }
-        }
-
-        #user-features .feature-text {
-            width: calc(60% ~"-" 20px);
-        }
-
-        #confusion {
-            background: @item-background-color;
-            margin: 5px 0;
-            padding: 5px;
-            width: 100%;
-            height: 30px;
-            font-size: 14px;
-            font-weight: 300;
-            cursor: pointer;
-
-            &:hover {
-                background: @item-background-color-hover;
-            }
-
-            &.selected {
-                background: @item-background-color-selected;
-            }
-
-            .confusion-box {
-                width: 40%;
-                height: 20px;
-                display: inline-block;
-                line-height: 30px;
-                text-align: center;
-                color: white;
-                font-size: 12px;
-
-                span {
-                    vertical-align: middle;
-                    display: inline-block;
-                    margin-top: -12px;
+                > div {
+                    height: 100%;
                 }
 
-                &.feature-empty {
-                    width: 30%;
-                    height: 20px;
-                    background: #eee;
-                }
-            }
-
-            .confusion-total {
-                display: inline-block;
-                height: 100%;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                overflow: hidden;
-                padding-left: 5px;
-            }
-        }
-
-        #labels {
-            font-weight: 300;
-
-            label {
-                font-weight: 500;
-                font-size: 12px;
-            }
-
-            .help-text {
-                padding-top: 20px;
-                color: #777;
-                font-size: 14px;
-            }
-
-            #search {
-                div {
-                    width: 50px;
-                    display: inline-block;
+                > div[class^="col-"] {
+                    padding: 0;
+                    height: 100%;
                 }
 
-                input {
-                    width: calc(100% ~"-" 50px);
-                    padding: 5px;
+                h3 {
+                    margin-top: 0;
                 }
-            }
+                p {
+                    margin: 0;
+                }
 
-            .label-item {
+                .code-definition {
+                    text-align: justify;
+                    white-space: normal;
+                    font-weight: 300;
+                    font-size: 14px;
+                    height: calc(100% ~ "-" 20px);
+                    overflow-y: auto;
 
-                .confusion {
-                    width: 100%;
-                    position: relative;
-
-                    .confusion-box {
-                        position: absolute;
-                        width: 50%;
-                        height: 10px;
-                        left: 50%;
-
-                        &:first-child {
-                            left: 0;
-                        }
+                    &.help-text {
+                        color: #777;
                     }
                 }
 
-                .content {
-                    padding-top: 15px;
+                textarea {
+                    resize: none;
+                    width: 100%;
+                    background: transparent;
+                }
+            }
+
+            #bottom-area {
+                height: calc(100% ~ "-" @review-top-height);
+                padding: 10px;
+                padding-top: 0;
+
+                div[class^="col-"] {
+                    padding: 0;
+                    height: 100%;
+                }
+
+                #code-distribution {
+                    width: 100%;
+                    height: 20px;
+
+                    .distribution-chart {
+                        width: 90%;
+                        display: inline-block;
+
+                        & > div {
+                            display: inline-block;
+                            height: 20px;
+                        }
+                    }
+
+                    .distribution-total {
+                        display: inline-block;
+                        height: 100%;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        padding-left: 5px;
+                        font-size: 14px;
+                    }
+                }
+
+                #user-features .feature-text {
+                    width: calc(60% ~ "-" 20px);
+                }
+
+                #confusion {
+                    background: @item-background-color;
+                    margin: 5px 0;
+                    padding: 5px;
+                    width: 100%;
+                    height: 30px;
+                    font-size: 14px;
+                    font-weight: 300;
+                    cursor: pointer;
+
+                    &:hover {
+                        background: @item-background-color-hover;
+                    }
+
+                    &.selected {
+                        background: @item-background-color-selected;
+                    }
+
+                    .confusion-box {
+                        width: 40%;
+                        height: 20px;
+                        display: inline-block;
+                        line-height: 30px;
+                        text-align: center;
+                        color: white;
+                        font-size: 12px;
+
+                        span {
+                            vertical-align: middle;
+                            display: inline-block;
+                            margin-top: -12px;
+                        }
+
+                        &.feature-empty {
+                            width: 30%;
+                            height: 20px;
+                            background: #eee;
+                        }
+                    }
+
+                    .confusion-total {
+                        display: inline-block;
+                        height: 100%;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        padding-left: 5px;
+                    }
+                }
+
+                #labels {
+                    font-weight: 300;
+
+                    label {
+                        font-weight: 500;
+                        font-size: 12px;
+                    }
+
+                    .help-text {
+                        padding-top: 20px;
+                        color: #777;
+                        font-size: 14px;
+                    }
+
+                    #search {
+                        div {
+                            width: 50px;
+                            display: inline-block;
+                        }
+
+                        input {
+                            width: calc(100% ~ "-" 50px);
+                            padding: 5px;
+                        }
+                    }
+
+                    .label-item {
+
+                        .confusion {
+                            width: 100%;
+                            position: relative;
+
+                            .confusion-box {
+                                position: absolute;
+                                width: 50%;
+                                height: 10px;
+                                left: 50%;
+
+                                &:first-child {
+                                    left: 0;
+                                }
+                            }
+                        }
+
+                        .content {
+                            padding-top: 15px;
+                        }
+                    }
                 }
             }
         }
