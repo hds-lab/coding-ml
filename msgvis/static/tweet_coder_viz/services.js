@@ -308,7 +308,7 @@
 
                         return $http.get(apiUrl, request)
                             .success(function (data) {
-                                self.coded_messages[source][code.code_text] = data.assignments;
+                                self.coded_messages[source][code.code_text] = data.assignments.map(function(d){ return self.format_tweet_item(d);});
                                 $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
                             });
                     });
@@ -355,7 +355,7 @@
                     if (searchText && searchText.length > 0) {
 
                         if (searchText.indexOf("_") != -1) {
-                            var ngrams = searchText.toLowerCase().split("_");
+                            var ngrams = searchText.toLowerCase().split("_").filter(Boolean);
 
                             // iterate and search for continuous tokens
                             var iNgram = 0;
@@ -381,7 +381,7 @@
                             }
                         }
                         else if (searchText.indexOf("&") != -1) {
-                            var ngrams = searchText.toLowerCase().split("&");
+                            var ngrams = searchText.toLowerCase().split("&").filter(Boolean);
 
                             // iterate and search for tokens
                             var iNgram = 0;
