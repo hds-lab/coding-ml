@@ -204,5 +204,5 @@ class ProgressSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=False)
     class Meta:
         model = experiment_models.Progress
-        fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', )
-        read_only_fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', )
+        fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', 'is_finished', )
+        read_only_fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', 'is_finished', )

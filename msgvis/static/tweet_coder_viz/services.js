@@ -529,7 +529,15 @@
         }
     ]);
 
-
+    function getQueryVariable(variable){
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+                   var pair = vars[i].split("=");
+                   if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+    }
 
     //A service for progress
     module.factory('TweetCoderViz.services.Progress', [
@@ -552,8 +560,17 @@
                 init_load: function(){
                     var self = this;
 
+                    /*var request = {
+                        params: {
+                            stage_index: getQueryVariable('stage_index'),
+                            target_status: getQueryVariable('target_status')
+                        }
+                    };*/
+
+
                     var apiUrl = djangoUrl.reverse('progress');
 
+                    //return $http.get(apiUrl, request)
                     return $http.get(apiUrl)
                         .success(function (data) {
                             console.log(data);
@@ -567,11 +584,13 @@
 
                     var apiUrl = djangoUrl.reverse('progress');
 
+
                     return $http.post(apiUrl)
                         .success(function (data) {
                             self.current_stage_index = data.current_stage_index;
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;
+                            self.is_finished = data.is_finished;
                         })
 
                 },

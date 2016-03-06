@@ -448,6 +448,7 @@ class Progress(models.Model):
     user = models.OneToOneField(User, related_name="progress", unique=True)
     current_stage_index = models.IntegerField(default=0)
     current_message_index = models.IntegerField(default=0)
+    is_finished = models.BooleanField(default=False)
 
     STATUS_CHOICES = (
         ('N', 'Not yet start'),
@@ -486,63 +487,35 @@ class Progress(models.Model):
         current_stage = self.get_current_stage()
         return current_stage.get_next_stage()
 
+    def set_stage(self, target_stage, target_status):
+        if self.is_finished and (self.current_stage_index != target_stage or self.current_status != target_status):
+            self.current_stage_index = target_stage
+            self.current_status = target_status
+            self.current_message_index = 0
+            self.save()
+            return True
+        return False
+
     def set_to_next_step(self):
         # make sure only one user is making changes to the progress table
         with transaction.atomic(savepoint=False):
             partner = self.user.pair.first().get_partner(self.user)
             partner_progress = partner.progress
-
-            if self.current_status == 'N':
-                self.current_status = 'I'
-                self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'I' and partner_progress.current_status == 'I':
-                    current_stage = self.get_current_stage()
-                    current_stage.initialize_stage()
+            if self.is_finished:
+                # This is a backdoor to go through stages when an user has already finished
+                if self.current_status == 'N':
                     self.current_status = 'C'
                     self.current_message_index = 0
                     self.save()
-                    partner_progress.current_status = 'C'
-                    partner_progress.current_message_index = 0
-                    partner_progress.save()
-
-                return True
-
-            elif self.current_status == 'C':
-                current_message = self.get_current_message()
-
-                # Check if the current message has been coded
-                if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
-                                                                   source=self.user, message=current_message).exists():
-                    return False
-
-                next_message = self.get_next_message()
-                if next_message is None:  # finish coding this stage
-                    self.current_status = 'W'
-                    self.save()
-                else:
-                    self.current_message_index = next_message.order
-                    self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'W' and partner_progress.current_status == 'W':
-                    self.current_status = 'R'
-                    self.save()
-                    partner_progress.current_status = 'R'
-                    partner_progress.save()
-
-                return True
-
-            elif self.current_status == 'R':
-                self.current_status = 'S'
-                self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'S' and partner_progress.current_status == 'S':
-                    current_stage = self.get_current_stage()
-                    current_stage.process_stage()
-                    self.current_status = 'N'
+                elif self.current_status == 'C':
+                    next_message = self.get_next_message()
+                    if next_message is None:  # finish coding this stage
+                        self.current_status = 'R'
+                        self.save()
+                    else:
+                        self.current_message_index = next_message.order
+                        self.save()
+                elif self.current_status == 'R':
                     try:
                         next_stage = self.get_next_stage()
                     except IndexError:
@@ -551,16 +524,85 @@ class Progress(models.Model):
                         partner_progress.current_status = 'F'
                         partner_progress.save()
                     else:
+                        self.current_status = 'N'
                         self.current_stage_index = next_stage.order
                         self.save()
                         partner_progress.current_status = 'N'
                         partner_progress.current_stage_index = next_stage.order
                         partner_progress.save()
-
                 return True
-
             else:
-                return False
+                if self.current_status == 'N':
+                    self.current_status = 'I'
+                    self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'I' and partner_progress.current_status == 'I':
+                        current_stage = self.get_current_stage()
+                        current_stage.initialize_stage()
+                        self.current_status = 'C'
+                        self.current_message_index = 0
+                        self.save()
+                        partner_progress.current_status = 'C'
+                        partner_progress.current_message_index = 0
+                        partner_progress.save()
+
+                    return True
+
+                elif self.current_status == 'C':
+                    current_message = self.get_current_message()
+
+                    # Check if the current message has been coded
+                    if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
+                                                                       source=self.user, message=current_message).exists():
+                        return False
+
+                    next_message = self.get_next_message()
+                    if next_message is None:  # finish coding this stage
+                        self.current_status = 'W'
+                        self.save()
+                    else:
+                        self.current_message_index = next_message.order
+                        self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'W' and partner_progress.current_status == 'W':
+                        self.current_status = 'R'
+                        self.save()
+                        partner_progress.current_status = 'R'
+                        partner_progress.save()
+
+                    return True
+
+                elif self.current_status == 'R':
+                    self.current_status = 'S'
+                    self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'S' and partner_progress.current_status == 'S':
+                        current_stage = self.get_current_stage()
+                        current_stage.process_stage()
+                        self.current_status = 'N'
+                        try:
+                            next_stage = self.get_next_stage()
+                        except IndexError:
+                            self.current_status = 'F'
+                            self.is_finished = True
+                            self.save()
+                            partner_progress.current_status = 'F'
+                            partner_progress.is_finished = True
+                            partner_progress.save()
+                        else:
+                            self.current_stage_index = next_stage.order
+                            self.save()
+                            partner_progress.current_status = 'N'
+                            partner_progress.current_stage_index = next_stage.order
+                            partner_progress.save()
+
+                    return True
+
+                else:
+                    return False
 
 
 

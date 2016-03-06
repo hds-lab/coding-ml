@@ -806,13 +806,18 @@ class ProgressView(APIView):
         progress = user.progress
 
         try:
+            if not progress.is_finished:
+                while progress.current_status == 'N':
+                    try:
+                        progress.set_to_next_step()
+                    except IntegrityError:
+                        import time
+                        time.sleep(1)
+            else:
+                target_stage_index = int(request.query_params.get('stage_index', progress.current_stage_index))
+                target_status = str(request.query_params.get('target_status', progress.current_status))
+                progress.set_stage(target_stage_index, target_status)
 
-            while progress.current_status == 'N':
-                try:
-                    progress.set_to_next_step()
-                except IntegrityError:
-                    import time
-                    time.sleep(1)
 
             output = serializers.ProgressSerializer(progress)
 
