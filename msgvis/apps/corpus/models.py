@@ -64,6 +64,16 @@ class Dataset(models.Model):
     def get_message_set(self):
         return self.message_set.filter(time__isnull=False).all()
 
+    def get_non_master_message_set(self):
+        messages = self.message_set.filter(time__isnull=False)
+
+        filter_ors = [("code_assignments__isnull", True),
+                      ("code_assignments__source__username__ne", "master")]
+        return messages.filter(reduce(operator.or_, [Q(x) for x in filter_ors]))
+
+    def get_master_message_set(self):
+        messages = self.message_set.filter(time__isnull=False)
+        return messages.filter(code_assignments__source__username="master")
 
     def get_dictionary(self):
         dictionary = self.dictionary.all()

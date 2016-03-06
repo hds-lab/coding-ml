@@ -21,13 +21,15 @@
         });
     }]);
 
-    var DictionaryController = function ($scope, Dictionary) {
+    var DictionaryController = function ($scope, Dictionary, Progress) {
         $scope.Dictionary = Dictionary;
+        $scope.Progress = Progress;
 
     };
     DictionaryController.$inject = [
         '$scope',
-        'TweetCoderViz.services.Dictionary'
+        'TweetCoderViz.services.Dictionary',
+        'TweetCoderViz.services.Progress'
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
@@ -243,7 +245,7 @@
 
         $scope.filterFeatures = function(code){
             return function(feature){
-                return feature.distribution[code.code_text] > 0;
+                return  feature.distribution && feature.distribution[code.code_text] > 0;
             }
         };
 
@@ -321,7 +323,7 @@
             if (distribution > 0) {
                 var colorIndex = $scope.code_map[label].code_id;
                 color = $scope.colors[colorIndex % $scope.colorsLight.length];
-                width = Math.round(distribution * 100) + "%";
+                width = Math.floor(distribution * 100) + "%";
             }
             else {
                 color = "transparent";

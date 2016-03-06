@@ -95,7 +95,7 @@
         <div id="coding" ng-if="is_status('C') && !statusText">
             <div class="box box-top">
                 <div id="top-area">
-                    <h2>New Label</h2>
+                    <h2><span class="stage"> Stage {$ Progress.current_stage_index + 1 $}</span> | Coding</h2>
                     <div class="" id="labeling">
                         <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                         <div class="col-md-9 tweet-item">
@@ -181,7 +181,9 @@
                                 <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ code.code_text$}</span>'. You can do so in the review stage.</p>
                                 <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code)" id="user-features"
                                     ng-click="searchFeature(feature.feature_text)">
+                                    <!--
                                     <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)" data-toggle="tooltip" title="Remove this keyword"><span class="glyphicon glyphicon-remove-circle"></span></button>
+                                    -->
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
                                         <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
@@ -262,7 +264,7 @@
         <div id="reviewing" ng-if="is_status('R') && !statusText">
             <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
             <div class="box box-top" id="top-area">
-                <h2>Review Code Definitions</h2>
+                <h2><span class="stage"> Stage {$ Progress.current_stage_index + 1 $}</span> | Review</h2>
                 <div class="" data-toggle="buttons" id="codes">
                     <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                     <div class="btn btn-default" ng-repeat="code in codes"
@@ -324,7 +326,7 @@
                                     <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)"
                                              data-toggle="tooltip" title="Remove this keyword"
                                              ng-enabled="feature.distribution"><span class="glyphicon glyphicon-remove-circle"></span></button>
-                                    <span class="feature-text">{$ feature.feature_text $}</span>
+                                    <span class="feature-text user-feature">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
                                         <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"

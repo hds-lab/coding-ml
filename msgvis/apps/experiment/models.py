@@ -158,8 +158,9 @@ class Experiment(models.Model):
                 print >>output, "Pair #%d" % pair_list[idx * num_pairs + i].id
 
     def random_assign_messages(self):
-        message_count = self.dictionary.dataset.message_count
-        messages = map(lambda x: x, self.dictionary.dataset.get_message_set())
+        messages = self.dictionary.dataset.get_non_master_message_set()
+        message_count = messages.count()
+        messages = [x for x in messages.all()]
         shuffle(messages)
         num_stages = self.stage_count
         num_per_stage = int(round(message_count / num_stages))
@@ -329,6 +330,7 @@ class StageAssignment(models.Model):
                 sources = ["system", source]
                 features = list(dictionary.get_feature_list(sources))
                 messages = self.selected_messages.all()
+                master_messages = dictionary.dataset.get_master_message_set().all()
 
                 feature_index_map = {}
                 for idx, feature in enumerate(features):
@@ -342,7 +344,8 @@ class StageAssignment(models.Model):
                                                                          messages=messages,
                                                                          feature_index_map=feature_index_map,
                                                                          feature_num=len(features),
-                                                                         use_tfidf=use_tfidf)
+                                                                         use_tfidf=use_tfidf,
+                                                                         master_messages=master_messages)
                 lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
 
                 svm_model = SVMModel(source=source, source_stage=self, saved_path=model_save_path)
@@ -351,7 +354,17 @@ class StageAssignment(models.Model):
                 weights = []
                 for code_index, code_id in code_map_inverse.iteritems():
                     for feature_index, feature in enumerate(features):
-                        weight = lin_clf.coef_[code_index][feature_index]
+                        try:
+                            if lin_clf.coef_.shape[0] == 1:
+                                weight = lin_clf.coef_[0][feature_index]
+                            else:
+                                weight = lin_clf.coef_[code_index][feature_index]
+                        except:
+                            import traceback
+                            traceback.print_exc()
+                            import pdb
+                            pdb.set_trace()
+
 
                         model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
                                                       feature=feature, weight=weight)
@@ -375,8 +388,19 @@ class StageAssignment(models.Model):
                 for idx, message in enumerate(next_message_set):
                     code_index = predict_y[idx]
                     code_id = code_map_inverse[code_index]
-
-                    probability = prob[idx, code_index]
+                    try:
+                        if lin_clf.coef_.shape[0] == 1:
+                            if code_index == 1:
+                                probability = prob[idx]
+                            else:
+                                probability = 1 - prob[idx]
+                        else:
+                            probability = prob[idx, code_index]
+                    except:
+                        import traceback
+                        traceback.print_exc()
+                        import pdb
+                        pdb.set_trace()
 
                     code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
                                                                    is_user_labeled=False, probability=probability)
