@@ -280,7 +280,10 @@ class StageAssignment(models.Model):
         return self.svm_models.get(source=source)
 
     def get_next_stage(self):
-        return StageAssignment.objects.filter(assignment=self.assignment, order__gt=self.order).first()
+        next_stage = StageAssignment.objects.filter(assignment=self.assignment, order__gt=self.order).first()
+        if next_stage is None:
+            raise IndexError("No next stage")
+        return next_stage
 
     def initialize_stage(self, selected_num=5):
         stage = self.stage
@@ -315,7 +318,11 @@ class StageAssignment(models.Model):
                 message_with_disagreement_levels.append(message_with_disagreement_level)
 
             message_with_disagreement_levels.sort(key=itemgetter('disagreement'), reverse=True)
-            messages = map(lambda x: x["message"], message_with_disagreement_levels)
+            messages = [message_with_disagreement_levels[0]["message"]]
+            for idx, item in enumerate(message_with_disagreement_levels[1:], 1):
+                if item["message"].text != message_with_disagreement_levels[idx - 1]["message"].text:
+                    messages.append(item["message"])
+
 
         selected_messages = []
         for idx, msg in enumerate(messages[:selected_num]):
@@ -373,40 +380,43 @@ class StageAssignment(models.Model):
 
                 SVMModelWeight.objects.bulk_create(weights)
 
-                next_stage = self.get_next_stage()
-                next_message_set = next_stage.stage.messages.all()
-                next_message_num = next_message_set.count()
+                try:
+                    next_stage = self.get_next_stage()
+                except IndexError:
+                    pass
+                else:
+                    next_message_set = next_stage.stage.messages.all()
 
-                code_assignments = []
-                next_X = coding_utils.get_formatted_X(messages=next_message_set,
-                                                      dictionary=dictionary,
-                                                      source=source,
-                                                      feature_index_map=feature_index_map,
-                                                      feature_num=len(features),
-                                                      use_tfidf=use_tfidf)
-                predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
-                for idx, message in enumerate(next_message_set):
-                    code_index = predict_y[idx]
-                    code_id = code_map_inverse[code_index]
-                    try:
-                        if lin_clf.coef_.shape[0] == 1:
-                            if code_index == 1:
-                                probability = prob[idx]
+                    code_assignments = []
+                    next_X = coding_utils.get_formatted_X(messages=next_message_set,
+                                                          dictionary=dictionary,
+                                                          source=source,
+                                                          feature_index_map=feature_index_map,
+                                                          feature_num=len(features),
+                                                          use_tfidf=use_tfidf)
+                    predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
+                    for idx, message in enumerate(next_message_set):
+                        code_index = predict_y[idx]
+                        code_id = code_map_inverse[code_index]
+                        try:
+                            if lin_clf.coef_.shape[0] == 1:
+                                if code_index == 1:
+                                    probability = prob[idx]
+                                else:
+                                    probability = 1 - prob[idx]
                             else:
-                                probability = 1 - prob[idx]
-                        else:
-                            probability = prob[idx, code_index]
-                    except:
-                        import traceback
-                        traceback.print_exc()
-                        import pdb
-                        pdb.set_trace()
+                                probability = prob[idx, code_index]
+                        except:
+                            import traceback
+                            traceback.print_exc()
+                            import pdb
+                            pdb.set_trace()
 
-                    code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
-                                                                   is_user_labeled=False, probability=probability)
-                    code_assignments.append(code_assignment)
+                        code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
+                                                                       is_user_labeled=False, probability=probability)
+                        code_assignments.append(code_assignment)
 
-                coding_models.CodeAssignment.objects.bulk_create(code_assignments)
+                    coding_models.CodeAssignment.objects.bulk_create(code_assignments)
 
         except:
             import traceback
@@ -446,6 +456,7 @@ class Progress(models.Model):
         ('W', 'Waiting'),
         ('R', 'Review'),
         ('S', 'Switching stage'),
+        ('F', 'Finished'),
     )
     current_status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='N')
 
@@ -532,11 +543,19 @@ class Progress(models.Model):
                     current_stage = self.get_current_stage()
                     current_stage.process_stage()
                     self.current_status = 'N'
-                    self.current_stage_index = self.get_next_stage().order
-                    self.save()
-                    partner_progress.current_status = 'N'
-                    partner_progress.current_stage_index = partner_progress.get_next_stage().order
-                    partner_progress.save()
+                    try:
+                        next_stage = self.get_next_stage()
+                    except IndexError:
+                        self.current_status = 'F'
+                        self.save()
+                        partner_progress.current_status = 'F'
+                        partner_progress.save()
+                    else:
+                        self.current_stage_index = next_stage.order
+                        self.save()
+                        partner_progress.current_status = 'N'
+                        partner_progress.current_stage_index = next_stage.order
+                        partner_progress.save()
 
                 return True
 

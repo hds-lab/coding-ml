@@ -195,11 +195,11 @@
                         }
 
                         // Find the mapping between the token index and lemmatized token index
-                        if (token == lemmatized_tokens[currentLemmatizedIndex]){
-                            lemmatizedToFull.set(currentLemmatizedIndex, i);
-                            fullToLemmatized.set(i, currentLemmatizedIndex);
-                            currentLemmatizedIndex++;
-                        }
+                        //if (token.toLowerCase() == lemmatized_tokens[currentLemmatizedIndex].toLowerCase()){
+                        lemmatizedToFull.set(currentLemmatizedIndex, i);
+                        fullToLemmatized.set(i, currentLemmatizedIndex);
+                        currentLemmatizedIndex++;
+                        //}
                     }
 
                     messageData.message.lemmatizedToFull = lemmatizedToFull;
@@ -350,6 +350,9 @@
 
                 },
                 match_text: function(message, searchText, charToToken) {
+                    // TODO: fix matching algorithm. It will be wrong when search key is aaa_bbb&ccc
+                    // TODO: some system features are n-gram with stop words in between.
+                    // TODO: Those should use filtered_tokens
                     // Search for text
                     var matchedTokenIndices = [];
                     if (searchText && searchText.length > 0) {
@@ -364,7 +367,7 @@
                             for (var i = 0; i < message.lemmatized_tokens.length; i++) {
                                 var tokenText = message.lemmatized_tokens[i].toLowerCase();
                                 if (tokenText == ngrams[iNgram]) {
-                                    // Is it ontinuous?
+                                    // Is it continuous?
                                     if (iToken >= 0 && i != iToken + 1) {
                                         matchedTokenIndices = [];
                                         break;

@@ -80,15 +80,22 @@
     </div>
     <div id="content" class="ng-cloak" ng-cloak ng-controller="TweetCoderViz.controllers.ViewController" >
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
-        <div id="Initialization" ng-show="!(is_status('C') || is_status('R'))">
+        <div id="initialization" ng-show="!(is_status('C') || is_status('R') || is_status('F'))">
             <div class="stage-prompt">Waiting for the other participant... (Wait for a while and then refresh)<br />
             Current status: {$ stage_desc[Progress.current_status] $}
             <br />
             <button class="btn btn-success next-step" ng-click="next_step()">Try to go to the next stage</button>
             </div>
         </div>
+        <div id="finished" ng-show="is_status('F')">
+            <div class="stage-prompt">
+                This is the end of the study. <br />
+                Please find the moderator for the follow-up interview. <br />
+                Thank you very much for your participation!!!
+            </div>
+        </div>
 
-        <div id="Initialization" ng-show="(is_status('C') || is_status('R')) && statusText">
+        <div id="statusText" ng-show="(is_status('C') || is_status('R')) && statusText">
             <div class="stage-prompt">{$ statusText $}</div>
         </div>
 
@@ -179,7 +186,7 @@
                                 <h2>Keyword distribution for <span>{$ code.code_text $}</span></h2>
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ code.code_text$}</span>'. You can do so in the review stage.</p>
-                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code)" id="user-features"
+                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code) track by $index" id="user-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <!--
                                     <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)" data-toggle="tooltip" title="Remove this keyword"><span class="glyphicon glyphicon-remove-circle"></span></button>
@@ -196,7 +203,7 @@
                                 </div>
                                 <h3>System keywords</h3>
                                 <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ code.code_text$}</span>'.</p>
-                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code)" id="system-features"
+                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code) track by $index" id="system-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
@@ -321,7 +328,7 @@
                                 <h2>Keyword distribution</h2>
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">Please select keywords from your tweets.</p>
-                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code)" id="user-features"
+                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code) track by $index" id="user-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)"
                                              data-toggle="tooltip" title="Remove this keyword"
@@ -338,7 +345,7 @@
                                 </div>
                                 <h3>System keywords</h3>
                                 <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">No system keywords for found for '{$ code.code_text $}'.</p>
-                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code)" id="system-features"
+                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code) track by $index" id="system-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">

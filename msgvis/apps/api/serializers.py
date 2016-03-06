@@ -60,11 +60,12 @@ class MessageSerializer(serializers.ModelSerializer):
     media_url = serializers.CharField()
     tokens = serializers.ListField()
     lemmatized_tokens = serializers.ListField()
+    filtered_tokens = serializers.ListField()
 
     class Meta:
         model = corpus_models.Message
         fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html',
-                  'media_url', 'tokens', 'lemmatized_tokens')
+                  'media_url', 'tokens', 'lemmatized_tokens', 'filtered_tokens', )
 
 
 class CodeSerializer(serializers.ModelSerializer):
