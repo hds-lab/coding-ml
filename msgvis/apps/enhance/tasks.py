@@ -297,7 +297,7 @@ def default_feature_context(name, dataset_id):
                         tokenizer=TweetParserTokenizer,
                         lemmatizer=None,#WordNetLemmatizer(),
                         filters=filters,
-                        minimum_frequency=4)
+                        minimum_frequency=20)
 
 
 def import_from_tweet_parser_results(dataset_id, filename):
