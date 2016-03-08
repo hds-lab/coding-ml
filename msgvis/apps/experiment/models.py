@@ -158,8 +158,9 @@ class Experiment(models.Model):
                 print >>output, "Pair #%d" % pair_list[idx * num_pairs + i].id
 
     def random_assign_messages(self):
-        message_count = self.dictionary.dataset.message_count
-        messages = map(lambda x: x, self.dictionary.dataset.get_message_set())
+        messages = self.dictionary.dataset.get_non_master_message_set()
+        message_count = messages.count()
+        messages = [x for x in messages.all()]
         shuffle(messages)
         num_stages = self.stage_count
         num_per_stage = int(round(message_count / num_stages))
@@ -279,7 +280,10 @@ class StageAssignment(models.Model):
         return self.svm_models.get(source=source)
 
     def get_next_stage(self):
-        return StageAssignment.objects.filter(assignment=self.assignment, order__gt=self.order).first()
+        next_stage = StageAssignment.objects.filter(assignment=self.assignment, order__gt=self.order).first()
+        if next_stage is None:
+            raise IndexError("No next stage")
+        return next_stage
 
     def initialize_stage(self, selected_num=5):
         stage = self.stage
@@ -314,7 +318,11 @@ class StageAssignment(models.Model):
                 message_with_disagreement_levels.append(message_with_disagreement_level)
 
             message_with_disagreement_levels.sort(key=itemgetter('disagreement'), reverse=True)
-            messages = map(lambda x: x["message"], message_with_disagreement_levels)
+            messages = [message_with_disagreement_levels[0]["message"]]
+            for idx, item in enumerate(message_with_disagreement_levels[1:], 1):
+                if item["message"].text != message_with_disagreement_levels[idx - 1]["message"].text:
+                    messages.append(item["message"])
+
 
         selected_messages = []
         for idx, msg in enumerate(messages[:selected_num]):
@@ -329,6 +337,7 @@ class StageAssignment(models.Model):
                 sources = ["system", source]
                 features = list(dictionary.get_feature_list(sources))
                 messages = self.selected_messages.all()
+                master_messages = dictionary.dataset.get_master_message_set().all()
 
                 feature_index_map = {}
                 for idx, feature in enumerate(features):
@@ -342,7 +351,8 @@ class StageAssignment(models.Model):
                                                                          messages=messages,
                                                                          feature_index_map=feature_index_map,
                                                                          feature_num=len(features),
-                                                                         use_tfidf=use_tfidf)
+                                                                         use_tfidf=use_tfidf,
+                                                                         master_messages=master_messages)
                 lin_clf = coding_utils.train_model(X, y, model_save_path=model_save_path)
 
                 svm_model = SVMModel(source=source, source_stage=self, saved_path=model_save_path)
@@ -351,7 +361,17 @@ class StageAssignment(models.Model):
                 weights = []
                 for code_index, code_id in code_map_inverse.iteritems():
                     for feature_index, feature in enumerate(features):
-                        weight = lin_clf.coef_[code_index][feature_index]
+                        try:
+                            if lin_clf.coef_.shape[0] == 1:
+                                weight = lin_clf.coef_[0][feature_index]
+                            else:
+                                weight = lin_clf.coef_[code_index][feature_index]
+                        except:
+                            import traceback
+                            traceback.print_exc()
+                            import pdb
+                            pdb.set_trace()
+
 
                         model_weight = SVMModelWeight(svm_model=svm_model, code_id=code_id,
                                                       feature=feature, weight=weight)
@@ -360,29 +380,43 @@ class StageAssignment(models.Model):
 
                 SVMModelWeight.objects.bulk_create(weights)
 
-                next_stage = self.get_next_stage()
-                next_message_set = next_stage.stage.messages.all()
-                next_message_num = next_message_set.count()
+                try:
+                    next_stage = self.get_next_stage()
+                except IndexError:
+                    pass
+                else:
+                    next_message_set = next_stage.stage.messages.all()
 
-                code_assignments = []
-                next_X = coding_utils.get_formatted_X(messages=next_message_set,
-                                                      dictionary=dictionary,
-                                                      source=source,
-                                                      feature_index_map=feature_index_map,
-                                                      feature_num=len(features),
-                                                      use_tfidf=use_tfidf)
-                predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
-                for idx, message in enumerate(next_message_set):
-                    code_index = predict_y[idx]
-                    code_id = code_map_inverse[code_index]
+                    code_assignments = []
+                    next_X = coding_utils.get_formatted_X(messages=next_message_set,
+                                                          dictionary=dictionary,
+                                                          source=source,
+                                                          feature_index_map=feature_index_map,
+                                                          feature_num=len(features),
+                                                          use_tfidf=use_tfidf)
+                    predict_y, prob = coding_utils.get_prediction(lin_clf, next_X)
+                    for idx, message in enumerate(next_message_set):
+                        code_index = predict_y[idx]
+                        code_id = code_map_inverse[code_index]
+                        try:
+                            if lin_clf.coef_.shape[0] == 1:
+                                if code_index == 1:
+                                    probability = prob[idx]
+                                else:
+                                    probability = 1 - prob[idx]
+                            else:
+                                probability = prob[idx, code_index]
+                        except:
+                            import traceback
+                            traceback.print_exc()
+                            import pdb
+                            pdb.set_trace()
 
-                    probability = prob[idx, code_index]
+                        code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
+                                                                       is_user_labeled=False, probability=probability)
+                        code_assignments.append(code_assignment)
 
-                    code_assignment = coding_models.CodeAssignment(message=message, source=source, code_id=code_id,
-                                                                   is_user_labeled=False, probability=probability)
-                    code_assignments.append(code_assignment)
-
-                coding_models.CodeAssignment.objects.bulk_create(code_assignments)
+                    coding_models.CodeAssignment.objects.bulk_create(code_assignments)
 
         except:
             import traceback
@@ -414,6 +448,7 @@ class Progress(models.Model):
     user = models.OneToOneField(User, related_name="progress", unique=True)
     current_stage_index = models.IntegerField(default=0)
     current_message_index = models.IntegerField(default=0)
+    is_finished = models.BooleanField(default=False)
 
     STATUS_CHOICES = (
         ('N', 'Not yet start'),
@@ -422,6 +457,7 @@ class Progress(models.Model):
         ('W', 'Waiting'),
         ('R', 'Review'),
         ('S', 'Switching stage'),
+        ('F', 'Finished'),
     )
     current_status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='N')
 
@@ -451,73 +487,122 @@ class Progress(models.Model):
         current_stage = self.get_current_stage()
         return current_stage.get_next_stage()
 
+    def set_stage(self, target_stage, target_status):
+        if self.is_finished and (self.current_stage_index != target_stage or self.current_status != target_status):
+            self.current_stage_index = target_stage
+            self.current_status = target_status
+            self.current_message_index = 0
+            self.save()
+            return True
+        return False
+
     def set_to_next_step(self):
         # make sure only one user is making changes to the progress table
         with transaction.atomic(savepoint=False):
             partner = self.user.pair.first().get_partner(self.user)
             partner_progress = partner.progress
-
-            if self.current_status == 'N':
-                self.current_status = 'I'
-                self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'I' and partner_progress.current_status == 'I':
-                    current_stage = self.get_current_stage()
-                    current_stage.initialize_stage()
+            if self.is_finished:
+                # This is a backdoor to go through stages when an user has already finished
+                if self.current_status == 'N':
                     self.current_status = 'C'
                     self.current_message_index = 0
                     self.save()
-                    partner_progress.current_status = 'C'
-                    partner_progress.current_message_index = 0
-                    partner_progress.save()
-
+                elif self.current_status == 'C':
+                    next_message = self.get_next_message()
+                    if next_message is None:  # finish coding this stage
+                        self.current_status = 'R'
+                        self.save()
+                    else:
+                        self.current_message_index = next_message.order
+                        self.save()
+                elif self.current_status == 'R':
+                    try:
+                        next_stage = self.get_next_stage()
+                    except IndexError:
+                        self.current_status = 'F'
+                        self.save()
+                        partner_progress.current_status = 'F'
+                        partner_progress.save()
+                    else:
+                        self.current_status = 'N'
+                        self.current_stage_index = next_stage.order
+                        self.save()
+                        partner_progress.current_status = 'N'
+                        partner_progress.current_stage_index = next_stage.order
+                        partner_progress.save()
                 return True
-
-            elif self.current_status == 'C':
-                current_message = self.get_current_message()
-
-                # Check if the current message has been coded
-                if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
-                                                                   source=self.user, message=current_message).exists():
-                    return False
-
-                next_message = self.get_next_message()
-                if next_message is None:  # finish coding this stage
-                    self.current_status = 'W'
-                    self.save()
-                else:
-                    self.current_message_index = next_message.order
-                    self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'W' and partner_progress.current_status == 'W':
-                    self.current_status = 'R'
-                    self.save()
-                    partner_progress.current_status = 'R'
-                    partner_progress.save()
-
-                return True
-
-            elif self.current_status == 'R':
-                self.current_status = 'S'
-                self.save()
-
-                # Switch to the next status when both are on the same page
-                if self.current_status == 'S' and partner_progress.current_status == 'S':
-                    current_stage = self.get_current_stage()
-                    current_stage.process_stage()
-                    self.current_status = 'N'
-                    self.current_stage_index = self.get_next_stage().order
-                    self.save()
-                    partner_progress.current_status = 'N'
-                    partner_progress.current_stage_index = partner_progress.get_next_stage().order
-                    partner_progress.save()
-
-                return True
-
             else:
-                return False
+                if self.current_status == 'N':
+                    self.current_status = 'I'
+                    self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'I' and partner_progress.current_status == 'I':
+                        current_stage = self.get_current_stage()
+                        current_stage.initialize_stage()
+                        self.current_status = 'C'
+                        self.current_message_index = 0
+                        self.save()
+                        partner_progress.current_status = 'C'
+                        partner_progress.current_message_index = 0
+                        partner_progress.save()
+
+                    return True
+
+                elif self.current_status == 'C':
+                    current_message = self.get_current_message()
+
+                    # Check if the current message has been coded
+                    if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
+                                                                       source=self.user, message=current_message).exists():
+                        return False
+
+                    next_message = self.get_next_message()
+                    if next_message is None:  # finish coding this stage
+                        self.current_status = 'W'
+                        self.save()
+                    else:
+                        self.current_message_index = next_message.order
+                        self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'W' and partner_progress.current_status == 'W':
+                        self.current_status = 'R'
+                        self.save()
+                        partner_progress.current_status = 'R'
+                        partner_progress.save()
+
+                    return True
+
+                elif self.current_status == 'R':
+                    self.current_status = 'S'
+                    self.save()
+
+                    # Switch to the next status when both are on the same page
+                    if self.current_status == 'S' and partner_progress.current_status == 'S':
+                        current_stage = self.get_current_stage()
+                        current_stage.process_stage()
+                        self.current_status = 'N'
+                        try:
+                            next_stage = self.get_next_stage()
+                        except IndexError:
+                            self.current_status = 'F'
+                            self.is_finished = True
+                            self.save()
+                            partner_progress.current_status = 'F'
+                            partner_progress.is_finished = True
+                            partner_progress.save()
+                        else:
+                            self.current_stage_index = next_stage.order
+                            self.save()
+                            partner_progress.current_status = 'N'
+                            partner_progress.current_stage_index = next_stage.order
+                            partner_progress.save()
+
+                    return True
+
+                else:
+                    return False
 
 
 

@@ -187,6 +187,7 @@ class Dictionary(models.Model):
 
                 num_tokens = len(tokens)
                 tf = float(feature_freq) / float(num_tokens)
+
                 idf = math.log(total_documents / document_freq)
                 tfidf = tf * idf
                 batch.append(MessageFeature(dictionary=self,
@@ -402,7 +403,7 @@ class Dictionary(models.Model):
             clean_token_list.append(clean_f)
 
         dataset = self.dataset
-        queryset = dataset.message_set.all()
+        queryset = dataset.get_message_set()
 
         # 1. Calculate the document_frequency
         document_freq = 0

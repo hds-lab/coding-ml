@@ -21,13 +21,15 @@
         });
     }]);
 
-    var DictionaryController = function ($scope, Dictionary) {
+    var DictionaryController = function ($scope, Dictionary, Progress) {
         $scope.Dictionary = Dictionary;
+        $scope.Progress = Progress;
 
     };
     DictionaryController.$inject = [
         '$scope',
-        'TweetCoderViz.services.Dictionary'
+        'TweetCoderViz.services.Dictionary',
+        'TweetCoderViz.services.Progress'
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
@@ -215,6 +217,26 @@
             }
         };
 
+        $scope.filterTweetsByConfusionAndCode = function(){
+            return function(item) {
+                var confusion = $scope.selectedConfusion;
+                var searchText = $scope.search.text;
+                var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
+                var rightCode = item.user_code.id == $scope.selectedCode.code_id;
+
+                // Search for text
+                var matched = $scope.matchText(item.message, searchText);
+
+                return (!searchText || searchText.length == 0 || matched) && flagged && rightCode;
+            }
+        };
+
+        $scope.filterConfusionByCode = function() {
+            return function(confusion){
+                return confusion.count > 0 && confusion.user_code == $scope.selectedCode.code_text;
+            }
+        };
+
         $scope.matchText = function(message, searchText) {
             var matchedTokenIndices = Message.match_text(message, searchText);
 
@@ -223,7 +245,7 @@
 
         $scope.filterFeatures = function(code){
             return function(feature){
-                return feature.distribution[code.code_text] > 0;
+                return  feature.distribution && feature.distribution[code.code_text] > 0;
             }
         };
 
@@ -301,7 +323,7 @@
             if (distribution > 0) {
                 var colorIndex = $scope.code_map[label].code_id;
                 color = $scope.colors[colorIndex % $scope.colorsLight.length];
-                width = Math.round(distribution * 100) + "%";
+                width = Math.floor(distribution * 100) + "%";
             }
             else {
                 color = "transparent";
@@ -851,6 +873,7 @@
             });
 
         });
+
     };
 
     ViewController.$inject = [

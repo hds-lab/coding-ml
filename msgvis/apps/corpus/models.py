@@ -64,6 +64,16 @@ class Dataset(models.Model):
     def get_message_set(self):
         return self.message_set.filter(time__isnull=False).all()
 
+    def get_non_master_message_set(self):
+        messages = self.message_set.filter(time__isnull=False)
+
+        filter_ors = [("code_assignments__isnull", True),
+                      ("code_assignments__source__username__ne", "master")]
+        return messages.filter(reduce(operator.or_, [Q(x) for x in filter_ors]))
+
+    def get_master_message_set(self):
+        messages = self.message_set.filter(time__isnull=False)
+        return messages.filter(code_assignments__source__username="master")
 
     def get_dictionary(self):
         dictionary = self.dictionary.all()
@@ -324,6 +334,16 @@ class Message(models.Model):
 
     @property
     def lemmatized_tokens(self):
+        # using lemmatized words
+        tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
+
+        #stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
+        #tokens = filter(lambda x: x not in stop_words, tokens)
+        #tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
+        return tokens
+
+    @property
+    def filtered_tokens(self):
         # using lemmatized words
         from msgvis.apps.base.utils import get_stoplist
         tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())

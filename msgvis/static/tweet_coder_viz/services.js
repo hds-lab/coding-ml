@@ -195,11 +195,11 @@
                         }
 
                         // Find the mapping between the token index and lemmatized token index
-                        if (token == lemmatized_tokens[currentLemmatizedIndex]){
-                            lemmatizedToFull.set(currentLemmatizedIndex, i);
-                            fullToLemmatized.set(i, currentLemmatizedIndex);
-                            currentLemmatizedIndex++;
-                        }
+                        //if (token.toLowerCase() == lemmatized_tokens[currentLemmatizedIndex].toLowerCase()){
+                        lemmatizedToFull.set(currentLemmatizedIndex, i);
+                        fullToLemmatized.set(i, currentLemmatizedIndex);
+                        currentLemmatizedIndex++;
+                        //}
                     }
 
                     messageData.message.lemmatizedToFull = lemmatizedToFull;
@@ -350,6 +350,9 @@
 
                 },
                 match_text: function(message, searchText, charToToken) {
+                    // TODO: fix matching algorithm. It will be wrong when search key is aaa_bbb&ccc
+                    // TODO: some system features are n-gram with stop words in between.
+                    // TODO: Those should use filtered_tokens
                     // Search for text
                     var matchedTokenIndices = [];
                     if (searchText && searchText.length > 0) {
@@ -364,7 +367,7 @@
                             for (var i = 0; i < message.lemmatized_tokens.length; i++) {
                                 var tokenText = message.lemmatized_tokens[i].toLowerCase();
                                 if (tokenText == ngrams[iNgram]) {
-                                    // Is it ontinuous?
+                                    // Is it continuous?
                                     if (iToken >= 0 && i != iToken + 1) {
                                         matchedTokenIndices = [];
                                         break;
@@ -526,7 +529,15 @@
         }
     ]);
 
-
+    function getQueryVariable(variable){
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+                   var pair = vars[i].split("=");
+                   if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+    }
 
     //A service for progress
     module.factory('TweetCoderViz.services.Progress', [
@@ -549,8 +560,17 @@
                 init_load: function(){
                     var self = this;
 
+                    /*var request = {
+                        params: {
+                            stage_index: getQueryVariable('stage_index'),
+                            target_status: getQueryVariable('target_status')
+                        }
+                    };*/
+
+
                     var apiUrl = djangoUrl.reverse('progress');
 
+                    //return $http.get(apiUrl, request)
                     return $http.get(apiUrl)
                         .success(function (data) {
                             console.log(data);
@@ -564,11 +584,13 @@
 
                     var apiUrl = djangoUrl.reverse('progress');
 
+
                     return $http.post(apiUrl)
                         .success(function (data) {
                             self.current_stage_index = data.current_stage_index;
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;
+                            self.is_finished = data.is_finished;
                         })
 
                 },
