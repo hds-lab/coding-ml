@@ -141,18 +141,25 @@
             }
         };
 
-        $scope.searchFeature = function(feature_text) {
-            if ($scope.search.text != feature_text) {
-                $scope.search.text = feature_text;
+        $scope.searchFeature = function(feature) {
+            // Check if the previous feature matches the current one
+            if ($scope.search.feature != feature) {
+                $scope.search.feature = feature;
             }
             else {
-                $scope.search.text = undefined;
+                $scope.search.feature = undefined;
             }
+
+            $scope.search.text = undefined;
+        };
+
+        $scope.removeSearchFeature = function(){
+            $scope.search.feature = undefined;
+            $scope.search.text = undefined;
         };
 
         $scope.filterTweetsFlag = function() {
             return function(item) {
-                var searchText = $scope.search.text;
                 var filter = $scope.selectedFilter;
 
                 // Apply filters
@@ -172,10 +179,9 @@
                         break;
                 }
 
-                // Search for text
-                var matched = $scope.matchText(item.message, searchText);
+                var matched = $scope.searchTweets(item.message, $scope.search);
 
-                return (!searchText || searchText.length == 0 || matched) && flagged;
+                return matched && flagged;
             }
         };
 
@@ -210,25 +216,37 @@
                 var searchText = $scope.search.text;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
 
-                // Search for text
-                var matched = $scope.matchText(item.message, searchText);
+                var matched = $scope.searchTweets(item.message, $scope.search);
 
-                return (!searchText || searchText.length == 0 || matched) && flagged;
+                return matched && flagged;
             }
         };
 
         $scope.filterTweetsByConfusionAndCode = function(){
             return function(item) {
                 var confusion = $scope.selectedConfusion;
-                var searchText = $scope.search.text;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
                 var rightCode = item.user_code.id == $scope.selectedCode.code_id;
 
-                // Search for text
-                var matched = $scope.matchText(item.message, searchText);
-
-                return (!searchText || searchText.length == 0 || matched) && flagged && rightCode;
+                var matched = $scope.searchTweets(item.message, $scope.search);
+                return matched && flagged && rightCode;
             }
+        };
+
+        $scope.searchTweets = function(message, search) {
+            var matched = false;
+
+            // Are we searching for text or features?
+            if (search.feature) {
+                var matchedTokenIndices = Message.match_feature(message, search.feature);
+                matched = matchedTokenIndices && matchedTokenIndices.length > 0;
+            }
+            else {
+                var searchText = search.text;
+                matched = (!searchText || searchText.length == 0 || Message.match_text(message, searchText));
+            }
+
+            return matched;
         };
 
         $scope.filterConfusionByCode = function() {
@@ -237,15 +255,28 @@
             }
         };
 
-        $scope.matchText = function(message, searchText) {
-            var matchedTokenIndices = Message.match_text(message, searchText);
-
-            return (matchedTokenIndices && matchedTokenIndices.length > 0);
-        };
-
         $scope.filterFeatures = function(code){
             return function(feature){
                 return  feature.distribution && feature.distribution[code.code_text] > 0;
+            }
+        };
+
+        $scope.pillColor = function(code_id){
+            if (code_id) {
+                return $scope.colors[code_id % $scope.colors.length];
+            }
+            else {
+                return "#aaa";
+            }
+        };
+
+        $scope.myKeywordStyle = function(feature){
+            if (feature && feature.source == "user") {
+                var color = $scope.colors[feature.origin_code_id % $scope.colors.length];
+                return {'border': '1px solid ' + color};
+            }
+            else {
+                return {};
             }
         };
 
@@ -341,13 +372,13 @@
         $scope.charStyle = function(item, charIndex) {
 
             var tokenIndex = item.charToToken[charIndex];
-            var lemmatized = item.message.fullToLemmatized.get(tokenIndex);
+            var filtered = item.message.fullToFiltered.get(tokenIndex);
 
             if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
                 return { 'background' : "rgba(0,0,0,0.1)" };
             }
             else if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
-                if (lemmatized) {
+                if (filtered) {
                     return {'background': $scope.codeColorLight($scope.code_map[item.user_code.text])};
                 }
                 else {
@@ -358,7 +389,7 @@
                 for (var i = 0; item.active_features && i < item.active_features.length; i++) {
                     var feature = item.active_features[i];
                     if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
-                        if (lemmatized) {
+                        if (filtered) {
                             return {'background': $scope.colorsLight[feature.codeIndex % $scope.colors.length] };
                         }
                         else {
@@ -745,11 +776,8 @@
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
 
                 var tokens = [];
-                item.selectedTokenIndices.forEach(function (tokenIndex){
-                    var lemIndex = item.message.fullToLemmatized.get(tokenIndex);
-                    if (lemIndex){
-                        tokens.push(item.message.lemmatized_tokens[lemIndex]);
-                    }
+                item.selectedTokenIndices.forEach(function (tokenIndex) {
+                    tokens.push(item.message.lemmatized_tokens[tokenIndex]);
                 });
 
                 var key = item.message.id;
@@ -870,6 +898,7 @@
             $scope.codes = data;
             $scope.codes.forEach(function(code){
                 $scope.code_map[code.code_text] = code;
+                $scope.code_map[code.code_id] = code;
             });
 
         });
