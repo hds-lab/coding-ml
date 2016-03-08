@@ -237,14 +237,13 @@
                                             <li><a ng-click="selectFilter('Saved')">Saved</a></li>
                                             <li><a ng-click="selectFilter('Ambiguous')">Ambiguous</a></li>
                                         </ul>
-                                    </div><div class="search-label">
-                                        <div>Search: </div><input ng-if="!search.feature" ng-model="search.text" placeholder="Type in search keywords">
-                                        <div class="search-feature" ng-if="search.feature" ng-style="{ 'border-color': pillColor(search.feature.origin_code_id) }">{$ search.feature.feature_text $}
-                                            <button class="btn btn-default" ng-click="removeSearchFeature()"
-                                                    data-toggle="tooltip" title="Remove this keyword from search">
-                                                <span class="glyphicon glyphicon-remove-circle"></span>
-                                            </button>
-                                        </div>
+                                    </div>
+                                    <div class="search-label">Search: </div><input ng-if="!search.feature" ng-model="search.text" placeholder="Type in search keywords">
+                                    <div class="search-feature" ng-if="search.feature" ng-style="{ 'border-color': pillColor(search.feature.origin_code_id) }">{$ search.feature.feature_text $}
+                                        <button class="btn btn-default" ng-click="removeSearchFeature()"
+                                                data-toggle="tooltip" title="Remove this keyword from search">
+                                            <span class="glyphicon glyphicon-remove-circle"></span>
+                                        </button>
                                     </div>
                                 </div>
                                 <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag()"
