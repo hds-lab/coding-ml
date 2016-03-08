@@ -108,6 +108,11 @@ th:hover{
     }
 }
 
+.change-mark {
+    vertical-align: super;
+    font-size: 9px;
+    color: gray;
+}
 .stage-prompt{
     position: absolute;
     text-align: center;
@@ -602,12 +607,17 @@ h3 {
                     white-space: normal;
                     font-weight: 300;
                     font-size: 14px;
-                    height: calc(100% ~ "-" 20px);
+                    height: calc(100% ~ "-" 40px);
                     overflow-y: auto;
 
                     &.help-text {
                         color: #777;
                     }
+                }
+                .btn {
+                    line-height: 0.5em;
+                    border: none;
+                    font-size: 10px;
                 }
 
                 textarea {

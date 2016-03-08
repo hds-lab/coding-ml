@@ -113,10 +113,12 @@
 
 
         $scope.selectLabel = function(code){
-            if ($scope.Progress.current_status == 'C'){
-                //$scope.currentMessage.user_code.text = code.code_text;
+            if ($scope.Progress.current_status == 'R'){
+                if ($scope.is_different())
+                    $scope.ask_if_save = true;
             }
             $scope.selectedCode = code;
+            $scope.search.text = "";
 
             // set hover state on the first tweet
             if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text].length > 0){
@@ -458,18 +460,69 @@
 
         };
 
+        $scope.hasDefinition = function(code, source){
+            return Code.definitions_by_code[code.code_text][source] &&
+                   Code.definitions_by_code[code.code_text][source].trim().length > 0;
+        };
 
-        $scope.saveDefinition = function(code){
-            if (Code.definitions_by_code[code.code_text]["user"]) {
-                // TODO: call service on every character change?? on focus out?
+        $scope.saveDefinition = function(){
+            var code = $scope.selectedCode;
+            if ($scope.hasDefinition(code, "user")) {
                 var request = Code.update_definition(code);
                 if (request) {
                     usSpinnerService.spin('code-detail-spinner');
                     request.then(function () {
                         usSpinnerService.stop('code-detail-spinner');
+                        $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
                     });
                 }
             }
+        };
+
+        $scope.original_code_definition = undefined;
+        $scope.is_editing = false;
+        $scope.ask_if_save = false;
+        $scope.is_different = function(){
+            var code = $scope.selectedCode;
+            return ($scope.is_editing && $scope.original_code_definition &&
+                 $scope.original_code_definition.trim() != Code.definitions_by_code[code.code_text]["user"].trim() )
+
+
+        };
+
+        $scope.startEditing = function(){
+            var code = $scope.selectedCode;
+            if ($scope.is_editing == false){
+                $scope.is_editing = true;
+                $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
+            }
+
+            console.log('focus');
+        };
+        $scope.finishEditing = function(){
+            var code = $scope.selectedCode;
+            if ( $scope.is_different() ){
+                $scope.ask_if_save = true;
+            }
+            else {
+                $scope.original_code_definition = undefined;
+                console.log('blur');
+                $scope.is_editing = false;
+            }
+
+        };
+        $scope.handleDefinitionChanges = function(save){
+            var code = $scope.selectedCode;
+            if (save){
+                $scope.saveDefinition();
+            }
+            else {
+                Code.definitions_by_code[code.code_text]["user"] = $scope.original_code_definition;
+            }
+            $scope.original_code_definition = undefined;
+            $scope.ask_if_save = false;
+            $scope.is_editing = false;
+
         };
 
         $scope.getAllMessages = function(updateFeaturesOnly) {
@@ -873,6 +926,14 @@
             });
 
         });
+        $scope.$on('modal-hidden', function($event) {
+            console.log('scope-hidden', $scope.is_editing);
+            if ($scope.is_different()){
+                $('#code-definition').focus();
+            }
+
+        });
+
 
     };
 
@@ -897,7 +958,8 @@
     module.directive('modal', function() {
         var link = function (scope, elem) {
             elem.on('hidden.bs.modal', function () {
-                scope.showModal = undefined;
+                scope.showModal = false;
+                scope.$parent.$broadcast("modal-hidden");
             });
 
             scope.$watch('showModal', function (newVals, oldVals) {
