@@ -344,7 +344,7 @@
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">No system keywords for found for '{$ code.code_text $}'.</p>
+                                <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">No system keywords found for '{$ code.code_text $}'.</p>
                                 <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code) track by $index" id="system-features"
                                     ng-click="searchFeature(feature.feature_text)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
