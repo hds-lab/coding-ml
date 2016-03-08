@@ -484,8 +484,8 @@
         $scope.ask_if_save = false;
         $scope.is_different = function(){
             var code = $scope.selectedCode;
-            return ($scope.is_editing && $scope.original_code_definition &&
-                 $scope.original_code_definition.trim() != Code.definitions_by_code[code.code_text]["user"].trim() )
+            return ($scope.is_editing && (typeof($scope.original_code_definition) !== undefined) &&
+            ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].trim()) );
 
 
         };
