@@ -285,7 +285,7 @@ class StageAssignment(models.Model):
             raise IndexError("No next stage")
         return next_stage
 
-    def initialize_stage(self, selected_num=5):
+    def initialize_stage(self, selected_num=50):
         stage = self.stage
         message_count = self.stage.messages.count()
         messages = list(self.stage.messages.all())
@@ -329,7 +329,7 @@ class StageAssignment(models.Model):
             selected_messages.append(MessageSelection(stage_assignment=self, message=msg, order=idx))
         MessageSelection.objects.bulk_create(selected_messages)
 
-    def process_stage(self, use_tfidf=False):
+    def process_stage(self, use_tfidf=True):
         experiment = self.assignment.experiment
         dictionary = experiment.dictionary
         try:
