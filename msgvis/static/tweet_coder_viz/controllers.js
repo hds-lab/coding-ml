@@ -68,12 +68,17 @@
             color: "#000000"
         };
 
-        // Top pane
+        // Top panel
         $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
         $scope.codes = [];
         $scope.code_map = {};
         $scope.coded_messages = undefined;
+
+        // Variables for ensuring a code definition is saved after the user edits it
+        $scope.original_code_definition = undefined;
+        $scope.is_editing_definition = false;
+        $scope.ask_if_save_definition = false;
 
         // Tweets
         $scope.codeItems = undefined;
@@ -114,8 +119,8 @@
 
         $scope.selectLabel = function(code){
             if ($scope.Progress.current_status == 'R'){
-                if ($scope.is_different())
-                    $scope.ask_if_save = true;
+                if ($scope.is_definition_different())
+                    $scope.ask_if_save_definition = true;
             }
             $scope.selectedCode = code;
             $scope.search.text = "";
@@ -444,21 +449,47 @@
             }
         };
 
+
+        $scope.ask_if_change_code = false;
+        $scope.message_for_change = undefined;
         $scope.updateIndicator = function(item, disagreement){
 
-            if (disagreement) {
-                item.disagreement_indicator = disagreement;
-            }
+            if (disagreement && item.disagreement_indicator != disagreement) {
 
-            var request = Message.update_disagreement_indicator(item.message.id, item.disagreement_indicator);
+                var request = Message.update_disagreement_indicator(item.message.id, disagreement);
+                if (request) {
+                    usSpinnerService.spin('submitted-label-spinner');
+                    request.then(function () {
+                        usSpinnerService.stop('submitted-label-spinner');
+                        item.disagreement_indicator = disagreement;
+                        if (disagreement == 'P'){
+                            $scope.ask_if_change_code = true;
+                            $scope.message_for_change = item;
+
+                        }
+                    });
+                }
+            }
+        };
+
+        $scope.changeCode = function(){
+
+            console.log("change code");
+            var request = Message.update_code($scope.message_for_change.message.id,
+                                              $scope.message_for_change.partner_code.id);
             if (request) {
                 usSpinnerService.spin('submitted-label-spinner');
-                request.then(function () {
+                request.then(function() {
                     usSpinnerService.stop('submitted-label-spinner');
+                    // TODO: Update confusion matrix and list
+                    $scope.ask_if_change_code = false;
                 });
             }
 
         };
+
+
+        /** Functions for handling definitions start */
 
         $scope.hasDefinition = function(code, source){
             return Code.definitions_by_code[code.code_text][source] &&
@@ -479,12 +510,9 @@
             }
         };
 
-        $scope.original_code_definition = undefined;
-        $scope.is_editing = false;
-        $scope.ask_if_save = false;
-        $scope.is_different = function(){
+        $scope.is_definition_different = function(){
             var code = $scope.selectedCode;
-            return ($scope.is_editing && (typeof($scope.original_code_definition) !== undefined) &&
+            return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== undefined) &&
             ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].trim()) );
 
 
@@ -492,25 +520,24 @@
 
         $scope.startEditing = function(){
             var code = $scope.selectedCode;
-            if ($scope.is_editing == false){
-                $scope.is_editing = true;
+            if ($scope.is_editing_definition == false){
+                $scope.is_editing_definition = true;
                 $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
             }
-
-            console.log('focus');
         };
+
         $scope.finishEditing = function(){
             var code = $scope.selectedCode;
-            if ( $scope.is_different() ){
-                $scope.ask_if_save = true;
+            if ( $scope.is_definition_different() ){
+                $scope.ask_if_save_definition = true;
             }
             else {
                 $scope.original_code_definition = undefined;
-                console.log('blur');
-                $scope.is_editing = false;
+                $scope.is_editing_definition = false;
             }
 
         };
+
         $scope.handleDefinitionChanges = function(save){
             var code = $scope.selectedCode;
             if (save){
@@ -520,10 +547,12 @@
                 Code.definitions_by_code[code.code_text]["user"] = $scope.original_code_definition;
             }
             $scope.original_code_definition = undefined;
-            $scope.ask_if_save = false;
-            $scope.is_editing = false;
+            $scope.ask_if_save_definition = false;
+            $scope.is_editing_definition = false;
 
         };
+        /** Functions for handling definitions end */
+
 
         $scope.getAllMessages = function(updateFeaturesOnly) {
 
@@ -545,7 +574,9 @@
                         for (var i = 0; i < $scope.allItems.length; i++) {
                             var prototype = $scope.allItems[i];
                             // Update all message items
-                            prototype.characters = prototype.message.text.split("");
+                            //prototype.characters = prototype.message.text.split("");
+                            prototype.characters = Array.from(prototype.message.text); // make sure it works for unicode
+
 
                             // Interaction states
                             prototype.hoveredCharStart = -1;
@@ -916,6 +947,7 @@
             }
         });
 
+        // Specific event handlers
         $scope.$on('messages::load_coded_messages', function($event, data) {
             $scope.coded_messages = data;
         });
@@ -927,8 +959,7 @@
 
         });
         $scope.$on('modal-hidden', function($event) {
-            console.log('scope-hidden', $scope.is_editing);
-            if ($scope.is_different()){
+            if ($scope.is_definition_different()){
                 $('#code-definition').focus();
             }
 

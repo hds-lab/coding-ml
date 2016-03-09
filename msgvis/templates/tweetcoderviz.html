@@ -484,7 +484,7 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </modal>
-        <modal show-modal="ask_if_save" ng-model="ask_if_save" class="modal fade" id="def-save-modal" tabindex="-1" role="dialog">
+        <modal show-modal="ask_if_save_definition" ng-model="ask_if_save_definition" class="modal fade" id="def-save-modal" tabindex="-1" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -492,7 +492,7 @@
                                 aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h2 class="modal-title">Replace Keywords?</h2>
+                        <h2 class="modal-title">Save the new definition?</h2>
                     </div>
                     <div class="modal-body">
                         Do you want to save your changes for the definiton of {$ selectedCode.code_text $}?
@@ -500,6 +500,30 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" ng-click="handleDefinitionChanges(false)" data-dismiss="modal">Discard</button>
                         <button type="button" class="btn btn-primary" ng-click="handleDefinitionChanges(true)">Save</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
+        <modal show-modal="ask_if_change_code" ng-model="ask_if_change_code" class="modal fade" id="change-code-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h2 class="modal-title">Replacing the code?</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p>Do you want to change your code <strong>{$ message_for_change.user_code.text $}</strong> of the
+                        following tweet into your partner's code <strong>{$ message_for_change.partner_code.text $}</strong>?</p>
+                        <p>
+                            {$ message_for_change.message.text $}
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Ignore</button>
+                        <button type="button" class="btn btn-primary" ng-click="changeCode()">Change</button>
                     </div>
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
