@@ -413,8 +413,9 @@
         };
 
         $scope.next_step = function(){
+            var request;
             if (Progress.current_status == 'W'){
-                var request = Progress.init_load();
+                request = Progress.init_load();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
                     request.then(function() {
@@ -423,7 +424,7 @@
                 }
             }
             else{
-                var request = Progress.next_step();
+                request = Progress.next_step();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
                     request.then(function() {
@@ -475,14 +476,17 @@
         $scope.changeCode = function(){
 
             console.log("change code");
-            var request = Message.update_code($scope.message_for_change.message.id,
+            var request = Message.update_code($scope.message_for_change,
                                               $scope.message_for_change.partner_code.id);
             if (request) {
                 usSpinnerService.spin('submitted-label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('submitted-label-spinner');
-                    // TODO: Update confusion matrix and list
+
+                    $scope.load_distribution('user');
+
                     $scope.ask_if_change_code = false;
+
                 });
             }
 
@@ -512,7 +516,7 @@
 
         $scope.is_definition_different = function(){
             var code = $scope.selectedCode;
-            return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== undefined) &&
+            return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== "undefined") &&
             ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].trim()) );
 
 
@@ -877,7 +881,9 @@
                             var feature = Feature.latest_data;
 
                             // Update the features (need to refresh the whole data so we can get the counts for this stage only)
-                            $scope.load_distribution('user');
+                            //$scope.load_distribution('user');
+                            // TODO: check why this is not enough for adding new feature
+                            $scope.featureList.user[feature.feature_text] = feature;
 
                             // Update the message level features
                             $scope.getAllMessages(true);
@@ -897,7 +903,12 @@
             }
         };
 
-        $scope.removeFeature = function(feature){
+        $scope.removeFeature = function(feature, $event){
+            if ($event){
+                $event.preventDefault();
+                $event.stopPropagation();
+            }
+
             if (feature) {
 
                 // Remove from list
