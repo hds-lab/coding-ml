@@ -860,7 +860,15 @@
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
 
                 var tokens = [];
-                item.selectedTokenIndices.forEach(function (tokenIndex) {
+                // selectedTokenIndices are ordered by the tokens added, not by their index
+                var tokenIndices = [];
+                item.selectedTokenIndices.forEach(function(value, key) {
+                    tokenIndices.push(key);
+                });
+
+                tokenIndices.sort(function(a, b) {
+                    return a - b;
+                }).forEach(function (tokenIndex) {
                     tokens.push(item.message.lemmatized_tokens[tokenIndex]);
                 });
 
