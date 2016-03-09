@@ -700,7 +700,7 @@ class DisagreementIndicatorView(APIView):
                                                                         partner_assignment=partner_assignment,
                                                                         valid=True)
             if indicator.exists() and indicator.filter(type=type):
-                indicator = indicator.filter(type=type)
+                indicator = indicator.filter(type=type).first()
             else:
                 indicator.update(valid=False)
                 for ind in indicator:

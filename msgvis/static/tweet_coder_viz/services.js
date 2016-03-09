@@ -157,7 +157,8 @@
                     var self = this;
 
                     var text = messageData.message.text;
-                    var characters = text.split("");
+                    //var characters = text.split("");
+                    var characters = Array.from(text);
                     var tokens = messageData.message.tokens;
                     var filtered_tokens = messageData.message.lemmatized_tokens;
                     var feature_vector = messageData.feature_vector;
@@ -253,6 +254,26 @@
                     return $http.post(apiUrl, request)
                         .success(function (data) {
                             self.last_message = data;
+                        });
+
+                },
+                update_code: function (message_id, code_id) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message_id});
+
+                    // TODO: instead of setting all of them to be false, maybe taking flags from previous ones?
+                    var request = {
+                        code: code_id,
+                        is_example: false,
+                        is_ambiguous: false,
+                        is_saved: false
+                    };
+
+
+                    return $http.put(apiUrl, request)
+                        .success(function (data) {
+                            //self.last_message = data;
+                            // TODO: the data should be another assignment and need to use that for updating the interface
                         });
 
                 },
@@ -463,8 +484,8 @@
                                 self.definitions_by_source[def_set.source] = def_set.definitions;
                                 def_set.definitions.forEach(function(def){
                                     if (typeof(self.definitions_by_code[def.code_text]) === "undefined")
-                                        self.definitions_by_code[def.code_text] = {};
-                                    self.definitions_by_code[def.code_text][def_set.source] = def;
+                                        self.definitions_by_code[def.code_text] = {master: "", user: "", partner: ""};
+                                    self.definitions_by_code[def.code_text][def_set.source] = def.text;
                                 });
                             });
 
@@ -481,7 +502,7 @@
 
 
                     var request = {
-                        text: self.definitions_by_code[code.code_text]["user"].text.trim()
+                        text: self.definitions_by_code[code.code_text]["user"].trim()
                     };
 
 

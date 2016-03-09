@@ -168,8 +168,8 @@
                                 <h3>Master Example</h3>
                                 <p>{$ code.examples[0].text $}</p>
                                 <h3>My Definition</h3>
-                                <p ng-show="Code.definitions_by_code[code.code_text]['user'].text">{$ Code.definitions_by_code[code.code_text]["user"].text $}</p>
-                                <p ng-hide="Code.definitions_by_code[code.code_text]['user'].text" class="help-text">You have not provided a definition yet.</p>
+                                <p ng-show="Code.definitions_by_code[code.code_text]['user']">{$ Code.definitions_by_code[code.code_text]["user"] $}</p>
+                                <p ng-hide="Code.definitions_by_code[code.code_text]['user']" class="help-text">You have not provided a definition yet.</p>
                                 <h3>My Examples</h3>
                                 <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweets('Example')).length==0"
                                    class="help-text">You have not saved any tweets as exemplar of '<span>{$ code.code_text $}</span>'.</p>
@@ -290,29 +290,36 @@
                         <div class="code-name">{$ code.code_text $}</div>
                     </div>
                 </div>
-                <div id="tab-area" ng-repeat="code in codes" ng-style="definitionStyle(code)" ng-show="code.code_id == selectedCode.code_id">
+                <div id="tab-area" ng-style="definitionStyle(selectedCode)" >
                     <div class="" id="definitions">
                         <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-right box-full">
                                 <h3>Master Definition</h3>
-                                <p class="code-definition">{$ Code.definitions_by_code[code.code_text]["master"].text $}</p>
+                                <p class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["master"] $}</p>
                             </div>
                         </div>
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-full">
                                 <h3>Partner Definition</h3>
-                                <p ng-show="Code.definitions_by_code[code.code_text]['partner'].text" class="code-definition">{$ Code.definitions_by_code[code.code_text]["partner"].text $}</p>
-                                <p ng-hide="Code.definitions_by_code[code.code_text]['partner'].text" class="code-definition help-text">Your partner has not provided a definition yet.</p>
+                                <p ng-show="hasDefinition(selectedCode, 'partner')" class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["partner"] $}</p>
+                                <p ng-hide="hasDefinition(selectedCode, 'partner')" class="code-definition help-text">Your partner has not provided a definition yet.</p>
                             </div>
                         </div>
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-left box-full">
-                                <h3>My Definition</h3>
-                                <textarea class="code-definition" ng-model="Code.definitions_by_code[code.code_text]['user'].text"
-                                          ng-blur="saveDefinition(code)"
-                                          ng-style="{ 'border-color': codeColor(code) }"
+                                <h3>My Definition<span class='change-mark' ng-show="is_different()">*</span></h3>
+                                <textarea id="code-definition"
+                                          class="code-definition" ng-model="Code.definitions_by_code[selectedCode.code_text]['user']"
+                                          ng-focus="startEditing()"
+                                          ng-blur="finishEditing()"
+                                          ng-style="{ 'border-color': codeColor(selectedCode) }"
                                           placeholder="Please provide your own definition if necessary."></textarea>
+                                <div ng-show="is_different()">
+                                    <button class="btn btn-primary" ng-mousedown="handleDefinitionChanges(true)"
+                                            ng-style="{ 'background': codeColor(selectedCode) }">Save</button>
+                                    <button class="btn btn-default" ng-mousedown="handleDefinitionChanges(false)">Reset</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -336,8 +343,8 @@
                             <div class="box box-right box-light">
                                 <h2>Keyword distribution</h2>
                                 <h3>My keywords</h3>
-                                <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">Please select keywords from your tweets.</p>
-                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code) track by $index" id="user-features"
+                                <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
+                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(selectedCode) track by $index" id="user-features"
                                      ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)"
                                              data-toggle="tooltip" title="Remove this keyword"
@@ -356,8 +363,8 @@
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">No system keywords found for '{$ code.code_text $}'.</p>
-                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code) track by $index" id="system-features"
+                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">No system keywords found for '{$ code.code_text $}'.</p>
+                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(selectedCode) track by $index" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
@@ -491,6 +498,50 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" ng-click="replaceFeature(featureConflict)">Replace</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
+        <modal show-modal="ask_if_save_definition" ng-model="ask_if_save_definition" class="modal fade" id="def-save-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h2 class="modal-title">Save the new definition?</h2>
+                    </div>
+                    <div class="modal-body">
+                        Do you want to save your changes for the definiton of {$ selectedCode.code_text $}?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" ng-click="handleDefinitionChanges(false)" data-dismiss="modal">Discard</button>
+                        <button type="button" class="btn btn-primary" ng-click="handleDefinitionChanges(true)">Save</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
+        <modal show-modal="ask_if_change_code" ng-model="ask_if_change_code" class="modal fade" id="change-code-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h2 class="modal-title">Replacing the code?</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p>Do you want to change your code <strong>{$ message_for_change.user_code.text $}</strong> of the
+                        following tweet into your partner's code <strong>{$ message_for_change.partner_code.text $}</strong>?</p>
+                        <p>
+                            {$ message_for_change.message.text $}
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Ignore</button>
+                        <button type="button" class="btn btn-primary" ng-click="changeCode()">Change</button>
                     </div>
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
