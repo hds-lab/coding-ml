@@ -160,17 +160,17 @@
                     //var characters = text.split("");
                     var characters = Array.from(text);
                     var tokens = messageData.message.tokens;
-                    var lemmatized_tokens = messageData.message.lemmatized_tokens;
+                    var filtered_tokens = messageData.message.lemmatized_tokens;
                     var feature_vector = messageData.feature_vector;
 
                     var tokenItems = [];
                     var charToToken = [];
-                    var lemmatizedToFull = new Map(); // Mapping between lemmatized token id to full token id
-                    var fullToLemmatized = new Map(); // Mapping between full token id to lemmatized token id
+                    var filteredToFull = new Map(); // Mapping between filtered token id to full token id
+                    var fullToFiltered = new Map(); // Mapping between full token id to filtered token id
 
                     var lowerText = text.toLowerCase();
                     var currentIndex = 0;
-                    var currentLemmatizedIndex = 0;
+                    var currentFilteredIndex = 0;
                     for (var i = 0; i < tokens.length; i++) {
                         var token = tokens[i];
 
@@ -195,25 +195,25 @@
                             }
                         }
 
-                        // Find the mapping between the token index and lemmatized token index
-                        //if (token.toLowerCase() == lemmatized_tokens[currentLemmatizedIndex].toLowerCase()){
-                        lemmatizedToFull.set(currentLemmatizedIndex, i);
-                        fullToLemmatized.set(i, currentLemmatizedIndex);
-                        currentLemmatizedIndex++;
-                        //}
+                        // Find the mapping between the token index and filtered token index
+                        if (token.toLowerCase() == filtered_tokens[currentFilteredIndex].toLowerCase()) {
+                            filteredToFull.set(currentFilteredIndex, i);
+                            fullToFiltered.set(i, currentFilteredIndex);
+                            currentFilteredIndex++;
+                        }
                     }
 
-                    messageData.message.lemmatizedToFull = lemmatizedToFull;
-                    messageData.message.fullToLemmatized = fullToLemmatized;
+                    messageData.message.filteredToFull = filteredToFull;
+                    messageData.message.fullToFiltered = fullToFiltered;
 
                     // Extract token level features
                     var features = [];
                     if (feature_vector && feature_vector.length > 0){
                         for (i = 0; i < messageData.feature_vector.length; i++) {
-                            var feature_text = messageData.feature_vector[i].text;
-                            var code_id = messageData.feature_vector[i].origin_code_id;
+                            var feature = messageData.feature_vector[i];
+                            var code_id = feature.origin_code_id;
 
-                            var matchedTokenIndices = self.match_text(messageData.message, feature_text, charToToken);
+                            var matchedTokenIndices = self.match_feature(messageData.message, feature);
 
                             // TODO: For now, treat all as non-continuous token features
                             matchedTokenIndices.forEach(function (tokenIndex) {
@@ -370,82 +370,70 @@
                         });
 
                 },
-                match_text: function(message, searchText, charToToken) {
-                    // TODO: fix matching algorithm. It will be wrong when search key is aaa_bbb&ccc
-                    // TODO: some system features are n-gram with stop words in between.
-                    // TODO: Those should use filtered_tokens
-                    // Search for text
+                // Searches the tokens for the given feature and returns the matched token indices
+                match_feature: function(message, feature) {
                     var matchedTokenIndices = [];
-                    if (searchText && searchText.length > 0) {
+                    var featureText = feature.text ? feature.text : feature.feature_text;
 
-                        if (searchText.indexOf("_") != -1) {
-                            var ngrams = searchText.toLowerCase().split("_").filter(Boolean);
+                    // If it's a user feature, split it on '&' and search within lemmatized_tokens
+                    if (feature.source == "user") {
+                        var ngrams = featureText.toLowerCase().split("&").filter(Boolean);
 
-                            // iterate and search for continuous tokens
-                            var iNgram = 0;
-                            var iToken = -1;
+                        // iterate and search for tokens
+                        var iNgram = 0;
 
-                            for (var i = 0; i < message.lemmatized_tokens.length; i++) {
-                                var tokenText = message.lemmatized_tokens[i].toLowerCase();
-                                if (tokenText == ngrams[iNgram]) {
-                                    // Is it continuous?
-                                    if (iToken >= 0 && i != iToken + 1) {
-                                        matchedTokenIndices = [];
-                                        break;
-                                    }
+                        var tempIndices = [];
+                        for (var i = 0; i < message.lemmatized_tokens.length; i++) {
+                            var tokenText = message.lemmatized_tokens[i].toLowerCase();
+                            if (tokenText == ngrams[iNgram]) {
+                                tempIndices.push(i);
+                                iNgram++;
 
-                                    matchedTokenIndices.push(message.lemmatizedToFull.get(i));
-                                    iNgram++;
-                                    iToken = i;
-
-                                    if (iNgram == ngrams.length) {
-                                        break;
-                                    }
+                                if (iNgram == ngrams.length) {
+                                    matchedTokenIndices = tempIndices;
+                                    break;
                                 }
                             }
                         }
-                        else if (searchText.indexOf("&") != -1) {
-                            var ngrams = searchText.toLowerCase().split("&").filter(Boolean);
+                    }
+                    // If it's a system feature, split it on '&' and '_' and search within filtered_tokens
+                    else if (feature.source == "system") {
+                        var separators = ['\\\_', '\\\&'];
+                        var ngrams = featureText.split(new RegExp(separators.join('|'), 'g')).filter(Boolean);
 
-                            // iterate and search for tokens
-                            var iNgram = 0;
+                        // iterate and search for tokens
+                        var iNgram = 0;
 
-                            var tempIndices = [];
-                            for (var i = 0; i < message.lemmatized_tokens.length; i++) {
-                                var tokenText = message.lemmatized_tokens[i].toLowerCase();
-                                if (tokenText == ngrams[iNgram]) {
-                                    tempIndices.push(message.lemmatizedToFull.get(i));
-                                    iNgram++;
+                        var tempIndices = [];
+                        for (var i = 0; i < message.filtered_tokens.length; i++) {
+                            var tokenText = message.filtered_tokens[i].toLowerCase();
+                            if (tokenText == ngrams[iNgram]) {
+                                tempIndices.push(message.filteredToFull.get(i));
+                                iNgram++;
 
-                                    if (iNgram == ngrams.length) {
-                                        matchedTokenIndices = tempIndices;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            // Search the text in lemmetized tokens in case it's a unigram feature
-                            message.lemmatized_tokens.forEach(function(t, i) {
-                                if(t == searchText.toLowerCase()){
-                                    matchedTokenIndices.push(message.lemmatizedToFull.get(i));
-                                }
-                            });
-
-                            if (matchedTokenIndices.length == 0) {
-                                // Then search the text in the full text
-                                var charIndex = message.text.toLowerCase().search(searchText.toLowerCase());
-
-                                if (charIndex != -1) {
-                                    // A little hacky here. If charToToken is provided, return the token index.
-                                    // If it's not provided, we just need to add something to the returned list to indicate we found the match
-                                    matchedTokenIndices.push(charToToken ? charToToken[charIndex] : charIndex);
+                                if (iNgram == ngrams.length) {
+                                    matchedTokenIndices = tempIndices;
+                                    break;
                                 }
                             }
                         }
                     }
 
                     return matchedTokenIndices;
+                },
+                // Searches the full message text for the given search text and returns a boolean
+                match_text: function(message, searchText) {
+                    if (searchText && searchText.length > 0) {
+
+                        // Search the text in the full text
+                        var charIndex = message.text.toLowerCase().search(searchText.toLowerCase());
+
+                        if (charIndex != -1) {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
             });
 
