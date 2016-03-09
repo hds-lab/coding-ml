@@ -285,13 +285,14 @@
                                 if ( idx != -1 ){
                                     self.all_coded_messages.splice(idx, 1);
                                 }
+                                self.all_coded_messages.push(new_item);
 
                                 // Update the code distribution
                                 if (self.code_distribution[new_item.user_code.text] == undefined){
                                     self.code_distribution[new_item.user_code.text] = 0;
                                 }
                                 self.code_distribution[new_item.user_code.text]++;
-                                self.code_distribution[origingal_item.user_code.text]--;
+                                self.code_distribution[original_item.user_code.text]--;
 
                                 for (var key in self.code_distribution){
                                     if ( self.code_distribution.hasOwnProperty(key) ){
@@ -347,8 +348,8 @@
                     var self = this;
                     var param = {};
                     var source = source || "user";
-                    if (source != "master")
-                        param.stage = "current";
+                    //if (source != "master")
+                    //    param.stage = "current";
 
                     var apiUrl = djangoUrl.reverse('code_messages', param);
 
@@ -563,7 +564,7 @@
                     var self = this;
                     var request = {
                         params: {
-                            stage: use_current_stage || "current"
+                            stage: use_current_stage  || undefined
                         }
                     };
 
@@ -583,8 +584,8 @@
                     var new_key = new_code + "_" + partner_code;
 
                     if ( typeof(self.pairwise_distribution_map) !== "undefined") {
-                        self.pairwise_distribution[original_key].count--;
-                        self.pairwise_distribution[new_key].count++;
+                        self.pairwise_distribution_map[original_key].count--;
+                        self.pairwise_distribution_map[new_key].count++;
                     }
                 }
 
