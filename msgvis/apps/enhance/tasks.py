@@ -252,6 +252,7 @@ class FeatureContext(object):
         return Dictionary._create_from_texts(tokenized_texts=tokenized_texts,
                                              name=self.name,
                                              dataset=dataset,
+                                             queryset=self.queryset,
                                              minimum_frequency=self.minimum_frequency,
                                              settings=self.get_dict_settings())
 

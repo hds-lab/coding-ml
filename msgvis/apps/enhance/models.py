@@ -70,6 +70,31 @@ class Dictionary(models.Model):
         except KeyError:
             return None
 
+    @classmethod
+    def _filter_by_tfidf(cls, gensim_dict, threshold, queryset, tokenizer):
+
+        feature_maxtfidf = {}
+        total_documents = gensim_dict.num_docs
+        for msg in queryset.iterator():
+            tokens = tokenizer.tokenize(msg)
+            bow = gensim_dict.doc2bow(tokens)
+
+            for feature_index, feature_freq in bow:
+                document_freq = gensim_dict.dfs[feature_index]
+                num_tokens = len(tokens)
+                tf = float(feature_freq) / float(num_tokens)
+
+                idf = math.log(total_documents / document_freq)
+                tfidf = tf * idf
+                if feature_index in feature_maxtfidf:
+                    if feature_maxtfidf[feature_index] < tfidf:
+                        feature_maxtfidf[feature_index] = tfidf
+                else:
+                    feature_maxtfidf[feature_index] = tfidf
+        filtered_tokens =  {k:v for (k,v) in feature_maxtfidf.iteritems() if v < threshold}
+        gensim_dict.filter_tokens(filtered_tokens.keys())
+        return gensim_dict
+
     def _make_gensim_dictionary(self):
 
         logger.info("Building gensim dictionary from database")
@@ -94,7 +119,7 @@ class Dictionary(models.Model):
 
 
     @classmethod
-    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, minimum_frequency=2):
+    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, queryset, minimum_frequency=2, tfidf_threshold=0.3):
         from gensim.corpora import Dictionary as GensimDictionary
 
         # build a dictionary of features
@@ -104,6 +129,7 @@ class Dictionary(models.Model):
         # Remove extremely rare features
         logger.info("Features dictionary contains %d features. Filtering..." % len(gemsim_dictionary.token2id))
         gemsim_dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
+        cls._filter_by_tfidf(gemsim_dictionary, tfidf_threshold, queryset, tokenized_texts)
         gemsim_dictionary.compactify()
         logger.info("Features Dictionary contains %d features." % len(gemsim_dictionary.token2id))
 
