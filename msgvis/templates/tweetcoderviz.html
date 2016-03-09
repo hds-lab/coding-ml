@@ -349,9 +349,7 @@
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
                                 <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(selectedCode) track by $index" id="user-features"
-                                    ng-click="searchFeature(feature.feature_text)">
-                                    <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
-                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
+                                    ng-click="searchFeature(feature.feature_text)" ng-style="myKeywordStyle(feature)">
                                     <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
                                              data-toggle="tooltip" title="Remove this keyword"
                                              ng-enabled="feature.distribution"><span class="glyphicon glyphicon-remove-circle"></span></button>

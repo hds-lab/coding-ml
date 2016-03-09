@@ -193,11 +193,10 @@ class DisagreementIndicatorSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'message', 'user_assignment', 'partner_assignment', )
 
 
-
-
 class PairwiseSerializer(serializers.Serializer):
     user_code = serializers.CharField()
     partner_code = serializers.CharField()
+
     count = serializers.IntegerField()
 
 class ProgressSerializer(serializers.ModelSerializer):
@@ -206,3 +205,11 @@ class ProgressSerializer(serializers.ModelSerializer):
         model = experiment_models.Progress
         fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', 'is_finished', )
         read_only_fields = ('user', 'current_message_id', 'current_stage_index', 'current_status', 'is_finished', )
+
+
+class ActionHistorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(required=False)
+    class Meta:
+        model = experiment_models.ActionHistory
+        fields = ('id', 'owner', 'type', 'contents', 'created_at', )
+        read_only_fields = ('id', )

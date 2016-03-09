@@ -583,15 +583,7 @@
         }
     ]);
 
-    function getQueryVariable(variable){
-           var query = window.location.search.substring(1);
-           var vars = query.split("&");
-           for (var i=0;i<vars.length;i++) {
-                   var pair = vars[i].split("=");
-                   if(pair[0] == variable){return pair[1];}
-           }
-           return(false);
-    }
+
 
     //A service for progress
     module.factory('TweetCoderViz.services.Progress', [
@@ -613,15 +605,6 @@
             angular.extend(Progress.prototype, {
                 init_load: function(){
                     var self = this;
-
-                    /*var request = {
-                        params: {
-                            stage_index: getQueryVariable('stage_index'),
-                            target_status: getQueryVariable('target_status')
-                        }
-                    };*/
-
-
                     var apiUrl = djangoUrl.reverse('progress');
 
                     //return $http.get(apiUrl, request)
@@ -647,7 +630,7 @@
                             self.is_finished = data.is_finished;
                         })
 
-                },
+                }
             });
 
             return new Progress();
@@ -656,4 +639,80 @@
     ]);
 
 
+    //A service for add history.
+    module.factory('TweetCoderViz.services.ActionHistory', [
+        '$rootScope', '$http', '$interval', '$window', 'djangoUrl',
+        function actionHistoryFactory($rootScope, $http, $interval, $window, djangoUrl) {
+
+            var apiUrl = djangoUrl.reverse('action-history');
+
+            var ActionHistory = function () {
+                var self = this;
+                var second = 1000;
+                var submit_interval = 30;
+                self.queue = [];
+                var interval_timer = $interval(self.submit_records.bind(self), submit_interval * second);
+
+                /*
+                if ($window.location.search.indexOf('safe') != -1){
+                    window.onbeforeunload = function(){
+                        self.submit_records.call(self);
+                        return "Are you sure you want to leave the page?";
+                    };
+                }*/
+                window.onbeforeunload = function(){
+                    self.submit_records.call(self);
+                    return "Are you sure you want to leave the page?";
+                };
+
+                self.init();
+
+            };
+
+            angular.extend(ActionHistory.prototype, {
+                init: function(){
+                    var self = this;
+                    self.add_record('initialization:server-time', '', true);
+                    self.add_record('initialization:client-time', '');
+                    self.submit_records();
+                },
+                add_record: function (type, contents, use_server_time) {
+                    var self = this;
+                    if ( typeof(contents) !== typeof("string") ){
+                        contents = JSON.stringify(contents);
+                    }
+
+                    var record = {
+                        type: type,
+                        contents: contents
+                    };
+                    if (!use_server_time)
+                        record.created_at =  moment.utc().format('YYYY-MM-DD HH:mm:ss');
+                    console.log(record);
+                    self.queue.push(record);
+
+
+                },
+                submit_records: function(){
+                    var self = this;
+                    console.log(self.queue.length + " record(s) in the action history queue ... " );
+                    if (self.queue.length == 0) return;
+
+                    var request = self.queue;
+
+                    self.queue = [];
+
+                    return $http.post(apiUrl, request)
+                        .success(function (data) {
+                            console.log('save ' + data.length + ' record(s)');
+                        }).error(function (data) {
+                            // push the records back to queue
+                            self.queue.concat(request);
+                        });
+                }
+            });
+
+            return new ActionHistory();
+        }
+    ]);
 })();

@@ -33,7 +33,7 @@
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, ActionHistory, usSpinnerService) {
 
         $scope.Progress = Progress;
         $scope.Message = Message;
@@ -1032,6 +1032,7 @@
         'TweetCoderViz.services.Message',
         'TweetCoderViz.services.Feature',
         'TweetCoderViz.services.Progress',
+        'TweetCoderViz.services.ActionHistory',
         'usSpinnerService'
     ];
     module.controller('TweetCoderViz.controllers.ViewController', ViewController);
