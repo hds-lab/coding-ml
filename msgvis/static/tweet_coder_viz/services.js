@@ -102,6 +102,8 @@
                         .success(function (data) {
 
                             self.distributions[source] = data;
+                            // TODO: understand this and make sure the feature is added to the list
+                            // WHAT!?!?!? Array in JS is also object and it is being used in both way in this case...
                             data.forEach(function(feature){
                                 // Add to the dict
                                 self.distributions[source][feature.feature_text] = feature;
@@ -127,6 +129,7 @@
                 var self = this;
                 self.last_message = undefined;
                 self.current_message = undefined;
+                self.all_coded_messages = [];
                 self.coded_messages = {
                     master: {},
                     user: {},
@@ -257,9 +260,9 @@
                         });
 
                 },
-                update_code: function (message_id, code_id) {
+                update_code: function (original_item, code_id) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('assignment', {message_id: message_id});
+                    var apiUrl = djangoUrl.reverse('assignment', {message_id: original_item.message.id});
 
                     // TODO: instead of setting all of them to be false, maybe taking flags from previous ones?
                     var request = {
@@ -271,9 +274,41 @@
 
 
                     return $http.put(apiUrl, request)
-                        .success(function (data) {
+                        .success(function (new_item) {
                             //self.last_message = data;
+                            new_item = self.format_tweet_item(new_item);
                             // TODO: the data should be another assignment and need to use that for updating the interface
+                            if (Progress.current_status == 'R'){
+
+                                // Remove the original item from list and add the new item
+                                var idx = self.all_coded_messages.indexOf(original_item);
+                                if ( idx != -1 ){
+                                    self.all_coded_messages.splice(idx, 1);
+                                }
+                                self.all_coded_messages.push(new_item);
+
+                                // Update the code distribution
+                                if (self.code_distribution[new_item.user_code.text] == undefined){
+                                    self.code_distribution[new_item.user_code.text] = 0;
+                                }
+                                self.code_distribution[new_item.user_code.text]++;
+                                self.code_distribution[original_item.user_code.text]--;
+
+                                for (var key in self.code_distribution){
+                                    if ( self.code_distribution.hasOwnProperty(key) ){
+                                        self.normalized_code_distribution[key] = self.code_distribution[key];
+                                        self.normalized_code_distribution[key] /= self.all_coded_messages.length;
+                                    }
+                                }
+
+                                // Update pairwise comparison
+                                Code.update_pairwise(original_item.user_code.text,
+                                                     new_item.user_code.text,
+                                                     new_item.partner_code.text);
+
+                            }
+
+
                         });
 
                 },
@@ -313,8 +348,8 @@
                     var self = this;
                     var param = {};
                     var source = source || "user";
-                    if (source != "master")
-                        param.stage = "current";
+                    //if (source != "master")
+                    //    param.stage = "current";
 
                     var apiUrl = djangoUrl.reverse('code_messages', param);
 
@@ -517,7 +552,7 @@
                     var self = this;
                     var request = {
                         params: {
-                            stage: use_current_stage || "current"
+                            stage: use_current_stage  || undefined
                         }
                     };
 
@@ -530,6 +565,16 @@
                                 self.pairwise_distribution_map[key] = pair;
                             });
                         });
+                },
+                update_pairwise: function(original_code, new_code, partner_code){
+                    var self = this;
+                    var original_key = original_code + "_" + partner_code;
+                    var new_key = new_code + "_" + partner_code;
+
+                    if ( typeof(self.pairwise_distribution_map) !== "undefined") {
+                        self.pairwise_distribution_map[original_key].count--;
+                        self.pairwise_distribution_map[new_key].count++;
+                    }
                 }
 
             });

@@ -150,10 +150,10 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = coding_models.CodeAssignment
-        fields = ('id', 'source', 'message', 'is_example', 'is_ambiguous',
+        fields = ('id', 'source', 'message', 'is_example', 'is_ambiguous', 'source_stage_index',
                   'is_saved', 'code', 'user_code', 'partner_code', 'disagreement_indicator', 'feature_vector')
-        read_only_fields = ('id', 'source', 'message', 'user_code', 'partner_code', 'disagreement_indicator',
-                            'feature_vector')
+        read_only_fields = ('id', 'source', 'message', 'current_stage_index',
+                            'user_code', 'partner_code', 'disagreement_indicator', 'feature_vector')
 
 
 #class CodeDefinitionSerializer(serializers.ModelSerializer):

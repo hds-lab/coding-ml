@@ -264,8 +264,12 @@
                                                      data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                             </div>
                                             <div ng-bind-html="item.message.embedded_html"></div>
+                                            <div class="source-stage" ng-show="hoveredItem==item">
+                                                <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                            </div>
                                         </div>
                                         <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
+
                                     </div>
                                 </div>
 
@@ -345,8 +349,10 @@
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
                                 <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(selectedCode) track by $index" id="user-features"
+                                    ng-click="searchFeature(feature.feature_text)">
+                                    <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
                                      ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
-                                    <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)"
+                                    <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
                                              data-toggle="tooltip" title="Remove this keyword"
                                              ng-enabled="feature.distribution"><span class="glyphicon glyphicon-remove-circle"></span></button>
                                     <span class="feature-text user-feature"
@@ -363,7 +369,7 @@
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">No system keywords found for '{$ code.code_text $}'.</p>
+                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">No system keywords for found for '{$ selectedCode.code_text $}'.</p>
                                 <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(selectedCode) track by $index" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
@@ -415,6 +421,7 @@
                                         <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.user_code.text])}"></div>
                                         <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.partner_code.text])}"></div>
                                     </div>
+
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
                                         <div>
@@ -427,7 +434,7 @@
                                             <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
                                                  ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
                                                              data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                                            <div class="inline" ng-show="item.disagreement_indicator">
+                                            <div class="inline" ng-show="showIndicator(item)">
                                                 <label for="indicator">Disagreement indicator: </label>
                                                 <div class="dropdown">
                                                     <button class="btn btn-default dropdown-toggle" type="button" id="verdictMenu"
@@ -453,8 +460,10 @@
                                         </div>
                                         <button class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
                                     </div>
-
                                         <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
+                                        <div class="source-stage" ng-show="hoveredItem==item">
+                                            <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsByConfusionAndCode()).length==0" class="help-text">No tweets were found.</p>
