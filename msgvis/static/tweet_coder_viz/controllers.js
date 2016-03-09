@@ -454,6 +454,10 @@
 
         $scope.ask_if_change_code = false;
         $scope.message_for_change = undefined;
+        $scope.showIndicator = function(item){
+            return item.disagreement_indicator && Progress.current_stage_index == item.source_stage_index;
+        };
+
         $scope.updateIndicator = function(item, disagreement){
 
             if (disagreement && item.disagreement_indicator != disagreement) {

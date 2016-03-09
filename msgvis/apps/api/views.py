@@ -497,7 +497,10 @@ class CodeAssignmentView(APIView):
                 user_dict = self.request.user
                 if user_dict.id is not None and User.objects.filter(id=user_dict.id).exists():
                     user = User.objects.get(id=self.request.user.id)
+                    progress = experiment_models.Progress.objects.filter(user=user).first()
+                    current_stage_index = progress.current_stage_index
                     assignments = coding_models.CodeAssignment.objects.filter(is_user_labeled=True, source=user,
+                                                                              source_stage_index=current_stage_index,
                                                                               message=message, valid=True)
                     if assignments.exists():
                         assignments.update(valid=False)
@@ -505,6 +508,7 @@ class CodeAssignmentView(APIView):
                             assignment.save()
 
                     code_assignment = coding_models.CodeAssignment(is_user_labeled=True, source=user,
+                                                                   source_stage_index=current_stage_index,
                                                                    message=message, code=code, valid=True)
 
                     code_assignment.is_example=data['is_example']
@@ -622,7 +626,7 @@ class AllCodedMessageView(APIView):
                                                                           is_user_labeled=True,
                                                                           valid=True).all()
 
-            assignments = assignments.order_by('message_id')
+            assignments = assignments.order_by('-source_stage_index', 'message_id')
 
             for assignment in assignments:
                 message = corpus_models.Message.objects.get(id=assignment.message_id)

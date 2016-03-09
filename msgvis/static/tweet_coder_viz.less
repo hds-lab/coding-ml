@@ -22,11 +22,12 @@ html, body {
     overflow: hidden;
     min-width: 1200px;
     background: #eee;
+    color: #333;
 }
 body {
-    font-family: 'Open Sans', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: 'Calibri', sans-serif;
     font-weight: 400;
-    font-size: 9pt;
+    font-size: 10pt;
     min-width: 1200px;
 
     .popover {
@@ -149,7 +150,7 @@ th:hover{
 
 h2 {
     font-weight: 800;
-    font-size: 14px;
+    font-size: 16px;
     text-transform: uppercase;
     margin: 0 0 10px 0;
 }
@@ -255,7 +256,7 @@ h3 {
     }
 
     .feature-text {
-        width: 60%;
+        width: 58%;
         height: 100%;
         display: inline-block;
         white-space: nowrap;
@@ -308,10 +309,10 @@ h3 {
 
     .content {
         padding: 5px;
-
+        position: relative;
         .item-message {
             &.item-selectable {
-                font-size: 16px;
+                font-size: 18px;
                 margin: 20px;
                 -webkit-touch-callout: none;
                 -webkit-user-select: none;
@@ -324,6 +325,14 @@ h3 {
                     cursor: pointer;
                 }
             }
+        }
+
+        .source-stage {
+            position: absolute;
+            right: 10px;
+            top: 5px;
+            color: #999;
+            font-size: 10px;
         }
 
         .btn-toggle {
@@ -663,7 +672,7 @@ h3 {
                 }
 
                 #user-features .feature-text {
-                    width: calc(60% ~ "-" 20px);
+                    width: calc(58% ~ "-" 20px);
                 }
 
                 #confusion {
@@ -743,6 +752,7 @@ h3 {
                     }
 
                     .label-item {
+                        position: relative;
 
                         .confusion {
                             width: 100%;
@@ -763,7 +773,17 @@ h3 {
                         .content {
                             padding-top: 15px;
                         }
+
+                        .source-stage {
+                            position: absolute;
+                            right: 10px;
+                            top: 15px;
+                            color: #999;
+                            font-size: 10px;
+                        }
                     }
+
+
                 }
             }
         }

@@ -19,6 +19,8 @@ class CodeAssignment(models.Model):
     is_ambiguous = models.BooleanField(default=False)
     is_example = models.BooleanField(default=False)
 
+    source_stage_index = models.IntegerField(default=-1, null=True)
+
     is_user_labeled = models.BooleanField(default=True)
     """Whether this code assignment is user given. Otherwise it is from the user's model"""
     probability = models.FloatField(default=1.0)
@@ -56,6 +58,8 @@ class CodeAssignment(models.Model):
                                               partner_assignment=partner_assignment)
             indicator.save()
         return indicator
+
+
 
 
 
