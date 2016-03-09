@@ -253,6 +253,7 @@ class FeatureContext(object):
                                              name=self.name,
                                              dataset=dataset,
                                              queryset=self.queryset,
+                                             filter_tfidf=True,
                                              minimum_frequency=self.minimum_frequency,
                                              settings=self.get_dict_settings())
 

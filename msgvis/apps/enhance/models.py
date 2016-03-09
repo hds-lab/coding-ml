@@ -119,7 +119,7 @@ class Dictionary(models.Model):
 
 
     @classmethod
-    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, queryset, minimum_frequency=2, tfidf_threshold=0.3):
+    def _create_from_texts(cls, tokenized_texts, name, dataset, settings, queryset, filter_tfidf, minimum_frequency=2, tfidf_threshold=0.3):
         from gensim.corpora import Dictionary as GensimDictionary
 
         # build a dictionary of features
@@ -129,7 +129,8 @@ class Dictionary(models.Model):
         # Remove extremely rare features
         logger.info("Features dictionary contains %d features. Filtering..." % len(gemsim_dictionary.token2id))
         gemsim_dictionary.filter_extremes(no_below=minimum_frequency, no_above=1, keep_n=None)
-        cls._filter_by_tfidf(gemsim_dictionary, tfidf_threshold, queryset, tokenized_texts)
+        if filter_tfidf:
+            cls._filter_by_tfidf(gemsim_dictionary, tfidf_threshold, queryset, tokenized_texts)
         gemsim_dictionary.compactify()
         logger.info("Features Dictionary contains %d features." % len(gemsim_dictionary.token2id))
 
