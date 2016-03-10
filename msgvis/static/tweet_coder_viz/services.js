@@ -344,7 +344,7 @@
                             console.log("Update disagreement indicator", data);
                         });
                 },
-                load_coded_messages: function(source){
+                load_coded_messages: function(code, source){
                     var self = this;
                     var param = {};
                     var source = source || "user";
@@ -353,21 +353,20 @@
 
                     var apiUrl = djangoUrl.reverse('code_messages', param);
 
-                    Code.codes.forEach(function(code){
 
-                        var request = {
-                            params: {
-                                code: code.code_id,
-                                source: source
-                            }
-                        };
+                    var request = {
+                        params: {
+                            code: code.code_id,
+                            source: source
+                        }
+                    };
 
-                        return $http.get(apiUrl, request)
-                            .success(function (data) {
-                                self.coded_messages[source][code.code_text] = data.assignments.map(function(d){ return self.format_tweet_item(d);});
-                                $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
-                            });
-                    });
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.coded_messages[source][code.code_text] = data.assignments.map(function(d){ return self.format_tweet_item(d);});
+                            $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
+                        });
+
 
                 },
                 load_all_coded_messages: function(use_current_stage){
@@ -411,7 +410,7 @@
                     var featureText = feature.text ? feature.text : feature.feature_text;
 
                     // If it's a user feature, split it on '&' and search within lemmatized_tokens
-                    if (feature.source == "user") {
+                    if (feature.source == "user" || feature.source == "partner") {
                         var ngrams = featureText.toLowerCase().split("&").filter(Boolean);
 
                         // iterate and search for tokens

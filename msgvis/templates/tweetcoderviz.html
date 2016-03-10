@@ -99,7 +99,7 @@
             <div class="stage-prompt">{$ statusText $}</div>
         </div>
 
-        <div id="coding" ng-if="is_status('C') && !statusText">
+        <div id="coding" ng-show="is_status('C') && !statusText">
             <div class="box box-top">
                 <div id="top-area">
                     <h2><span class="stage"> Stage {$ Progress.current_stage_index + 1 $}</span> | Coding</h2>
@@ -158,23 +158,22 @@
 
                 <div id="bottom-area">
                     <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
-                    <div class="row" id="panel" ng-repeat="code in codes" ng-style="definitionStyle(code)"
-                         ng-show="code.code_text == selectedCode.code_text">
+                    <div class="row" id="panel" ng-show="selectedCode" ng-style="definitionStyle(selectedCode)">
                         <div class="col-md-3 scroll-y">
                             <div class="box box-light box-right">
-                                <h2>Review <span>{$ code.code_text $}</span></h2>
+                                <h2>Review <span>{$ selectedCode.code_text $}</span></h2>
                                 <h3>Master Definition</h3>
-                                <p>{$ code.text $}</p>
+                                <p>{$ selectedCode.text $}</p>
                                 <h3>Master Example</h3>
-                                <p>{$ code.examples[0].text $}</p>
+                                <p>{$ selectedCode.examples[0].text $}</p>
                                 <h3>My Definition</h3>
-                                <p ng-show="Code.definitions_by_code[code.code_text]['user']">{$ Code.definitions_by_code[code.code_text]["user"] $}</p>
-                                <p ng-hide="Code.definitions_by_code[code.code_text]['user']" class="help-text">You have not provided a definition yet.</p>
+                                <p ng-show="Code.definitions_by_code[selectedCode.code_text]['user']">{$ Code.definitions_by_code[selectedCode.code_text]["user"] $}</p>
+                                <p ng-hide="Code.definitions_by_code[selectedCode.code_text]['user']" class="help-text">You have not provided a definition yet.</p>
                                 <h3>My Examples</h3>
-                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweets('Example')).length==0"
+                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')).length==0"
                                    class="help-text">You have not saved any tweets as exemplar of '<span>{$ code.code_text $}</span>'.</p>
-                                <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweets('Example')"
-                                     class="label-item" ng-style="{ 'border-color': codeColor(code) }">
+                                <div ng-repeat="item in coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')"
+                                     class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
                                     <div class="content">
                                         <div class="item-message" ng-bind-html="item.message.embedded_html"></div>
                                     </div>
@@ -183,14 +182,28 @@
                         </div>
                         <div class="col-md-3 scroll-y">
                             <div class="box box-light">
-                                <h2>Keyword distribution for <span>{$ code.code_text $}</span></h2>
+                                <h2>Keyword distribution for <span>{$ selectedCode.code_text $}</span></h2>
                                 <h3>My keywords</h3>
-                                <p ng-hide="(featureList.user | filter:filterFeatures(code)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ code.code_text$}</span>'. You can do so in the review stage.</p>
-                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(code) track by $index" id="user-features"
+                                <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'. You can do so in the review stage.</p>
+                                <div class="features" ng-repeat="feature in featureList.user track by $index" ng-show="filterFeatures(selectedCode, feature)" id="user-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
-                                    <!--
-                                    <button class="btn btn-default" ng-click="$event.preventDefault(); $event.stopPropagation(); removeFeature(feature)" data-toggle="tooltip" title="Remove this keyword"><span class="glyphicon glyphicon-remove-circle"></span></button>
-                                    -->
+                                    <span class="feature-text"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
+                                     data-placement="auto top">{$ feature.feature_text $}</span>
+                                    <div ng-show="feature.total_count > 0" class="feature-distribution">
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
+                                    </div>
+                                    <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                                    <span class="feature-total">{$ feature.total_count $}</span>
+                                </div>
+                                <h3>My partner's keywords</h3>
+                                <p ng-hide="(featureList.partner | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Your partner does not have any keyword for '<span>{$ selectedCode.code_text$}</span>'.</p>
+                                <div class="features" ng-repeat="feature in featureList.partner track by $index " ng-show="filterFeatures(selectedCode, feature)" id="partner-features"
+                                    ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <span class="feature-text"
                                      popover data-toggle="popover" data-trigger="hover" data-html="true"
                                      ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
@@ -205,8 +218,8 @@
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(code)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ code.code_text$}</span>'.</p>
-                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(code) track by $index" id="system-features"
+                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ code.code_text$}</span>'.</p>
+                                <div class="features" ng-repeat="feature in featureList.system track by $index" ng-show="filterFeatures(selectedCode, feature)" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
@@ -222,7 +235,7 @@
                         </div>
                         <div class="col-md-6 scroll-y">
                             <div class="box box-light box-left">
-                                <h2>My Tweets labeled as <span>{$ code.code_text $}</span></h2>
+                                <h2>My Tweets labeled as <span>{$ selectedCode.code_text $}</span></h2>
 
                                 <div id="search">
                                     <div class="search-label">Show: </div>
@@ -246,8 +259,8 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div ng-repeat="item in coded_messages['user'][code.code_text] | filter:filterTweetsFlag()"
-                                     class="label-item" ng-style="{ 'border-color': codeColor(code) }"
+                                <div ng-repeat="item in coded_messages['user'][selectedCode.code_text] | filter:filterTweetsFlag()"
+                                     class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }"
                                      ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)">
 
                                     <div class="content">
@@ -273,7 +286,7 @@
                                     </div>
                                 </div>
 
-                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][code.code_text] | filter:filterTweetsFlag()).length==0" class="help-text">No tweets were found.</p>
+                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][selectedCode.code_text] | filter:filterTweetsFlag()).length==0" class="help-text">No tweets were found.</p>
                             </div>
                         </div>
                     </div>
@@ -281,7 +294,7 @@
             </div>
         </div>
 
-        <div id="reviewing" ng-if="is_status('R') && !statusText">
+        <div id="reviewing" ng-show="is_status('R') && !statusText">
             <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
             <div class="box box-top" id="top-area">
                 <h2><span class="stage"> Stage {$ Progress.current_stage_index + 1 $}</span> | Review</h2>
@@ -348,7 +361,7 @@
                                 <h2>Keyword distribution</h2>
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
-                                <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(selectedCode) track by $index" id="user-features"
+                                <div class="features" ng-repeat="feature in featureList.user track by $index" ng-show="filterFeatures(selectedCode, feature)" id="user-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
                                              data-toggle="tooltip" title="Remove this keyword"
@@ -366,9 +379,26 @@
                                     <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
+                                <h3>My partner's keywords</h3>
+                                <p ng-hide="(featureList.partner | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Your partner does not have any keyword for '{$ selectedCode.code_text $}'.</p>
+                                <div class="features" ng-repeat="feature in featureList.partner track by $index" ng-show="filterFeatures(selectedCode, feature)" id="partner-features"
+                                    ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
+                                    <span class="feature-text partner-feature"
+                                     popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                     ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
+                                     data-placement="auto top">{$ feature.feature_text $}</span>
+                                    <div ng-show="feature.total_count > 0" class="feature-distribution">
+                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                             popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                             ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
+                                             data-placement="auto top"></div>
+                                    </div>
+                                    <div ng-show="feature.total_count == 0" class="feature-distribution feature-empty"></div>
+                                    <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
+                                </div>
                                 <h3>System keywords</h3>
                                 <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">No system keywords for found for '{$ selectedCode.code_text $}'.</p>
-                                <div class="features" ng-repeat="feature in featureList.system | filter:filterFeatures(selectedCode) track by $index" id="system-features"
+                                <div class="features" ng-repeat="feature in featureList.system track by $index" ng-show="filterFeatures(selectedCode, feature)" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
@@ -386,7 +416,9 @@
                             <div class="box box-light">
                                 <h2>Comparison</h2>
                                 <span us-spinner="spinnerOptions" spinner-key="pairwise-spinner"></span>
-                                <div id="confusion" ng-class="{ selected: selectedConfusion==pair}" ng-repeat="pair in confusionPairs | filter:filterConfusionByCode()" ng-click="selectConfusion(pair)">
+                                <div id="confusion" ng-class="{ selected: selectedConfusion==pair}"
+                                     ng-repeat="pair in confusionPairs" ng-show="filterConfusionByCode(pair)"
+                                     ng-click="selectConfusion(pair)">
                                     <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[pair.user_code])}">
                                         <span>{$ pair.user_code $}</span>
                                     </div>
@@ -411,7 +443,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div ng-repeat="item in allItems | filter:filterTweetsByConfusionAndCode()" class="label-item"
+                                <div ng-repeat="item in allItems" ng-show="filterTweetsByConfusionAndCode(item)" class="label-item"
                                      ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }"
                                      ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
                                      ng-class="{ hovered: hoveredItem==item }">

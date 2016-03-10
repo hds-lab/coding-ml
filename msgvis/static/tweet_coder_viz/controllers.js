@@ -123,10 +123,9 @@
                 if ($scope.is_definition_different())
                     $scope.ask_if_save_definition = true;
                 $scope.selectedConfusion = undefined;
-                $scope.search = {text: "", feature: undefined};
             }
             $scope.selectedCode = code;
-            $scope.search.text = "";
+            $scope.search = {text: "", feature: undefined};
 
             // set hover state on the first tweet
             if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text] &&
@@ -228,8 +227,8 @@
             }
         };
 
-        $scope.filterTweetsConfusion = function() {
-            return function(item) {
+        $scope.filterTweetsConfusion = function(item) {
+            if (item) {
                 var confusion = $scope.selectedConfusion;
                 var searchText = $scope.search.text;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
@@ -240,8 +239,8 @@
             }
         };
 
-        $scope.filterTweetsByConfusionAndCode = function(){
-            return function(item) {
+        $scope.filterTweetsByConfusionAndCode = function(item) {
+            if (item){
                 var confusion = $scope.selectedConfusion;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
                 var rightCode = item.user_code.id == $scope.selectedCode.code_id;
@@ -249,6 +248,8 @@
                 var matched = $scope.searchTweets(item.message, $scope.search);
                 return matched && flagged && rightCode;
             }
+
+
         };
 
         $scope.searchTweets = function(message, search) {
@@ -269,16 +270,17 @@
             return matched;
         };
 
-        $scope.filterConfusionByCode = function() {
-            return function(confusion){
+        $scope.filterConfusionByCode = function(confusion){
+            if (confusion) {
                 return confusion.count > 0 && confusion.user_code == $scope.selectedCode.code_text;
             }
         };
 
-        $scope.filterFeatures = function(code){
-            return function(feature){
-                return  feature.distribution && feature.distribution[code.code_text] > 0;
+        $scope.filterFeatures = function(code, feature){
+            if (code && feature){
+                return feature.distribution && feature.distribution[code.code_text] > 0;
             }
+            return true;
         };
 
         $scope.pillColor = function(code_id){
@@ -291,7 +293,7 @@
         };
 
         $scope.myKeywordStyle = function(feature){
-            if (feature && feature.source == "user") {
+            if (feature && feature.source != "system") {
                 var color = $scope.colors[feature.origin_code_id % $scope.colors.length];
                 return {'border': '1px solid ' + color};
             }
@@ -301,24 +303,28 @@
         };
 
         $scope.codeColor = function(code){
+            if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
             return color;
         };
 
         $scope.codeColorLight = function(code){
+            if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
             return color;
         };
 
         $scope.codeColorLighter = function(code){
+            if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLighter[colorIndex % $scope.colorsLighter.length];
             return color;
         };
 
         $scope.buttonStyle = function(code){
+            if (!code) return;
 
             var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
@@ -342,6 +348,7 @@
         };
 
         $scope.definitionStyle = function(code){
+            if (!code) return;
 
             var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
@@ -357,7 +364,7 @@
 
 
         $scope.panelStyle = function(code){
-
+            if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
 
@@ -569,7 +576,8 @@
         /** Functions for handling definitions start */
 
         $scope.hasDefinition = function(code, source){
-            return Code.definitions_by_code[code.code_text][source] &&
+            if (!code) return false;
+            return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
                    Code.definitions_by_code[code.code_text][source].trim().length > 0;
         };
 
@@ -645,9 +653,9 @@
             History.add_record("getAllMessages:request-start", {updateFeaturesOnly: updateFeaturesOnly});
             var request = Message.load_all_coded_messages(/*"current"*/);
             if (request) {
-                usSpinnerService.spin('label-spinner');
+                usSpinnerService.spin('submitted-label-spinner');
                 request.then(function () {
-                    usSpinnerService.stop('label-spinner');
+                    usSpinnerService.stop('submitted-label-spinner');
                     History.add_record("getAllMessages:request-end", {updateFeaturesOnly: updateFeaturesOnly});
 
                     if (!updateFeaturesOnly) {
@@ -701,32 +709,61 @@
                     History.add_record("getCodeDetail:request-end", {});
                     $scope.statusText = undefined;
 
-                    Message.load_coded_messages();
                     $scope.codes = Code.codes;
                     if (Progress.current_status == 'R'){
                         $scope.selectedCode = $scope.codes[0];
                         $scope.load_distribution("user");
+                        $scope.load_distribution("partner");
                         $scope.load_distribution("system");
                         $scope.load_pairwise_distribution();
                         $scope.getAllMessages();
                     }
-                    else {
+                    else if (Progress.current_status == 'C') {
                         $scope.getMessageDetail();
                         $scope.load_distribution("user");
+                        $scope.load_distribution("partner");
                         $scope.load_distribution("system");
+                        $scope.getCodedMessages();
+
                     }
                 });
             }
-            
         };
 
+        var num_coded_message_requests = 0;
+        $scope.getCodedMessages = function(){
+            if ($scope.codes){
+                $scope.codes.forEach(function(code){
+                    var request = Message.load_coded_messages(code);
+                    if (request) {
+                        usSpinnerService.spin('code-detail-spinner');
+                        History.add_record("getCodeMessages:request-start", {code: code});
+                        num_coded_message_requests += 1;
+                        request.then(function() {
+                            num_coded_message_requests -= 1;
+                            History.add_record("getCodeMessages:request-end", {code: code});
+                            if (num_coded_message_requests == 0){
+                                usSpinnerService.stop('code-detail-spinner');
+                                $scope.coded_messages = Message.coded_messages;
+                            }
+
+                        });
+                    }
+                });
+            }
+        };
+
+        var num_distribution_queries = 0;
         $scope.load_distribution = function(source){
             History.add_record("load_distribution:request-start", {source: source});
             var request = Feature.get_distribution(source);
             if (request) {
                 usSpinnerService.spin('feature-spinner');
+                num_distribution_queries += 1;
                 request.then(function() {
-                    usSpinnerService.stop('feature-spinner');
+                    num_distribution_queries -= 1;
+                    if (num_distribution_queries <= 0 )
+                        usSpinnerService.stop('feature-spinner');
                     History.add_record("load_distribution:request-end", {source: source});
                     $scope.featureList[source] = Feature.distributions[source];
                 });
@@ -927,7 +964,7 @@
         };
         $scope.stageSelectable = function(item){
             return ($scope.from_current_stage(item)) ? "pointer" : "";
-        }
+        };
 
         $scope.replaceFeature = function(featureConflict){
             $scope.featureConflict = null;
@@ -1081,9 +1118,9 @@
         });
 
         // Specific event handlers
-        $scope.$on('messages::load_coded_messages', function($event, data) {
+       /* $scope.$on('messages::load_coded_messages', function($event, data) {
             $scope.coded_messages = data;
-        });
+        });*/
         $scope.$on('definitions::updated', function($event, data) {
             $scope.codes = data;
             $scope.codes.forEach(function(code){
