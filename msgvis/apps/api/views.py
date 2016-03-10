@@ -15,31 +15,38 @@ The view classes below define the API endpoints.
 | Snapshots                                                       | /api/snapshots  | Save a visualization snapshot                   |
 +-----------------------------------------------------------------+-----------------+-------------------------------------------------+
 """
+import json
+import logging
+from operator import attrgetter, itemgetter
 
 from django.db import IntegrityError
+from django.db import transaction
+from django.db.models import Count
+from django.contrib.auth.models import User
+from django.core.urlresolvers import NoReverseMatch
 
 from rest_framework import status
 from rest_framework.views import APIView, Response
-from django.core.urlresolvers import NoReverseMatch
 from rest_framework.reverse import reverse
 from rest_framework.compat import get_resolver_match, OrderedDict
-from django.core.context_processors import csrf
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count
-from django.contrib.auth.models import User
-from operator import attrgetter, itemgetter
 
 from msgvis.apps.api import serializers
+from msgvis.apps.base.utils import AttributeDict, entropy
+from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.experiment import models as experiment_models
-from msgvis.apps.coding import models as coding_models
-import json
-import logging
 
-from msgvis.apps.base.utils import AttributeDict, entropy
 
 logger = logging.getLogger(__name__)
+
+
+def add_history(user, type, contents):
+    history = experiment_models.ActionHistory(type=type, contents=json.dumps(contents), from_server=True)
+    if user.id is not None and User.objects.filter(id=1).count() != 0:
+        user = User.objects.get(id=user.id)
+        history.owner = user
+    history.save()
 
 
 class DatasetView(APIView):
@@ -853,13 +860,61 @@ class ProgressView(APIView):
                 progress = user.progress
             output = serializers.ProgressSerializer(progress)
             return Response(output.data, status=status.HTTP_200_OK)
-           # else:
-           #     return Response("No progress can be made.", status=status.HTTP_200_OK)
+
         except:
             import traceback
             traceback.print_exc()
             import pdb
             pdb.set_trace()
+
+class ActionHistoryView(APIView):
+    """
+    Add a action history record.
+
+    **Request:** ``POST /api/history``
+
+    **Format:**: (request should not have ``messages`` key)
+
+    ::
+
+        {
+           "records": [
+               {
+                    "type": "click-legend",
+                    "contents": "group 10"
+                },
+                {
+                    "type": "group:delete",
+                    "contents": "{\\"group\\": 10}"
+                }
+            ]
+        }
+    """
+
+    def post(self, request, format=None):
+        input = serializers.ActionHistorySerializer(data=request.data, many=True)
+        if input.is_valid():
+            data = input.validated_data
+            records = []
+            owner = None
+            if self.request.user is not None:
+                user = self.request.user
+                if user.id is not None and User.objects.filter(id=1).count() != 0:
+                    owner = User.objects.get(id=self.request.user.id)
+
+            for record in data:
+                record_obj = experiment_models.ActionHistory(owner=owner, type=record["type"], contents=record["contents"],
+                                                             stage_index=record["stage_index"], status=record["status"])
+                if record.get('created_at'):
+                    record_obj.created_at = record.get('created_at')
+                records.append(record_obj)
+
+            with transaction.atomic(savepoint=False):
+                experiment_models.ActionHistory.objects.bulk_create(records)
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class APIRoot(APIView):

@@ -1,12 +1,14 @@
 from operator import itemgetter
+from random import shuffle
 
 from django.db import models
 from django.db import transaction
+from django.contrib.auth.models import User
+from django.utils import timezone
+
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.coding import models as coding_models
-from django.contrib.auth.models import User
-from random import shuffle
 from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
 
@@ -285,7 +287,7 @@ class StageAssignment(models.Model):
             raise IndexError("No next stage")
         return next_stage
 
-    def initialize_stage(self, selected_num=5):
+    def initialize_stage(self, selected_num=30):
         stage = self.stage
         message_count = self.stage.messages.count()
         messages = list(self.stage.messages.all())
@@ -640,3 +642,33 @@ class SVMModelWeight(models.Model):
 
     last_updated = models.DateTimeField(auto_now_add=True, auto_now=True)
     """The code updated time"""
+
+
+class ActionHistory(models.Model):
+    """
+    A model to record history
+    """
+
+    owner = models.ForeignKey(User, default=None, null=True)
+
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    """Created time"""
+
+    from_server = models.BooleanField(default=False)
+
+    type = models.CharField(max_length=100, default="", blank=True, db_index=True)
+
+    contents = models.TextField(default="", blank=True)
+
+    stage_index = models.IntegerField(default=-1)
+
+    STATUS_CHOICES = (
+        ('N', 'Not yet start'),
+        ('I', 'Initialization'),
+        ('C', 'Coding'),
+        ('W', 'Waiting'),
+        ('R', 'Review'),
+        ('S', 'Switching stage'),
+        ('F', 'Finished'),
+    )
+    status = models.CharField(null=True, max_length=1, choices=STATUS_CHOICES, default=None)
