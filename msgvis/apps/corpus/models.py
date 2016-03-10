@@ -66,10 +66,10 @@ class Dataset(models.Model):
 
     def get_non_master_message_set(self):
         messages = self.message_set.filter(time__isnull=False)
+        messages = messages.exclude(code_assignments__isnull=True)
+        messages = messages.exclude(code_assignments__source__username="master")
 
-        filter_ors = [("code_assignments__isnull", True),
-                      ("code_assignments__source__username__ne", "master")]
-        return messages.filter(reduce(operator.or_, [Q(x) for x in filter_ors]))
+        return messages
 
     def get_master_message_set(self):
         messages = self.message_set.filter(time__isnull=False)

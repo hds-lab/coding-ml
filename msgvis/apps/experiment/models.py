@@ -14,7 +14,7 @@ from msgvis.apps.base.utils import check_or_create_dir
 
 def create_a_pair(output):
 
-    current_user_count = User.objects.count()
+    current_user_count = User.objects.exclude(is_superuser=True).count()
 
     # user 1
     username1 = "user_%03d" % (current_user_count + 1)
