@@ -903,7 +903,8 @@ class ActionHistoryView(APIView):
                     owner = User.objects.get(id=self.request.user.id)
 
             for record in data:
-                record_obj = experiment_models.ActionHistory(owner=owner, type=record["type"], contents=record["contents"])
+                record_obj = experiment_models.ActionHistory(owner=owner, type=record["type"], contents=record["contents"],
+                                                             stage_index=record["stage_index"], status=record["status"])
                 if record.get('created_at'):
                     record_obj.created_at = record.get('created_at')
                 records.append(record_obj)

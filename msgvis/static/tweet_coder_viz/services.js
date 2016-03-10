@@ -642,7 +642,8 @@
     //A service for add history.
     module.factory('TweetCoderViz.services.ActionHistory', [
         '$rootScope', '$http', '$interval', '$window', 'djangoUrl',
-        function actionHistoryFactory($rootScope, $http, $interval, $window, djangoUrl) {
+        'TweetCoderViz.services.Progress',
+        function actionHistoryFactory($rootScope, $http, $interval, $window, djangoUrl, Progress) {
 
             var apiUrl = djangoUrl.reverse('action-history');
 
@@ -684,7 +685,9 @@
 
                     var record = {
                         type: type,
-                        contents: contents
+                        contents: contents,
+                        stage_index: Progress.current_stage_index,
+                        status: Progress.current_status
                     };
                     if (!use_server_time)
                         record.created_at =  moment.utc().format('YYYY-MM-DD HH:mm:ss');

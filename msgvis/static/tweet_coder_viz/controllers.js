@@ -33,7 +33,7 @@
     ];
     module.controller('TweetCoderViz.controllers.DictionaryController', DictionaryController);
 
-    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, ActionHistory, usSpinnerService) {
+    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, History, usSpinnerService) {
 
         $scope.Progress = Progress;
         $scope.Message = Message;
@@ -118,6 +118,7 @@
 
 
         $scope.selectLabel = function(code){
+            History.add_record("selectLabel", {code: code});
             if ($scope.Progress.current_status == 'R'){
                 if ($scope.is_definition_different())
                     $scope.ask_if_save_definition = true;
@@ -133,18 +134,22 @@
         };
 
         $scope.selectMedia = function(media_url){
+            History.add_record("selectMedia", {media_url: media_url});
             $scope.selectedMedia = media_url;
         };
 
         $scope.selectFilter = function(filter){
+            History.add_record("selectFilter", {filter: filter});
             $scope.selectedFilter = filter;
         };
 
         $scope.selectConfusion = function(pair){
             if ($scope.selectedConfusion == pair){
+                History.add_record("selectConfusion:deselect", {pair: pair});
                 $scope.selectedConfusion = undefined;
             }
             else {
+                History.add_record("selectConfusion:select", {pair: pair});
                 $scope.selectedConfusion = pair;
             }
         };
@@ -152,9 +157,11 @@
         $scope.searchFeature = function(feature) {
             // Check if the previous feature matches the current one
             if ($scope.search.feature != feature) {
+                History.add_record("selectFeature:select", {feature: feature});
                 $scope.search.feature = feature;
             }
             else {
+                History.add_record("selectFeature:deselect", {feature: feature});
                 $scope.search.feature = undefined;
             }
 
@@ -162,6 +169,7 @@
         };
 
         $scope.removeSearchFeature = function(){
+            History.add_record("removeSearchFeature", {});
             $scope.search.feature = undefined;
             $scope.search.text = undefined;
         };
@@ -246,10 +254,12 @@
 
             // Are we searching for text or features?
             if (search.feature) {
+                //History.add_record("searchTweets:feature", {message: message, search: search});
                 var matchedTokenIndices = Message.match_feature(message, search.feature);
                 matched = matchedTokenIndices && matchedTokenIndices.length > 0;
             }
             else {
+                //History.add_record("searchTweets:text", {message: message, search: search});
                 var searchText = search.text;
                 matched = (!searchText || searchText.length == 0 || Message.match_text(message, searchText));
             }
@@ -411,23 +421,28 @@
         };
 
         $scope.getMessageDetail = function(){
+            History.add_record("getMessageDetail:request-start", {});
+
             var request = Message.load_message_details();
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('label-spinner');
+                    History.add_record("getMessageDetail:request-end", {});
                     $scope.currentMessage = Message.current_message;
                 });
             }
         };
 
         $scope.submitLabel = function(){
+            History.add_record("submitLabel:request-start", {});
 
             var request = Message.submit($scope.selectedCode.code_id);
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('label-spinner');
+                    History.add_record("submitLabel:request-end", {});
 
                     // Save the submitted message to the list and reset selected code
                     var idx = $scope.coded_messages['user'][$scope.selectedCode.code_text]
@@ -447,37 +462,42 @@
         $scope.next_step = function(){
             var request;
             if (Progress.current_status == 'W'){
+                History.add_record("next_step:refresh:request-start", {});
                 request = Progress.init_load();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
+                        History.add_record("next_step:refresh:request-end", {});
                     });
                 }
             }
             else{
+                History.add_record("next_step:next:request-start", {});
                 request = Progress.next_step();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
+                        History.add_record("next_step:next:request-end", {});
                     });
                 }
             }
 
         };
 
-        
 
         $scope.updateItem = function(item, is_saved, is_example, is_ambiguous){
             item.is_saved = is_saved;
             item.is_example = is_example;
             item.is_ambiguous = is_ambiguous;
+            History.add_record("updateItem:request-start", {item: item});
             var request = Message.update_flags(item);
             if (request) {
                 usSpinnerService.spin('submitted-label-spinner');
                 request.then(function () {
                     usSpinnerService.stop('submitted-label-spinner');
+                    History.add_record("updateItem:request-end", {item: item});
                 });
             }
         };
@@ -492,14 +512,16 @@
         $scope.updateIndicator = function(item, disagreement){
 
             if (disagreement && item.disagreement_indicator != disagreement) {
-
+                History.add_record("updateIndicator:request-start", {item: item, disagreement: disagreement});
                 var request = Message.update_disagreement_indicator(item.message.id, disagreement);
                 if (request) {
                     usSpinnerService.spin('submitted-label-spinner');
                     request.then(function () {
                         usSpinnerService.stop('submitted-label-spinner');
                         item.disagreement_indicator = disagreement;
+                        History.add_record("updateIndicator:request-end", {item: item, disagreement: disagreement});
                         if (disagreement == 'P'){
+                            History.add_record("updateIndicator:show-dialog", {item: item, disagreement: disagreement});
                             $scope.ask_if_change_code = true;
                             $scope.message_for_change = item;
 
@@ -511,19 +533,25 @@
 
         $scope.changeCode = function(){
 
-            console.log("change code");
+            History.add_record("changeCode:request-start", {message_for_change: $scope.message_for_change,
+                                                            partner_code: $scope.message_for_change.partner_code.id});
             var request = Message.update_code($scope.message_for_change,
                                               $scope.message_for_change.partner_code.id);
             if (request) {
                 usSpinnerService.spin('submitted-label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('submitted-label-spinner');
+                    History.add_record("changeCode:request-end", {message_for_change: $scope.message_for_change,
+                                                                    partner_code: $scope.message_for_change.partner_code.id});
 
-                    $scope.load_distribution('user'); // TODO: rewrite to avoid reloading whole; but need to go through all messages for feature color
+                    // TODO: rewrite to avoid reloading whole; but need to go through all messages for feature color
+                    $scope.load_distribution('user');
 
-                    if ($scope.selectedConfusion.count == 0){
+                    if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0){
                         // Unselected confusion pair
                         $scope.selectedConfusion = undefined;
+                        History.add_record("changeCode:deselect-no-longer-existed-confusion",
+                                           {selectedConfusion: $scope.selectedConfusion});
                     }
                     $scope.ask_if_change_code = false;
 
@@ -543,11 +571,16 @@
         $scope.saveDefinition = function(){
             var code = $scope.selectedCode;
             if ($scope.hasDefinition(code, "user")) {
+                History.add_record("saveDefinition:request-start", {code: code,
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
                 var request = Code.update_definition(code);
                 if (request) {
                     usSpinnerService.spin('code-detail-spinner');
                     request.then(function () {
                         usSpinnerService.stop('code-detail-spinner');
+                        History.add_record("saveDefinition:request-end", {code: code,
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
+
                         $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
                     });
                 }
@@ -565,6 +598,7 @@
         $scope.startEditing = function(){
             var code = $scope.selectedCode;
             if ($scope.is_editing_definition == false){
+                History.add_record("definition:startEditing", {code: code});
                 $scope.is_editing_definition = true;
                 $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
             }
@@ -573,9 +607,11 @@
         $scope.finishEditing = function(){
             var code = $scope.selectedCode;
             if ( $scope.is_definition_different() ){
+                History.add_record("definition:finishEditing:handle-unsaved-definition", {code: code});
                 $scope.ask_if_save_definition = true;
             }
             else {
+                History.add_record("definition:finishEditing:end", {code: code});
                 $scope.original_code_definition = undefined;
                 $scope.is_editing_definition = false;
             }
@@ -585,9 +621,11 @@
         $scope.handleDefinitionChanges = function(save){
             var code = $scope.selectedCode;
             if (save){
+                History.add_record("definition:handleDefinitionChanges:save", {code: code});
                 $scope.saveDefinition();
             }
             else {
+                History.add_record("definition:handleDefinitionChanges:discard", {code: code});
                 Code.definitions_by_code[code.code_text]["user"] = $scope.original_code_definition;
             }
             $scope.original_code_definition = undefined;
@@ -599,14 +637,16 @@
 
 
         $scope.getAllMessages = function(updateFeaturesOnly) {
-
+            History.add_record("getAllMessages:request-start", {updateFeaturesOnly: updateFeaturesOnly});
             var request = Message.load_all_coded_messages(/*"current"*/);
             if (request) {
                 usSpinnerService.spin('label-spinner');
                 request.then(function () {
                     usSpinnerService.stop('label-spinner');
+                    History.add_record("getAllMessages:request-end", {updateFeaturesOnly: updateFeaturesOnly});
 
                     if (!updateFeaturesOnly) {
+                        History.add_record("getAllMessages:initialize-all-message", {});
                         $scope.allItems = Message.all_coded_messages;
                         $scope.allItems.forEach(function(item){
                             $scope.allItemsMap.set(item.id, item);
@@ -632,6 +672,7 @@
                         }
                     }
                     else {
+                        History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
                         Message.all_coded_messages.forEach(function(newItem){
                             var item = $scope.allItemsMap.get(newItem.id);
@@ -646,12 +687,13 @@
         };
 
         $scope.getCodeDetail = function(){
-
+            History.add_record("getCodeDetail:request-start", {});
             var request = Code.init_load();
             if (request) {
                 usSpinnerService.spin('page-spinner');
                 request.then(function() {
                     usSpinnerService.stop('page-spinner');
+                    History.add_record("getCodeDetail:request-end", {});
                     $scope.statusText = undefined;
 
                     Message.load_coded_messages();
@@ -674,24 +716,26 @@
         };
 
         $scope.load_distribution = function(source){
-
+            History.add_record("load_distribution:request-start", {source: source});
             var request = Feature.get_distribution(source);
             if (request) {
                 usSpinnerService.spin('feature-spinner');
                 request.then(function() {
                     usSpinnerService.stop('feature-spinner');
+                    History.add_record("load_distribution:request-end", {source: source});
                     $scope.featureList[source] = Feature.distributions[source];
                 });
             }
 
         };
         $scope.load_pairwise_distribution = function(){
-
+            History.add_record("load_pairwise_distribution:request-start", {});
             var request = Code.get_pairwise();
             if (request) {
                 usSpinnerService.spin('pairwise-spinner');
                 request.then(function() {
                     usSpinnerService.stop('pairwise-spinner');
+                    History.add_record("load_pairwise_distribution:request-end", {});
                     $scope.confusionPairs = Code.pairwise_distribution;
                 });
             }
@@ -703,6 +747,11 @@
         // Feature selection logic and states
 
         var updateSelection = function(item, startIndex, endIndex, isSelected, shouldClear) {
+            History.add_record("tokens:updateSelection", {item: item,
+                                                           startIndex: startIndex,
+                                                           endIndex: endIndex,
+                                                           isSelected: isSelected,
+                                                           shouldClear: shouldClear});
             if (shouldClear) {
                 item.selectedTokenIndices.clear();
             }
@@ -735,8 +784,8 @@
 
         $scope.onCharMouseEnter = function(item, charIndex){
             //console.log("onCharMouseEnter:" + charIndex);
-
             if (item){
+                History.add_record("tokens:onCharMouseEnter:item-exists", {item: item, charIndex: charIndex});
                 var tokenIndex = item.charToToken[charIndex];
 
                 if (tokenIndex != undefined && item.tokens[tokenIndex] != undefined) {
@@ -758,6 +807,7 @@
                     }
                 }
                 else {
+                    History.add_record("tokens:onCharMouseEnter:item-not-exists", {item: item, charIndex: charIndex});
                     item.hoveredCharStart = -1;
                     item.hoveredCharEnd = -1;
                 }
@@ -766,7 +816,7 @@
 
         $scope.onCharMouseLeave = function(item, charIndex){
             //console.log("onCharMouseLeave:" + charIndex);
-
+            History.add_record("tokens:onCharMouseLeave", {item: item, charIndex: charIndex});
             item.hoveredCharStart = -1;
             item.hoveredCharEnd = -1;
         };
@@ -775,10 +825,11 @@
             //console.log("onCharMouseDown:" + charIndex);
 
             if (item) {
-
                 var tokenIndex = item.charToToken[charIndex];
 
                 if (tokenIndex != undefined && item.tokens[tokenIndex] != undefined) {
+                    History.add_record("tokens:onCharMouseDown:token-exists", {item: item, charIndex: charIndex,
+                                                                               tokenIndex: tokenIndex});
 
                     var tokenItem = item.tokens[tokenIndex];
 
@@ -796,6 +847,7 @@
                     }
                 }
                 else {
+                    History.add_record("tokens:onCharMouseDown:token-clean", {item: item, charIndex: charIndex});
                     item.clickStartTokenItem = undefined;
                     item.selectedTokenIndices.clear();
                 }
@@ -808,7 +860,7 @@
 
             if (item.selectedTokenIndices.size > 0) {
                 if (item) {
-
+                    History.add_record("tokens:onCharMouseUp:item-exists", {item: item, charIndex: charIndex});
                     // Get sorted list of selected token indices
                     var indices = [];
                     item.selectedTokenIndices.forEach(function (val) {
@@ -838,10 +890,12 @@
             if ($scope.hoveredItem && $scope.hoveredItem != item && $scope.hoveredItem.selectedTokenIndices) {
                 $scope.hoveredItem.selectedTokens = undefined;
                 $scope.hoveredItem.selectedTokenIndices.clear();
+                History.add_record("messages:onItemHover:clearHover", {item: item});
             }
 
             if ($scope.hoveredItem != item) {
                 $scope.hoveredItem = item;
+                History.add_record("messages:onItemHover:hover", {item: item});
                 //console.log("onItemHover");
                 //if (item.submittedTokenIndices && item.submittedTokenIndices.size > 0) {
                 //    item.submittedTokenIndices.forEach(function (tokenIndex) {
@@ -856,7 +910,7 @@
 
         $scope.replaceFeature = function(featureConflict){
             $scope.featureConflict = null;
-
+            History.add_record("replaceFeature", {featureConflict: featureConflict});
             if (featureConflict) {
                 if (featureConflict.existingFeatureText) {
                     $scope.removeFeature(featureConflict.existingFeatureText);
@@ -871,7 +925,7 @@
 
         $scope.addFeature = function(item){
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
-
+                History.add_record("addFeature", {item: item});
                 var tokens = [];
                 // selectedTokenIndices are ordered by the tokens added, not by their index
                 var tokenIndices = [];
@@ -954,6 +1008,7 @@
             }
 
             if (feature) {
+                History.add_record("removeFeature", {feature: feature});
 
                 // Remove from list
                 var index = $scope.featureList.user.indexOf(feature);
@@ -964,11 +1019,13 @@
                 delete $scope.featureList.user[feature.feature_text];
 
                 if (feature.feature_id) {
+                    History.add_record("removeFeature:request-start", {feature: feature});
                     var request = Feature.remove(feature);
                     if (request) {
                         usSpinnerService.spin('vector-spinner');
                         request.then(function () {
                             usSpinnerService.stop('vector-spinner');
+                            History.add_record("removeFeature:request-end", {feature: feature});
 
                             // Update the message level features
                             $scope.getAllMessages(true);

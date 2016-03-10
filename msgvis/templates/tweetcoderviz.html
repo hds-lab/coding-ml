@@ -312,14 +312,14 @@
                         </div>
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-left box-full">
-                                <h3>My Definition<span class='change-mark' ng-show="is_different()">*</span></h3>
+                                <h3>My Definition<span class='change-mark' ng-show="is_definition_different()">*</span></h3>
                                 <textarea id="code-definition"
                                           class="code-definition" ng-model="Code.definitions_by_code[selectedCode.code_text]['user']"
                                           ng-focus="startEditing()"
                                           ng-blur="finishEditing()"
                                           ng-style="{ 'border-color': codeColor(selectedCode) }"
                                           placeholder="Please provide your own definition if necessary."></textarea>
-                                <div ng-show="is_different()">
+                                <div ng-show="is_definition_different()">
                                     <button class="btn btn-primary" ng-mousedown="handleDefinitionChanges(true)"
                                             ng-style="{ 'background': codeColor(selectedCode) }">Save</button>
                                     <button class="btn btn-default" ng-mousedown="handleDefinitionChanges(false)">Reset</button>
@@ -441,7 +441,7 @@
                                                         <span class="caret"></span>
                                                     </button>
                                                     <ul class="dropdown-menu" aria-labelledby="verdictMenu">
-                                                        <li ng-repeat="indicator in indicators">
+                                                        <li class="dropdown-item" ng-repeat="indicator in indicators">
                                                             <a ng-click="updateIndicator(item, indicator)">{$ indicator_mapping[indicator] $}</a>
                                                         </li>
                                                     </ul>

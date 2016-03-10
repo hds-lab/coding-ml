@@ -287,7 +287,7 @@ class StageAssignment(models.Model):
             raise IndexError("No next stage")
         return next_stage
 
-    def initialize_stage(self, selected_num=5):
+    def initialize_stage(self, selected_num=30):
         stage = self.stage
         message_count = self.stage.messages.count()
         messages = list(self.stage.messages.all())
@@ -659,3 +659,16 @@ class ActionHistory(models.Model):
     type = models.CharField(max_length=100, default="", blank=True, db_index=True)
 
     contents = models.TextField(default="", blank=True)
+
+    stage_index = models.IntegerField(default=-1)
+
+    STATUS_CHOICES = (
+        ('N', 'Not yet start'),
+        ('I', 'Initialization'),
+        ('C', 'Coding'),
+        ('W', 'Waiting'),
+        ('R', 'Review'),
+        ('S', 'Switching stage'),
+        ('F', 'Finished'),
+    )
+    status = models.CharField(null=True, max_length=1, choices=STATUS_CHOICES, default=None)

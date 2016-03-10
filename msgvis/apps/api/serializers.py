@@ -211,5 +211,5 @@ class ActionHistorySerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(required=False)
     class Meta:
         model = experiment_models.ActionHistory
-        fields = ('id', 'owner', 'type', 'contents', 'created_at', )
+        fields = ('id', 'owner', 'type', 'contents', 'stage_index', 'status', 'created_at', )
         read_only_fields = ('id', )
