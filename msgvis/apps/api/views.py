@@ -581,6 +581,8 @@ class CodeMessageView(APIView):
                                                                           code=code,
                                                                           valid=True).all()
 
+            assignments = assignments.order_by('-source_stage_index', 'message_id')
+
             for assignment in assignments:
                 message = corpus_models.Message.objects.get(id=assignment.message_id)
                 assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
