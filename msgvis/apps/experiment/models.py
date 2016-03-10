@@ -287,7 +287,7 @@ class StageAssignment(models.Model):
             raise IndexError("No next stage")
         return next_stage
 
-    def initialize_stage(self, selected_num=30):
+    def initialize_stage(self, selected_num=20):
         stage = self.stage
         message_count = self.stage.messages.count()
         messages = list(self.stage.messages.all())

@@ -22,7 +22,7 @@ class Command(BaseCommand):
                     help='Num of conditions in this experiment'
         ),
         make_option('-s', '--num_stages',
-                    default=3,
+                    default=4,
                     dest='num_stages',
                     help='Num of stages in each condition'
         ),
