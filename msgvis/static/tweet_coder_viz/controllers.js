@@ -272,7 +272,7 @@
 
         $scope.filterConfusionByCode = function(confusion){
             if (confusion) {
-                return confusion.count > 0 && confusion.user_code == $scope.selectedCode.code_text;
+                return confusion.count > 0 && $scope.selectedCode && confusion.user_code == $scope.selectedCode.code_text;
             }
         };
 
