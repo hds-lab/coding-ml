@@ -243,7 +243,7 @@
             if (item){
                 var confusion = $scope.selectedConfusion;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
-                var rightCode = item.user_code.id == $scope.selectedCode.code_id;
+                var rightCode = ($scope.selectedCode) && (item.user_code.id == $scope.selectedCode.code_id);
 
                 var matched = $scope.searchTweets(item.message, $scope.search);
                 return matched && flagged && rightCode;
@@ -594,7 +594,7 @@
 
         $scope.saveDefinition = function(){
             var code = $scope.selectedCode;
-            if ($scope.hasDefinition(code, "user")) {
+            if (code && $scope.hasDefinition(code, "user")) {
                 History.add_record("saveDefinition:request-start", {code: code,
                                                                     definition: Code.definitions_by_code[code.code_text]["user"]});
                 var request = Code.update_definition(code);
