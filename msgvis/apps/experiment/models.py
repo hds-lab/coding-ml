@@ -67,13 +67,11 @@ class Experiment(models.Model):
     """The root path of this experiment.
        The svm model in scikit-learn format will be saved in the directories in this path."""
 
-    @property
-    def stage_count(self):
-        return self.stages.count()
+    num_conditions = models.IntegerField(default=3)
 
-    @property
-    def condition_count(self):
-        return self.conditions.count()
+    num_stages = models.IntegerField(default=4)
+
+    num_message_sets = models.IntegerField(default=10)
 
     @property
     def user_count(self):
@@ -85,45 +83,33 @@ class Experiment(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def initialize_experiment(self, num_conditions, num_stages, num_pairs, output):
+    def initialize_experiment(self, num_pairs, output):
+
+        num_conditions = 3  # hard-coded for our study
+        num_stages = 4  # hard-coded for our study
+        num_message_sets = 10  # hard-coded for our study
+
+        self.num_conditions = num_conditions
+        self.num_stages = num_stages
+        self.num_message_sets = num_message_sets
+        self.save()
 
         print >>output, "Initializing the experiment with %d conditions." % num_conditions
 
         # create a list for saving conditions
+        condition_types = ["RRRR", "RDRR", "RRDR"]
         condition_list = []
         # create conditions
         for i in range(num_conditions):
-            condition_name = "Condition %d" %(i + 1)
-            condition = Condition(experiment=self, name=condition_name)
+            condition_name = "Condition %d %s" % ((i + 1), condition_types[i])
+            condition = Condition(experiment=self, name=condition_name, type=condition_types[i])
             condition.save()
             condition_list.append(condition)
 
         print >>output, "For each condition, users will go through %d stages." % num_stages
-        # create a list for saving stages
 
-        stage_types = ["R", "D"]
-
-        stage_list = [Stage.objects.create(experiment=self, type="R")]  # The fist stage is always Random by default
-        # create stages
-        for idx in range(1, num_stages):
-            stage = Stage(experiment=self, type=stage_types[idx % len(stage_types)])
-            stage.save()
-            stage_list.append(stage)
-
-        random_first = [stage_list[0]]
-        disagreement_first = [stage_list[0]]
-
-        for idx in range(1, num_stages):
-            random_first.append(stage_list[idx])  # DRDRDR
-            disagreement_first.append(stage_list[(idx % (num_stages - 1)) + 1])  # RDRDRD
-
-        # random assign messages to each stage. Only a portion of the messages in each stage will be used in the end
-        self.random_assign_messages()
-
-        # create a stage for golden code data
-        # golden_stage = Stage(experiment=self, order=0)
-        # golden_stage.save()
-        # self.assign_messages_with_golden_code(golden_stage)
+        #  random assign messages to each set. Only a portion of the messages in each stage will be used in the end
+        message_sets = self.random_assign_messages()
 
         print >>output, "Each condition has %d pairs." % num_pairs
         print >>output, "Pair list"
@@ -146,34 +132,41 @@ class Experiment(models.Model):
                                         experiment=self,
                                         condition=condition)
                 assignment.save()
-                if i % 2 == 1:
-                    stage_assigned_list = disagreement_first
-                else:
-                    stage_assigned_list = random_first
 
-                for stage_idx, stage in enumerate(stage_assigned_list):
-
-                    sa = StageAssignment(assignment=assignment, stage=stage, order=stage_idx)
+                # shuffle message sets for random selection
+                shuffle(message_sets)
+                message_set_ids = []
+                for stage_idx, stage_type in enumerate(condition.type):
+                    sa = StageAssignment(assignment=assignment, order=stage_idx, type=stage_type,
+                                         message_set=message_sets[stage_idx])
                     sa.save()
+                    message_set_ids.append(message_sets[stage_idx].id)
 
 
                 print >>output, "Pair #%d" % pair_list[idx * num_pairs + i].id
+                print >>output, message_set_ids
 
     def random_assign_messages(self):
         messages = self.dictionary.dataset.get_non_master_message_set()
         message_count = messages.count()
         messages = [x for x in messages.all()]
         shuffle(messages)
-        num_stages = self.stage_count
-        num_per_stage = int(round(message_count / num_stages))
+        num_per_stage = int(round(message_count / self.num_message_sets))
+
+        message_sets = []
 
         start = 0
         end = num_per_stage
-        for stage in self.stages.all():
-            stage.messages.add(*messages[start:end])
+        #for message_set in self.message_sets.all():
+        for idx in range(self.num_message_sets):
+            message_set = MessageSet.objects.create(experiment=self)
+            message_set.messages.add(*messages[start:end])
             start += num_per_stage
             end += num_per_stage
 
+            message_sets.append(message_set)
+
+        return message_sets
 
 class Condition(models.Model):
     """
@@ -192,6 +185,9 @@ class Condition(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     """The condition created time"""
 
+    type = models.CharField(max_length=250, default="RRRR", blank=True)
+    """The condition type."""
+
     @property
     def user_count(self):
         return self.users.count()
@@ -203,23 +199,17 @@ class Condition(models.Model):
         return self.__repr__()
 
 
-class Stage(models.Model):
+class MessageSet(models.Model):
     """
-    A model for stages in an experiment
+    A model for dividing messages into sets in an experiment
     """
-    experiment = models.ForeignKey(Experiment, related_name='stages')
+    experiment = models.ForeignKey(Experiment, related_name='message_sets')
     """Which :class:`Experiment` this condition belongs to"""
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The condition created time"""
 
-    TYPE_CHOICES = (
-        ('R', 'Random'),
-        ('D', 'Disagreement'),
-    )
-    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='R')
-
-    messages = models.ManyToManyField(corpus_models.Message, related_name="assigned_stages")
+    messages = models.ManyToManyField(corpus_models.Message, related_name="message_sets")
 
 
     @property
@@ -227,7 +217,7 @@ class Stage(models.Model):
         return self.messages.count()
 
     def __repr__(self):
-        return "Experiment %s / Stage Type %s" % (self.experiment.name, self.type)
+        return "Experiment %s / %d Messages" % (self.experiment.name, self.message_count)
 
     def __unicode__(self):
         return self.__repr__()
@@ -255,7 +245,6 @@ class Pair(models.Model):
             if user != current_user:
                 return user
 
-
 class Assignment(models.Model):
     """
     A model for assigning pairs to an experiment + a condition
@@ -263,16 +252,22 @@ class Assignment(models.Model):
     pair = models.OneToOneField(Pair, related_name="assignment")
     experiment = models.ForeignKey(Experiment, related_name="assignments")
     condition = models.ForeignKey(Condition, related_name="assignments")
-    stages = models.ManyToManyField(Stage, related_name="assignments", through="StageAssignment")
 
 
 class StageAssignment(models.Model):
     class Meta:
         ordering = ["order"]
 
-    assignment = models.ForeignKey(Assignment, related_name="stage_assignments")
-    stage = models.ForeignKey(Stage, related_name="stage_assignments")
+    experiment = models.ForeignKey(Experiment, related_name="stage_assignments", default=None, null=True)
+    assignment = models.ForeignKey(Assignment, related_name="stage_assignments", default=None, null=True)
+    message_set = models.ForeignKey(MessageSet, related_name="stage_assignments", default=None, null=True)
     order = models.IntegerField()
+
+    TYPE_CHOICES = (
+        ('R', 'Random'),
+        ('D', 'Disagreement'),
+    )
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='R')
 
     selected_messages = models.ManyToManyField(corpus_models.Message, related_name="source_stages",
                                                through="MessageSelection")
@@ -288,15 +283,14 @@ class StageAssignment(models.Model):
         return next_stage
 
     def initialize_stage(self, selected_num=20):
-        stage = self.stage
-        message_count = self.stage.messages.count()
-        messages = list(self.stage.messages.all())
+        message_set = self.message_set
+        messages = list(message_set.messages.all())
 
-        if stage.type == 'R':
+        if self.type == 'R':
             # Random select messages from the messages that associate with the stage
             shuffle(messages)
 
-        elif stage.type == 'D':
+        elif self.type == 'D':
             # Select messages based on disagreement
             message_with_disagreement_levels = []
             users = self.assignment.pair.users.all()
@@ -387,7 +381,7 @@ class StageAssignment(models.Model):
                 except IndexError:
                     pass
                 else:
-                    next_message_set = next_stage.stage.messages.all()
+                    next_message_set = next_stage.message_set.messages.all()
 
                     code_assignments = []
                     next_X = coding_utils.get_formatted_X(messages=next_message_set,

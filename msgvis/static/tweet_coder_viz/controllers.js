@@ -103,7 +103,7 @@
         $scope.indicator_mapping = {
             'N': 'Not specified',
             'U': 'My code is correct',
-            'D': 'My partner and I are both right',
+            'D': 'Unsure',
             'P': 'My partner\'s code is correct'
         };
 

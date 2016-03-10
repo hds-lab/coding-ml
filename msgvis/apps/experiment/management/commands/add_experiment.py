@@ -12,20 +12,20 @@ class Command(BaseCommand):
     args = '<dictionary_id> <output_folder>'
     option_list = BaseCommand.option_list + (
         make_option('-p', '--num_pairs',
-                    default=4,
+                    default=20,
                     dest='num_pairs',
                     help='Num of pairs in each conditions'
         ),
-        make_option('-c', '--num_conditions',
-                    default=2,
-                    dest='num_conditions',
-                    help='Num of conditions in this experiment'
-        ),
-        make_option('-s', '--num_stages',
-                    default=4,
-                    dest='num_stages',
-                    help='Num of stages in each condition'
-        ),
+       # make_option('-c', '--num_conditions',
+       #             default=2,
+       #             dest='num_conditions',
+       #              help='Num of conditions in this experiment'
+       #  ),
+       #  make_option('-s', '--num_stages',
+       #              default=4,
+       #              dest='num_stages',
+       #              help='Num of stages in each condition'
+       #  ),
         make_option('-n', '--name',
                     default='Experiment',
                     dest='experiment_name',
@@ -48,8 +48,8 @@ class Command(BaseCommand):
 
 
         num_pairs = options.get('num_pairs')
-        num_conditions = options.get('num_conditions')
-        num_stages = options.get('num_stages')
+        #num_conditions = options.get('num_conditions')
+        #num_stages = options.get('num_stages')
         experiment_name = options.get('experiment_name')
 
         # make sure the folder exists
@@ -65,8 +65,8 @@ class Command(BaseCommand):
                                                           dictionary_id=dictionary_id)
                 experiment.save()
 
-                experiment.initialize_experiment(num_conditions=num_conditions,
-                                                 num_stages=num_stages,
+                experiment.initialize_experiment(#num_conditions=num_conditions,
+                                                 #num_stages=num_stages,
                                                  num_pairs=num_pairs,
                                                  output=output)
 

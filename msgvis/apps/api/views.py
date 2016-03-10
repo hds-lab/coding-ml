@@ -571,7 +571,7 @@ class CodeMessageView(APIView):
                 assignments = coding_models.CodeAssignment.objects.filter(source=source_user,
                                                                           is_user_labeled=True,
                                                                           code=code,
-                                                                          message__selection__stage=stage,
+                                                                          source_stage_index=stage.order,
                                                                           valid=True).all()
             else:
                 assignments = coding_models.CodeAssignment.objects.filter(source=source_user,
@@ -626,7 +626,7 @@ class AllCodedMessageView(APIView):
             if stage:
                 assignments = coding_models.CodeAssignment.objects.filter(source=user,
                                                                           is_user_labeled=True,
-                                                                          message__selection__stage_assignment=stage,
+                                                                          source_stage_index=stage.order,
                                                                           valid=True).all()
             else:
                 assignments = coding_models.CodeAssignment.objects.filter(source=user,
