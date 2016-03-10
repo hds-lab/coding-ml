@@ -83,7 +83,7 @@
         // Tweets
         $scope.codeItems = undefined;
         $scope.selectedFilter = 'All';
-        $scope.search = {text: ""};
+        $scope.search = {text: "", feature: undefined};
         $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
@@ -123,12 +123,14 @@
                 if ($scope.is_definition_different())
                     $scope.ask_if_save_definition = true;
                 $scope.selectedConfusion = undefined;
+                $scope.search = {text: "", feature: undefined};
             }
             $scope.selectedCode = code;
             $scope.search.text = "";
 
             // set hover state on the first tweet
-            if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text].length > 0){
+            if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text] &&
+                $scope.coded_messages['user'][code.code_text].length > 0){
                 $scope.hoveredItem = $scope.coded_messages['user'][code.code_text][0];
             }
         };
@@ -506,7 +508,10 @@
         $scope.ask_if_change_code = false;
         $scope.message_for_change = undefined;
         $scope.showIndicator = function(item){
-            return item.disagreement_indicator && Progress.current_stage_index == item.source_stage_index;
+            return item.disagreement_indicator && $scope.from_current_stage(item);
+        };
+        $scope.from_current_stage = function(item){
+            return Progress.current_stage_index == item.source_stage_index;
         };
 
         $scope.updateIndicator = function(item, disagreement){
@@ -784,6 +789,10 @@
 
         $scope.onCharMouseEnter = function(item, charIndex){
             //console.log("onCharMouseEnter:" + charIndex);
+            if (!$scope.from_current_stage(item)){
+                return
+            }
+
             if (item){
                 History.add_record("tokens:onCharMouseEnter:item-exists", {item: item, charIndex: charIndex});
                 var tokenIndex = item.charToToken[charIndex];
@@ -815,6 +824,9 @@
         };
 
         $scope.onCharMouseLeave = function(item, charIndex){
+            if (!$scope.from_current_stage(item)){
+                return
+            }
             //console.log("onCharMouseLeave:" + charIndex);
             History.add_record("tokens:onCharMouseLeave", {item: item, charIndex: charIndex});
             item.hoveredCharStart = -1;
@@ -822,6 +834,9 @@
         };
 
         $scope.onCharMouseDown = function(item, charIndex, event){
+            if (!$scope.from_current_stage(item)){
+                return
+            }
             //console.log("onCharMouseDown:" + charIndex);
 
             if (item) {
@@ -855,6 +870,9 @@
         };
 
         $scope.onCharMouseUp = function(item, charIndex) {
+            if (!$scope.from_current_stage(item)){
+                return
+            }
             item.clickStartTokenItem = undefined;
             item.selectedTokens = undefined;
 
@@ -907,6 +925,9 @@
 
         $scope.onItemLeave = function(item){
         };
+        $scope.stageSelectable = function(item){
+            return ($scope.from_current_stage(item)) ? "pointer" : "";
+        }
 
         $scope.replaceFeature = function(featureConflict){
             $scope.featureConflict = null;

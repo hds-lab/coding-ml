@@ -252,7 +252,7 @@
 
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
-                                            <div>
+                                            <div ng-show="from_current_stage(item)">
                                                 <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
                                                      ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
                                                      data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
@@ -349,7 +349,7 @@
                                 <h3>My keywords</h3>
                                 <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
                                 <div class="features" ng-repeat="feature in featureList.user | filter:filterFeatures(selectedCode) track by $index" id="user-features"
-                                    ng-click="searchFeature(feature.feature_text)" ng-style="myKeywordStyle(feature)">
+                                    ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
                                              data-toggle="tooltip" title="Remove this keyword"
                                              ng-enabled="feature.distribution"><span class="glyphicon glyphicon-remove-circle"></span></button>
@@ -423,15 +423,17 @@
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
                                         <div>
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
-                                                 ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
-                                                             data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
-                                                 ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
-                                                             data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
-                                                 ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
-                                                             data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
+                                            <div class="inline" ng-show="from_current_stage(item)">
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
+                                                     ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
+                                                                 data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
+                                                     ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
+                                                                 data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
+                                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
+                                                     ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
+                                                                 data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
+                                            </div>
                                             <div class="inline" ng-show="showIndicator(item)">
                                                 <label for="indicator">Disagreement indicator: </label>
                                                 <div class="dropdown">
@@ -449,14 +451,15 @@
 
                                             </div>
                                         </div>
-                                        <div class="item-message item-selectable"><span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
+                                        <div class="item-message item-selectable" ng-class="stageSelectable(item)">
+                                            <span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
                                                ng-mouseenter="onCharMouseEnter(item, $index)"
                                                ng-mouseleave="onCharMouseLeave(item, $index)"
                                                ng-mousedown="onCharMouseDown(item, $index, $event)"
                                                ng-mouseup="onCharMouseUp(item, $index, $event)"
                                                ng-style="charStyle(item, $index)">{$ char $}</span>
                                         </div>
-                                        <button class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
+                                        <button ng-show="from_current_stage(item)" class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
                                     </div>
                                         <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
                                         <div class="source-stage" ng-show="hoveredItem==item">

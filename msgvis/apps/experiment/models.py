@@ -149,7 +149,7 @@ class Experiment(models.Model):
     def random_assign_messages(self):
         messages = self.dictionary.dataset.get_non_master_message_set()
         message_count = messages.count()
-        messages = [x for x in messages.all()]
+        messages = list(messages.all())
         shuffle(messages)
         num_per_stage = int(round(message_count / self.num_message_sets))
 

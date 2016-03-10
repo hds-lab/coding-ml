@@ -677,17 +677,25 @@
                     self.add_record('initialization:client-time', '');
                     self.submit_records();
                 },
+                JSON_stringify: function(s, emit_unicode){
+                   var json = JSON.stringify(s);
+                   return emit_unicode ? json : json.replace(/[\u007f-\uffff]/g,
+                      function(c) {
+                        return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4);
+                      }
+                   );
+                },
                 add_record: function (type, contents, use_server_time) {
                     var self = this;
                     if ( typeof(contents) !== typeof("string") ){
-                        contents = JSON.stringify(contents);
+                        contents = self.JSON_stringify(contents);
                     }
 
                     var record = {
                         type: type,
                         contents: contents,
-                        stage_index: Progress.current_stage_index,
-                        status: Progress.current_status
+                        stage_index: Progress.current_stage_index || 0,
+                        status: Progress.current_status || 'N'
                     };
                     if (!use_server_time)
                         record.created_at =  moment.utc().format('YYYY-MM-DD HH:mm:ss');

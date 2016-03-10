@@ -66,7 +66,6 @@ class Dataset(models.Model):
 
     def get_non_master_message_set(self):
         messages = self.message_set.filter(time__isnull=False)
-        messages = messages.exclude(code_assignments__isnull=True)
         messages = messages.exclude(code_assignments__source__username="master")
 
         return messages
