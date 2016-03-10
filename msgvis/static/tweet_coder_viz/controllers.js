@@ -280,7 +280,7 @@
             if (code && feature){
                 return feature.distribution && feature.distribution[code.code_text] > 0;
             }
-            return true;
+            return false;
         };
 
         $scope.pillColor = function(code_id){
@@ -1050,7 +1050,7 @@
 
                             // add to the top of the list to update the UI
                             $scope.featureList.user.unshift(feature);
-                            $scope.featureList.user[feature.feature_text] = feature;
+                            $scope.featureList.user["" + feature.feature_text] = feature;
 
                             // Update the message level features
                             $scope.getAllMessages(true);
@@ -1085,7 +1085,7 @@
                     $scope.featureList.user.splice(index, 1);
                 }
 
-                delete $scope.featureList.user[feature.feature_text];
+                delete $scope.featureList.user["" + feature.feature_text];
 
                 if (feature.feature_id) {
                     History.add_record("removeFeature:request-start", {feature: feature});

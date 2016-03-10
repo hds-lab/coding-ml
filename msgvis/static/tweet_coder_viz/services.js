@@ -106,7 +106,7 @@
                             // WHAT!?!?!? Array in JS is also object and it is being used in both way in this case...
                             data.forEach(function(feature){
                                 // Add to the dict
-                                self.distributions[source][feature.feature_text] = feature;
+                                self.distributions[source]["" + feature.feature_text] = feature;
                             });
 
                         });
