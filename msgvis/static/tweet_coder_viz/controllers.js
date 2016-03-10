@@ -1115,10 +1115,12 @@
             if (newVal && (newVal != oldVal)) {
                 switch (newVal) {
                     case 'C':  // coding
+                        $scope.selectedCode = undefined;
                         $scope.statusText = "Initializing coding interface...";
                         $scope.getCodeDetail();
                         break;
                     case 'R':  // review
+                        $scope.selectedCode = undefined;
                         $scope.statusText = "Initializing review interface...";
                         $scope.getCodeDetail();
                         break;
