@@ -262,7 +262,9 @@ class UserFeatureView(APIView):
                 item["distribution"][code.text] = 0
 
             counts = enhance_models.Feature.objects\
-                .filter(id=feature.id, messages__code_assignments__isnull=False, messages__code_assignments__valid=True)\
+                .filter(id=feature.id, messages__code_assignments__isnull=False,
+                        messages__code_assignments__is_user_labeled=True, 
+                        messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                                     .annotate(count=Count('messages')).order_by('id', 'count').all()
             for count in counts:
