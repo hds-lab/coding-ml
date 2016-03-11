@@ -439,6 +439,11 @@ class CodeDefinitionView(APIView):
                     code_definition = code.get_definition(source_user)
                     if code_definition:
                         code_definitions.append(code_definition)
+                    else:
+                        code_definition_obj = coding_models.CodeDefinition.objects.create(code=code, source=source_user)
+                        code_definition = code.get_definition(source_user)
+                        if code_definition:
+                            code_definitions.append(code_definition)
                 code_def_set.append({"source": source, "definitions":code_definitions})
 
             output = serializers.CodeDefinitionSetSerializer(code_def_set, many=True)

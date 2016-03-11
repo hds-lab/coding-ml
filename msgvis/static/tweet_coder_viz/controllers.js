@@ -604,7 +604,8 @@
         };
 
         $scope.hasExample = function(code, source){
-            return $scope.hasDefinition(code, source) &&
+            if (!code) return false;
+            return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
                    Code.definitions_by_code[code.code_text][source].hasOwnProperty('examples') &&
                    Code.definitions_by_code[code.code_text][source].examples.length > 0;
         };

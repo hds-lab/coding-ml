@@ -612,6 +612,7 @@
                     return $http.get(apiUrl)
                         .success(function (data) {
                             console.log(data);
+                            self.user = data.user;
                             self.current_stage_index = data.current_stage_index;
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;
