@@ -73,6 +73,7 @@
         $scope.selectedCode = undefined;
         $scope.codes = [];
         $scope.code_map = {};
+        $scope.code_text_list = [];
         $scope.coded_messages = undefined;
 
         // Variables for ensuring a code definition is saved after the user edits it
@@ -116,6 +117,15 @@
             S: 'Switching stage'
         };
 
+        $scope.code_map = function(distribution){
+            if ($scope.codes && distribution){
+                var dist = [];
+                $scope.codes.forEach(function(code){
+                    dist.push(distribution[code.code_text]);
+                });
+                return dist;
+            }
+        };
 
         $scope.selectLabel = function(code){
             History.add_record("selectLabel", {code: code});
@@ -589,23 +599,30 @@
         $scope.hasDefinition = function(code, source){
             if (!code) return false;
             return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
-                   Code.definitions_by_code[code.code_text][source].trim().length > 0;
+                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('text') &&
+                   Code.definitions_by_code[code.code_text][source].text.trim().length > 0;
+        };
+
+        $scope.hasExample = function(code, source){
+            return $scope.hasDefinition(code, source) &&
+                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('examples') &&
+                   Code.definitions_by_code[code.code_text][source].examples.length > 0;
         };
 
         $scope.saveDefinition = function(){
             var code = $scope.selectedCode;
             if (code && $scope.hasDefinition(code, "user")) {
                 History.add_record("saveDefinition:request-start", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
                 var request = Code.update_definition(code);
                 if (request) {
                     usSpinnerService.spin('code-detail-spinner');
                     request.then(function () {
                         usSpinnerService.stop('code-detail-spinner');
                         History.add_record("saveDefinition:request-end", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
 
-                        $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
+                        $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
                     });
                 }
             }
@@ -614,9 +631,7 @@
         $scope.is_definition_different = function(){
             var code = $scope.selectedCode;
             return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== "undefined") &&
-            ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].trim()) );
-
-
+            ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].text.trim()) );
         };
 
         $scope.startEditing = function(){
@@ -624,7 +639,7 @@
             if ($scope.is_editing_definition == false){
                 History.add_record("definition:startEditing", {code: code});
                 $scope.is_editing_definition = true;
-                $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
+                $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
             }
         };
 
@@ -650,7 +665,7 @@
             }
             else {
                 History.add_record("definition:handleDefinitionChanges:discard", {code: code});
-                Code.definitions_by_code[code.code_text]["user"] = $scope.original_code_definition;
+                Code.definitions_by_code[code.code_text]["user"].text = $scope.original_code_definition;
             }
             $scope.original_code_definition = undefined;
             $scope.ask_if_save_definition = false;
@@ -1139,6 +1154,7 @@
             $scope.codes.forEach(function(code){
                 $scope.code_map[code.code_text] = code;
                 $scope.code_map[code.code_id] = code;
+                $scope.code_text_list.push(code.code_text);
             });
 
         });

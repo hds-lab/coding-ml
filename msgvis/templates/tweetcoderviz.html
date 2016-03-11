@@ -91,7 +91,7 @@
         <div id="finished" ng-show="is_status('F')">
             <div class="stage-prompt">
                 This is the end of the study. <br />
-                Please click <a href="http://tinyurl.com/codingvis-study-survey" target="_blank">here</a> to fill the follow up survey.<br />
+                Please find the moderator for the follow-up interview. <br />
                 Thank you very much for your participation!!!
             </div>
         </div>
@@ -168,12 +168,24 @@
                                 <h3>Master Example</h3>
                                 <p>{$ selectedCode.examples[0].text $}</p>
                                 <h3>My Definition</h3>
-                                <p ng-show="Code.definitions_by_code[selectedCode.code_text]['user']">{$ Code.definitions_by_code[selectedCode.code_text]["user"] $}</p>
-                                <p ng-hide="Code.definitions_by_code[selectedCode.code_text]['user']" class="help-text">You have not provided a definition yet.</p>
+                                <p ng-show="hasDefinition(selectedCode, 'user')">{$ Code.definitions_by_code[selectedCode.code_text]["user"].text $}</p>
+                                <p ng-hide="hasDefinition(selectedCode, 'user')" class="help-text">You have not provided a definition yet.</p>
                                 <h3>My Examples</h3>
-                                <p ng-show="coded_messages!=undefined && (coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')).length==0"
+                                <p ng-hide="hasExample(selectedCode, 'user')"
                                    class="help-text">You have not saved any tweets as exemplar of '<span>{$ selectedCode.code_text $}</span>'.</p>
-                                <div ng-repeat="item in coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')"
+                                <div ng-repeat="item in Code.definitions_by_code[selectedCode.code_text]['user'].examples"
+                                     class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
+                                    <div class="content">
+                                        <div class="item-message" ng-bind-html="item.message.embedded_html"></div>
+                                    </div>
+                                </div>
+                                <h3>My Partner's Definition</h3>
+                                <p ng-show="hasDefinition(selectedCode, 'partner')">{$ Code.definitions_by_code[selectedCode.code_text]['partner'].text $}</p>
+                                <p ng-hide="hasDefinition(selectedCode, 'partner')" class="help-text">Your partner has not provided a definition yet.</p>
+                                <h3>My Partner's Examples</h3>
+                                <p ng-hide="hasExample(selectedCode, 'partner')"
+                                   class="help-text">Your partner has not saved any tweets as exemplar of '<span>{$ selectedCode.code_text $}</span>'.</p>
+                                <div ng-repeat="item in Code.definitions_by_code[selectedCode.code_text]['partner'].examples"
                                      class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
                                     <div class="content">
                                         <div class="item-message" ng-bind-html="item.message.embedded_html"></div>
@@ -193,7 +205,7 @@
                                      ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
                                      data-placement="auto top">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -210,7 +222,7 @@
                                      ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
                                      data-placement="auto top">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -224,7 +236,7 @@
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -315,13 +327,13 @@
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-right box-full">
                                 <h3>Master Definition</h3>
-                                <p class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["master"] $}</p>
+                                <p class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["master"].text $}</p>
                             </div>
                         </div>
                         <div class="col-md-4 scroll-y">
                             <div class="box box-light box-full">
                                 <h3>Partner Definition</h3>
-                                <p ng-show="hasDefinition(selectedCode, 'partner')" class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["partner"] $}</p>
+                                <p ng-show="hasDefinition(selectedCode, 'partner')" class="code-definition">{$ Code.definitions_by_code[selectedCode.code_text]["partner"].text $}</p>
                                 <p ng-hide="hasDefinition(selectedCode, 'partner')" class="code-definition help-text">Your partner has not provided a definition yet.</p>
                             </div>
                         </div>
@@ -329,7 +341,7 @@
                             <div class="box box-light box-left box-full">
                                 <h3>My Definition<span class='change-mark' ng-show="is_definition_different()">*</span></h3>
                                 <textarea id="code-definition"
-                                          class="code-definition" ng-model="Code.definitions_by_code[selectedCode.code_text]['user']"
+                                          class="code-definition" ng-model="Code.definitions_by_code[selectedCode.code_text]['user'].text"
                                           ng-focus="startEditing()"
                                           ng-blur="finishEditing()"
                                           ng-style="{ 'border-color': codeColor(selectedCode) }"
@@ -351,7 +363,7 @@
                                 <h2>Code distribution</h2>
                                 <div id="code-distribution">
                                     <div class="distribution-chart">
-                                        <div ng-repeat="(code, percentage) in normalized_code_distribution" ng-style="distributionStyle(code, percentage)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, normalized_code_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ code_distribution[code] + ' tweet' + (code_distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -373,7 +385,7 @@
                                      ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
                                      data-placement="auto top">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -390,7 +402,7 @@
                                      ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
                                      data-placement="auto top">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>
@@ -404,7 +416,7 @@
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
                                     <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                        <div ng-repeat="(code, count) in feature.normalized_distribution" ng-style="distributionStyle(code, count)"
+                                        <div ng-repeat="code in code_text_list" ng-style="distributionStyle(code, feature.normalized_distribution[code])"
                                              popover data-toggle="popover" data-trigger="hover" data-html="true"
                                              ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
                                              data-placement="auto top"></div>

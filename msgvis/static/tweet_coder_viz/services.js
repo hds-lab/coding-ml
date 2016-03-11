@@ -518,8 +518,10 @@
                                 self.definitions_by_source[def_set.source] = def_set.definitions;
                                 def_set.definitions.forEach(function(def){
                                     if (typeof(self.definitions_by_code[def.code_text]) === "undefined")
-                                        self.definitions_by_code[def.code_text] = {master: "", user: "", partner: ""};
-                                    self.definitions_by_code[def.code_text][def_set.source] = def.text;
+                                        self.definitions_by_code[def.code_text] = {master: {text: ""},
+                                                                                   user: {text: ""},
+                                                                                   partner: {text: ""}};
+                                    self.definitions_by_code[def.code_text][def_set.source] = def;
                                 });
                             });
 
@@ -536,7 +538,7 @@
 
 
                     var request = {
-                        text: self.definitions_by_code[code.code_text]["user"].trim()
+                        text: self.definitions_by_code[code.code_text]["user"].text.trim()
                     };
 
 
