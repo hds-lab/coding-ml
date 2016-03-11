@@ -91,7 +91,7 @@
         <div id="finished" ng-show="is_status('F')">
             <div class="stage-prompt">
                 This is the end of the study. <br />
-                Please find the moderator for the follow-up interview. <br />
+                Please click <a href="http://tinyurl.com/codingvis-study-survey" target="_blank">here</a> to fill the follow up survey.<br />
                 Thank you very much for your participation!!!
             </div>
         </div>
@@ -172,7 +172,7 @@
                                 <p ng-hide="Code.definitions_by_code[selectedCode.code_text]['user']" class="help-text">You have not provided a definition yet.</p>
                                 <h3>My Examples</h3>
                                 <p ng-show="coded_messages!=undefined && (coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')).length==0"
-                                   class="help-text">You have not saved any tweets as exemplar of '<span>{$ code.code_text $}</span>'.</p>
+                                   class="help-text">You have not saved any tweets as exemplar of '<span>{$ selectedCode.code_text $}</span>'.</p>
                                 <div ng-repeat="item in coded_messages['user'][selectedCode.code_text] | filter:filterTweets('Example')"
                                      class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
                                     <div class="content">
@@ -219,7 +219,7 @@
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ code.code_text$}</span>'.</p>
+                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'.</p>
                                 <div class="features" ng-repeat="feature in featureList.system track by $index" ng-show="filterFeatures(selectedCode, feature)" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
