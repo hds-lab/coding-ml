@@ -281,12 +281,6 @@
                             if (Progress.current_status == 'R'){
 
                                 // Remove the original item from list and add the new item
-                                var id_list = self.all_coded_messages.map(function(d){ return d.message.id; });
-                                var idx = id_list.indexOf(original_item.message.id);
-                                if ( idx != -1 ){
-                                    self.all_coded_messages.splice(idx, 1);
-                                }
-                                self.all_coded_messages.push(new_item);
 
                                 // Update the code distribution
                                 if (self.code_distribution[new_item.user_code.text] == undefined){

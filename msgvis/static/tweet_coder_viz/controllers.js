@@ -609,6 +609,12 @@
                     // TODO: rewrite to avoid reloading whole; but need to go through all messages for feature color
                     $scope.load_distribution('user');
 
+                    var id_list = self.all_coded_messages.map(function(d){ return d.message.id; });
+                    var idx = id_list.indexOf($scope.message_for_change.message.id);
+
+                    self.all_coded_messages[idx].id = new_item.id;
+                    self.all_coded_messages[idx].user_code = new_item.user_code;
+
                     if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0){
                         // Unselected confusion pair
                         $scope.selectedConfusion = undefined;
@@ -744,7 +750,7 @@
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
-                        $scope.allItems = Message.all_coded_messages;
+                        //$scope.allItems = Message.all_coded_messages;
                         Message.all_coded_messages.forEach(function(newItem){
                             var item = $scope.allItemsMap.get(newItem.id);
 

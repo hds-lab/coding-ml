@@ -446,7 +446,7 @@
                                 <p ng-show="confusionPairs!=undefined && (confusionPairs | filter:filterConfusionByCode()).length==0" class="help-text">No disagreements were found.</p>
                             </div>
                         </div>
-                        <div class="col-md-6 scroll-y">
+                        <div class="col-md-6">
                             <div class="box box-left box-light" id="labels">
                                 <h2>Submitted labels</h2>
                                 <span us-spinner="spinnerOptions" spinner-key="submitted-label-spinner"></span>
@@ -459,64 +459,66 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div ng-repeat="item in allItems" ng-show="filterTweetsByConfusionAndCode(item)" class="label-item"
-                                     ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }"
-                                     ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
-                                     ng-class="{ hovered: hoveredItem==item }">
-                                    <div class="confusion">
-                                        <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.user_code.text])}"></div>
-                                        <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.partner_code.text])}"></div>
-                                    </div>
+                                <div class="label-list scroll-y">
+                                    <div ng-repeat="item in allItems" ng-show="filterTweetsByConfusionAndCode(item)" class="label-item"
+                                         ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }"
+                                         ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
+                                         ng-class="{ hovered: hoveredItem==item }">
+                                        <div class="confusion">
+                                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.user_code.text])}"></div>
+                                            <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.partner_code.text])}"></div>
+                                        </div>
 
-                                    <div class="content">
-                                        <div ng-show="hoveredItem==item">
-                                            <div class="item">
-                                            <div class="inline" ng-show="from_current_stage(item)">
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
-                                                     ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
-                                                                 data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
-                                                     ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
-                                                                 data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
-                                                <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
-                                                     ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
-                                                                 data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                                            </div>
-                                            <div class="inline" ng-show="showIndicator(item)">
-                                                <label for="indicator">Disagreement indicator: </label>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-default dropdown-toggle" type="button" id="verdictMenu"
-                                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                                        <span>{$ indicator_mapping[item.disagreement_indicator] $}</span>
-                                                        <span class="caret"></span>
-                                                    </button>
-                                                    <ul class="dropdown-menu" aria-labelledby="verdictMenu">
-                                                        <li class="dropdown-item" ng-repeat="indicator in indicators">
-                                                            <a ng-click="updateIndicator(item, indicator)">{$ indicator_mapping[indicator] $}</a>
-                                                        </li>
-                                                    </ul>
+                                        <div class="content">
+                                            <div ng-show="hoveredItem==item">
+                                                <div class="item">
+                                                <div class="inline" ng-show="from_current_stage(item)">
+                                                    <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
+                                                         ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
+                                                                     data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span></div>
+                                                    <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
+                                                         ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
+                                                                     data-toggle="tooltip" title="Save as an example"><span class="glyphicon glyphicon-star"></span></div>
+                                                    <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
+                                                         ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
+                                                                     data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                                 </div>
+                                                <div class="inline" ng-show="showIndicator(item)">
+                                                    <label for="indicator">Disagreement indicator: </label>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" id="verdictMenu"
+                                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                            <span>{$ indicator_mapping[item.disagreement_indicator] $}</span>
+                                                            <span class="caret"></span>
+                                                        </button>
+                                                        <ul class="dropdown-menu" aria-labelledby="verdictMenu">
+                                                            <li class="dropdown-item" ng-repeat="indicator in indicators">
+                                                                <a ng-click="updateIndicator(item, indicator)">{$ indicator_mapping[indicator] $}</a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+
+                                                </div>
+                                                <div class="item-message item-selectable" ng-class="stageSelectable(item)">
+                                                    <span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
+                                                       ng-mouseenter="onCharMouseEnter(item, $index)"
+                                                       ng-mouseleave="onCharMouseLeave(item, $index)"
+                                                       ng-mousedown="onCharMouseDown(item, $index, $event)"
+                                                       ng-mouseup="onCharMouseUp(item, $index, $event)"
+                                                       ng-style="charStyle(item, $index)">{$ char $}</span>
+                                                </div>
+                                                <button ng-show="from_current_stage(item)" class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
 
                                             </div>
-                                            <div class="item-message item-selectable" ng-class="stageSelectable(item)">
-                                                <span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
-                                                   ng-mouseenter="onCharMouseEnter(item, $index)"
-                                                   ng-mouseleave="onCharMouseLeave(item, $index)"
-                                                   ng-mousedown="onCharMouseDown(item, $index, $event)"
-                                                   ng-mouseup="onCharMouseUp(item, $index, $event)"
-                                                   ng-style="charStyle(item, $index)">{$ char $}</span>
                                             </div>
-                                            <button ng-show="from_current_stage(item)" class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
-
-                                        </div>
-                                        </div>
-                                        <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
-                                        <div class="source-stage">
-                                            <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                            <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
+                                            <div class="source-stage">
+                                                <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsByConfusionAndCode()).length==0" class="help-text">No tweets were found.</p>
                                 </div>
-                                <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsByConfusionAndCode()).length==0" class="help-text">No tweets were found.</p>
 
                             </div>
                         </div>
