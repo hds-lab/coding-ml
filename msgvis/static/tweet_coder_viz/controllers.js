@@ -637,7 +637,7 @@
                         var features = [];
                         for (i = 0; i < messageItem.feature_vector.length; i++) {
                             var feature = messageItem.feature_vector[i];
-                            feature.origin_code_id = code_id;
+                            feature.origin_code_id = $scope.message_for_change.partner_code.id;
 
                             var matchedTokenIndices = Message.match_feature(messageItem.message, feature);
 
