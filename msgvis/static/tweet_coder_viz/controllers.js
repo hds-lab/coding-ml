@@ -1198,7 +1198,6 @@
 
         });
 
-
     };
 
     ViewController.$inject = [

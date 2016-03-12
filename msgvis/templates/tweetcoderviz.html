@@ -293,12 +293,12 @@
                                                      data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
                                             </div>
                                             <div ng-bind-html="item.message.embedded_html"></div>
-                                            <div class="source-stage" ng-show="hoveredItem==item">
-                                                <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
-                                            </div>
                                         </div>
                                         <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
 
+                                        <div class="source-stage">
+                                            <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -470,7 +470,7 @@
 
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
-                                        <div>
+                                            <div class="item">
                                             <div class="inline" ng-show="from_current_stage(item)">
                                                 <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
                                                      ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
@@ -498,19 +498,20 @@
                                                 </div>
 
                                             </div>
+                                            <div class="item-message item-selectable" ng-class="stageSelectable(item)">
+                                                <span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
+                                                   ng-mouseenter="onCharMouseEnter(item, $index)"
+                                                   ng-mouseleave="onCharMouseLeave(item, $index)"
+                                                   ng-mousedown="onCharMouseDown(item, $index, $event)"
+                                                   ng-mouseup="onCharMouseUp(item, $index, $event)"
+                                                   ng-style="charStyle(item, $index)">{$ char $}</span>
+                                            </div>
+                                            <button ng-show="from_current_stage(item)" class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
+
                                         </div>
-                                        <div class="item-message item-selectable" ng-class="stageSelectable(item)">
-                                            <span ng-repeat="char in item.characters track by $index" class="ng-class:'char-'+$index;"
-                                               ng-mouseenter="onCharMouseEnter(item, $index)"
-                                               ng-mouseleave="onCharMouseLeave(item, $index)"
-                                               ng-mousedown="onCharMouseDown(item, $index, $event)"
-                                               ng-mouseup="onCharMouseUp(item, $index, $event)"
-                                               ng-style="charStyle(item, $index)">{$ char $}</span>
                                         </div>
-                                        <button ng-show="from_current_stage(item)" class="btn btn-default" ng-click="addFeature(item)">Add Keywords</button>
-                                    </div>
                                         <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
-                                        <div class="source-stage" ng-show="hoveredItem==item">
+                                        <div class="source-stage">
                                             <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
                                         </div>
                                     </div>
