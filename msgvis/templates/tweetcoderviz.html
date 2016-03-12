@@ -85,7 +85,7 @@
             <div class="stage-prompt">Waiting for the other participant... (Wait for a while and then refresh)<br />
             Current status: {$ stage_desc[Progress.current_status] $}
             <br />
-            <button class="btn btn-success next-step" ng-click="next_step()">Try to go to the next stage</button>
+            <button class="btn btn-success next-step" ng-disabled="processing" ng-click="next_step()">Try to go to the next stage</button>
             </div>
         </div>
         <div id="finished" ng-show="is_status('F')">
@@ -199,7 +199,7 @@
                             <div class="box box-light">
                                 <h2>Keyword distribution for <span>{$ selectedCode.code_text $}</span></h2>
                                 <h3>My keywords</h3>
-                                <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'. You can do so in the review stage.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.user)" class="help-text">You have not provided any keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'. You can do so in the review stage.</p>
                                 <div class="features" ng-repeat="feature in featureList.user track by $index" ng-show="filterFeatures(selectedCode, feature)" id="user-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <span class="feature-text"
@@ -216,7 +216,7 @@
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                                 <h3>My partner's keywords</h3>
-                                <p ng-hide="(featureList.partner | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Your partner does not have any keyword for '<span>{$ selectedCode.code_text$}</span>'.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.partner)" class="help-text">Your partner does not have any keyword for '<span>{$ selectedCode.code_text$}</span>'.</p>
                                 <div class="features" ng-repeat="feature in featureList.partner track by $index " ng-show="filterFeatures(selectedCode, feature)" id="partner-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <span class="feature-text"
@@ -233,7 +233,7 @@
                                     <span class="feature-total">{$ feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">There are no system keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.system)" class="help-text">There are no system keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'.</p>
                                 <div class="features" ng-repeat="feature in featureList.system track by $index" ng-show="filterFeatures(selectedCode, feature)" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>
@@ -311,7 +311,7 @@
         </div>
 
         <div id="reviewing" ng-show="is_status('R') && !statusText">
-            <button class="btn btn-success next-step" ng-click="next_step()">Finish review</button>
+            <button class="btn btn-success next-step" ng-disabled="processing" ng-click="next_step()">Finish review</button>
             <div class="box box-top" id="top-area">
                 <h2><span class="stage"> Stage {$ Progress.current_stage_index + 1 $}</span> | Review</h2>
                 <div class="" data-toggle="buttons" id="codes">
@@ -376,7 +376,7 @@
                             <div class="box box-right box-light">
                                 <h2>Keyword distribution</h2>
                                 <h3>My keywords</h3>
-                                <p ng-hide="(featureList.user | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Please select keywords from your tweets.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.user)" class="help-text">Please select keywords from your tweets.</p>
                                 <div class="features" ng-repeat="feature in featureList.user track by $index" ng-show="filterFeatures(selectedCode, feature)" id="user-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <button class="btn btn-default" ng-click="removeFeature(feature, $event)"
@@ -396,7 +396,7 @@
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
                                 <h3>My partner's keywords</h3>
-                                <p ng-hide="(featureList.partner | filter:filterFeatures(selectedCode)).length > 0" class="help-text">Your partner does not have any keyword for '{$ selectedCode.code_text $}'.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.partner)" class="help-text">Your partner does not have any keyword for '{$ selectedCode.code_text $}'.</p>
                                 <div class="features" ng-repeat="feature in featureList.partner track by $index" ng-show="filterFeatures(selectedCode, feature)" id="partner-features"
                                     ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
                                     <span class="feature-text partner-feature"
@@ -413,7 +413,7 @@
                                     <span class="feature-total">{$ feature.total_count == 0 ? '--' : feature.total_count $}</span>
                                 </div>
                                 <h3>System keywords</h3>
-                                <p ng-hide="(featureList.system | filter:filterFeatures(selectedCode)).length > 0" class="help-text">No system keywords for found for '{$ selectedCode.code_text $}'.</p>
+                                <p ng-hide="hasFeatureOfCode(selectedCode, featureList.system)" class="help-text">No system keywords for found for '{$ selectedCode.code_text $}'.</p>
                                 <div class="features" ng-repeat="feature in featureList.system track by $index" ng-show="filterFeatures(selectedCode, feature)" id="system-features"
                                     ng-click="searchFeature(feature)">
                                     <span class="feature-text">{$ feature.feature_text $}</span>

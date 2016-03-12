@@ -293,6 +293,30 @@
             return false;
         };
 
+        var objectFilter = function(obj, predicate) {
+            var result = {}, key;
+
+            for (key in obj) {
+                if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+                    result[key] = obj[key];
+                }
+            }
+
+            return result;
+        };
+        $scope.hasFeatureOfCode = function(code, featureList){
+            if ( code && featureList ){
+                var count = 0;
+                for (var key in featureList){
+                    if (featureList.hasOwnProperty(key)){
+                        count += ($scope.filterFeatures(code, featureList[key]) == true);
+                    }
+                }
+                return count > 0;
+            }
+            return false;
+        };
+
         $scope.pillColor = function(code_id){
             if (code_id) {
                 return $scope.colors[code_id % $scope.colors.length];
@@ -478,6 +502,7 @@
             }
         };
 
+        $scope.processing = false;
         $scope.next_step = function(){
             var request;
             if (Progress.current_status == 'W'){
@@ -485,9 +510,11 @@
                 request = Progress.init_load();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
+                    $scope.processing = true;
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
                         History.add_record("next_step:refresh:request-end", {});
+                        $scope.processing = false;
                     });
                 }
             }
@@ -496,9 +523,11 @@
                 request = Progress.next_step();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
+                    $scope.processing = true;
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
                         History.add_record("next_step:next:request-end", {});
+                        $scope.processing = false;
                     });
                 }
             }
@@ -587,6 +616,7 @@
                                            {selectedConfusion: $scope.selectedConfusion});
                     }
                     $scope.ask_if_change_code = false;
+
 
                 });
             }
@@ -714,6 +744,7 @@
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
+                        $scope.allItems = Message.all_coded_messages;
                         Message.all_coded_messages.forEach(function(newItem){
                             var item = $scope.allItemsMap.get(newItem.id);
 
@@ -1152,6 +1183,7 @@
         });*/
         $scope.$on('definitions::updated', function($event, data) {
             $scope.codes = data;
+            $scope.code_text_list = [];
             $scope.codes.forEach(function(code){
                 $scope.code_map[code.code_text] = code;
                 $scope.code_map[code.code_id] = code;
