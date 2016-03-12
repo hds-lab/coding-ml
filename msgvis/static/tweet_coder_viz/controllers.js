@@ -603,22 +603,58 @@
                 usSpinnerService.spin('submitted-label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('submitted-label-spinner');
-                    History.add_record("changeCode:request-end", {message_for_change: $scope.message_for_change,
-                                                                    partner_code: $scope.message_for_change.partner_code.id});
+                    History.add_record("changeCode:request-end", {
+                        message_for_change: $scope.message_for_change,
+                        partner_code: $scope.message_for_change.partner_code.id
+                    });
 
                     // TODO: rewrite to avoid reloading whole; but need to go through all messages for feature color
                     $scope.load_distribution('user');
 
-                    var id_list = $scope.allItems.map(function(d){ return d.message.id; });
+                    var id_list = $scope.allItems.map(function (d) {
+                        return d.message.id;
+                    });
                     var idx = id_list.indexOf($scope.message_for_change.message.id);
                     $scope.allItems[idx].user_code = $scope.allItems[idx].partner_code;
 
-                    if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0){
+                    if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0) {
                         // Unselected confusion pair
                         $scope.selectedConfusion = undefined;
                         History.add_record("changeCode:deselect-no-longer-existed-confusion",
-                                           {selectedConfusion: $scope.selectedConfusion});
+                            {selectedConfusion: $scope.selectedConfusion});
                     }
+
+
+                    // Update the active features for messages whose feature_vector contains this message id
+                    var effectedMessages = $scope.allItems.filter(function (m) {
+                        return m.feature_vector.filter(function (f) {
+                                return f.origin_message_id == $scope.message_for_change.message.id;
+                            }).length > 0;
+                    });
+
+                    for (var i = 0; i < effectedMessages.length; i++) {
+                        var messageItem = effectedMessages[i];
+                        var features = [];
+                        for (i = 0; i < messageItem.feature_vector.length; i++) {
+                            var feature = messageItem.feature_vector[i];
+                            feature.origin_code_id = code_id;
+
+                            var matchedTokenIndices = Message.match_feature(messageItem.message, feature);
+
+                            matchedTokenIndices.forEach(function (tokenIndex) {
+                                var tokenItem = messageItem.tokens[tokenIndex];
+                                features.push({
+                                    startCharIndex: tokenItem.startIndex,
+                                    endCharIndex: tokenItem.endIndex,
+                                    codeIndex: feature.origin_code_id
+                                });
+                            });
+                        }
+
+                        messageItem.active_features = features;
+                    }
+
+
                     $scope.ask_if_change_code = false;
 
 
@@ -728,34 +764,11 @@
 
                         $scope.normalized_code_distribution = Message.normalized_code_distribution;
                         $scope.code_distribution = Message.code_distribution;
-
-                        for (var i = 0; i < $scope.allItems.length; i++) {
-                            var prototype = $scope.allItems[i];
-                            // Update all message items
-                            //prototype.characters = prototype.message.text.split("");
-                            prototype.characters = Array.from(prototype.message.text); // make sure it works for unicode
-
-
-                            // Interaction states
-                            prototype.hoveredCharStart = -1;
-                            prototype.hoveredCharEnd = -1;
-                            prototype.clickStartTokenItem = undefined;
-                            prototype.selectedTokens = undefined;
-                            prototype.selectedTokenIndices = new Map();
-
-                        }
                     }
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
-                        //$scope.allItems = Message.all_coded_messages;
-                        Message.all_coded_messages.forEach(function(newItem){
-                            var item = $scope.allItemsMap.get(newItem.id);
-
-                            if (item){
-                                item.active_features = newItem.active_features;
-                            }
-                        });
+                        $scope.allItems = Message.all_coded_messages;
                     }
                 });
             }
