@@ -892,21 +892,25 @@ class ExperimentProgressView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
 
-        if not user.is_superuser:
-            return Response("Admin only", status=status.HTTP_400_BAD_REQUEST)
-
-        pair_list = request.query_params.get('pairs')
-
         try:
-            users = []
-            if not pair_list:
-                progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=int(exp_id))
+            progresses = []
+            if user.is_superuser:
+                pair_list = request.query_params.get('pairs')
+
+
+                if not pair_list:
+                    progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=int(exp_id))
+                else:
+                    pair_list = pair_list.split(" ")
+                    filter_ors = []
+                    for pair_id in pair_list:
+                        filter_ors.append(("user__pair__id", int(pair_id)))
+                    progresses = experiment_models.Progress.objects.filter(reduce(or_, [Q(x) for x in filter_ors]))
             else:
-                pair_list = pair_list.split(" ")
-                filter_ors = []
-                for pair_id in pair_list:
-                    filter_ors.append(("user__pair__id", int(pair_id)))
-                progresses = experiment_models.Progress.objects.filter(reduce(or_, [Q(x) for x in filter_ors]))
+                progresses.append(user.progress)
+                partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+                if partner:
+                    progresses.append(partner.progress)
 
             output = serializers.ProgressSerializer(progresses, many=True)
 
@@ -916,6 +920,8 @@ class ExperimentProgressView(APIView):
             traceback.print_exc()
             import pdb
             pdb.set_trace()
+
+
 
 class ActionHistoryView(APIView):
     """
