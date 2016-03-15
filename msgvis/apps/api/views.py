@@ -17,13 +17,14 @@ The view classes below define the API endpoints.
 """
 import json
 import logging
-from operator import attrgetter, itemgetter
+from operator import attrgetter, itemgetter, or_
 
 from django.db import IntegrityError
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.contrib.auth.models import User
 from django.core.urlresolvers import NoReverseMatch
+
 
 from rest_framework import status
 from rest_framework.views import APIView, Response
@@ -815,7 +816,7 @@ class ProgressView(APIView):
     """
     Get the progress of the current user
 
-    **Request:** ``GET /progress
+    **Request:** ``GET /progress``
     """
 
     def get(self, request, format=None):
@@ -881,7 +882,7 @@ class ExperimentProgressView(APIView):
     """
     Get the progress of the current user
 
-    **Request:** ``GET /exp_progress/exp_id
+    **Request:** ``GET /exp_progress/exp_id``
     """
 
     def get(self, request, exp_id, format=None):
@@ -894,16 +895,17 @@ class ExperimentProgressView(APIView):
         if not user.is_superuser:
             return Response("Admin only", status=status.HTTP_400_BAD_REQUEST)
 
-        pair_list = request.query_params.get('pairs', "").split(" ")
+        pair_list = request.query_params.get('pairs')
 
         try:
             users = []
-            if len(pair_list) == 0:
-                progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=exp_id)
+            if not pair_list:
+                progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=int(exp_id))
             else:
+                pair_list = pair_list.split(" ")
                 filter_ors = []
                 for pair_id in pair_list:
-                    filter_ors.append(("user__pair_id", pair_id))
+                    filter_ors.append(("user__pair__id", int(pair_id)))
                 progresses = experiment_models.Progress.objects.filter(reduce(or_, [Q(x) for x in filter_ors]))
 
             output = serializers.ProgressSerializer(progresses, many=True)

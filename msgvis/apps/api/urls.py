@@ -21,7 +21,7 @@ api_root_urls = {
     'disagreement': url(r'^disagreement/(?P<message_id>[0-9]+)$', csrf_exempt(views.DisagreementIndicatorView.as_view()), name='disagreement'),
     'pairwise': url(r'^pairwise/$', csrf_exempt(views.PairwiseConfusionMatrixView.as_view()), name='pairwise'),
     'progress': url(r'^progress/$', csrf_exempt(views.ProgressView.as_view()), name='progress'),
-    'exp_progress': url(r'^exp_progress/$', csrf_exempt(views.ExperimentProgressView.as_view()), name='exp_progress'),
+    'exp_progress': url(r'^exp_progress/(?P<exp_id>[0-9]+)/$', csrf_exempt(views.ExperimentProgressView.as_view()), name='exp_progress'),
     'action-history': url(r'^history/$', views.ActionHistoryView.as_view(), name='action-history'),
 
 }
