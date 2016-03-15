@@ -264,6 +264,7 @@ class UserFeatureView(APIView):
             counts = enhance_models.Feature.objects\
                 .filter(id=feature.id, messages__code_assignments__isnull=False,
                         messages__code_assignments__is_user_labeled=True,
+                        messages__code_assignments__source=user,
                         messages__code_assignments__valid=True)\
                 .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                                     .annotate(count=Count('messages')).order_by('id', 'count').all()
@@ -439,6 +440,11 @@ class CodeDefinitionView(APIView):
                     code_definition = code.get_definition(source_user)
                     if code_definition:
                         code_definitions.append(code_definition)
+                    else:
+                        code_definition_obj = coding_models.CodeDefinition.objects.create(code=code, source=source_user)
+                        code_definition = code.get_definition(source_user)
+                        if code_definition:
+                            code_definitions.append(code_definition)
                 code_def_set.append({"source": source, "definitions":code_definitions})
 
             output = serializers.CodeDefinitionSetSerializer(code_def_set, many=True)

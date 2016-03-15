@@ -231,15 +231,21 @@
                     }
 
                     return angular.extend(messageData, {
-                       // id: messageData.message.id,
-                       // text: text,
+                        // id: messageData.message.id,
+                        // text: text,
                         characters: characters,
                         charToToken: charToToken,
                         tokens: tokenItems,
                         is_ambiguous: (messageData.is_ambiguous || false),
                         is_saved: (messageData.is_saved || false),
                         is_example: (messageData.is_example || false),
-                        active_features: features
+                        active_features: features,
+                        // Interaction states
+                        hoveredCharStart: -1,
+                        hoveredCharEnd: -1,
+                        clickStartTokenItem: undefined,
+                        selectedTokens: undefined,
+                        selectedTokenIndices: new Map(),
                     });
                 },
                 submit: function (code_id) {
@@ -278,24 +284,19 @@
                             //self.last_message = data;
                             new_item = self.format_tweet_item(new_item);
                             // TODO: the data should be another assignment and need to use that for updating the interface
-                            if (Progress.current_status == 'R'){
+                            if (Progress.current_status == 'R') {
 
                                 // Remove the original item from list and add the new item
-                                var idx = self.all_coded_messages.indexOf(original_item);
-                                if ( idx != -1 ){
-                                    self.all_coded_messages.splice(idx, 1);
-                                }
-                                self.all_coded_messages.push(new_item);
 
                                 // Update the code distribution
-                                if (self.code_distribution[new_item.user_code.text] == undefined){
+                                if (self.code_distribution[new_item.user_code.text] == undefined) {
                                     self.code_distribution[new_item.user_code.text] = 0;
                                 }
                                 self.code_distribution[new_item.user_code.text]++;
                                 self.code_distribution[original_item.user_code.text]--;
 
-                                for (var key in self.code_distribution){
-                                    if ( self.code_distribution.hasOwnProperty(key) ){
+                                for (var key in self.code_distribution) {
+                                    if (self.code_distribution.hasOwnProperty(key)) {
                                         self.normalized_code_distribution[key] = self.code_distribution[key];
                                         self.normalized_code_distribution[key] /= self.all_coded_messages.length;
                                     }
@@ -303,12 +304,10 @@
 
                                 // Update pairwise comparison
                                 Code.update_pairwise(original_item.user_code.text,
-                                                     new_item.user_code.text,
-                                                     new_item.partner_code.text);
+                                    new_item.user_code.text,
+                                    new_item.partner_code.text);
 
                             }
-
-
                         });
 
                 },
@@ -518,8 +517,10 @@
                                 self.definitions_by_source[def_set.source] = def_set.definitions;
                                 def_set.definitions.forEach(function(def){
                                     if (typeof(self.definitions_by_code[def.code_text]) === "undefined")
-                                        self.definitions_by_code[def.code_text] = {master: "", user: "", partner: ""};
-                                    self.definitions_by_code[def.code_text][def_set.source] = def.text;
+                                        self.definitions_by_code[def.code_text] = {master: {text: ""},
+                                                                                   user: {text: ""},
+                                                                                   partner: {text: ""}};
+                                    self.definitions_by_code[def.code_text][def_set.source] = def;
                                 });
                             });
 
@@ -536,7 +537,7 @@
 
 
                     var request = {
-                        text: self.definitions_by_code[code.code_text]["user"].trim()
+                        text: self.definitions_by_code[code.code_text]["user"].text.trim()
                     };
 
 
@@ -610,6 +611,7 @@
                     return $http.get(apiUrl)
                         .success(function (data) {
                             console.log(data);
+                            self.user = data.user;
                             self.current_stage_index = data.current_stage_index;
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;

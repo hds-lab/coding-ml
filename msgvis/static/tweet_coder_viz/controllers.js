@@ -73,6 +73,7 @@
         $scope.selectedCode = undefined;
         $scope.codes = [];
         $scope.code_map = {};
+        $scope.code_text_list = [];
         $scope.coded_messages = undefined;
 
         // Variables for ensuring a code definition is saved after the user edits it
@@ -116,6 +117,15 @@
             S: 'Switching stage'
         };
 
+        $scope.code_map = function(distribution){
+            if ($scope.codes && distribution){
+                var dist = [];
+                $scope.codes.forEach(function(code){
+                    dist.push(distribution[code.code_text]);
+                });
+                return dist;
+            }
+        };
 
         $scope.selectLabel = function(code){
             History.add_record("selectLabel", {code: code});
@@ -279,6 +289,30 @@
         $scope.filterFeatures = function(code, feature){
             if (code && feature){
                 return feature.distribution && feature.distribution[code.code_text] > 0;
+            }
+            return false;
+        };
+
+        var objectFilter = function(obj, predicate) {
+            var result = {}, key;
+
+            for (key in obj) {
+                if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+                    result[key] = obj[key];
+                }
+            }
+
+            return result;
+        };
+        $scope.hasFeatureOfCode = function(code, featureList){
+            if ( code && featureList ){
+                var count = 0;
+                for (var key in featureList){
+                    if (featureList.hasOwnProperty(key)){
+                        count += ($scope.filterFeatures(code, featureList[key]) == true);
+                    }
+                }
+                return count > 0;
             }
             return false;
         };
@@ -468,6 +502,7 @@
             }
         };
 
+        $scope.processing = false;
         $scope.next_step = function(){
             var request;
             if (Progress.current_status == 'W'){
@@ -475,9 +510,11 @@
                 request = Progress.init_load();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
+                    $scope.processing = true;
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
                         History.add_record("next_step:refresh:request-end", {});
+                        $scope.processing = false;
                     });
                 }
             }
@@ -486,9 +523,11 @@
                 request = Progress.next_step();
                 if (request) {
                     usSpinnerService.spin('page-spinner');
+                    $scope.processing = true;
                     request.then(function() {
                         usSpinnerService.stop('page-spinner');
                         History.add_record("next_step:next:request-end", {});
+                        $scope.processing = false;
                     });
                 }
             }
@@ -564,19 +603,62 @@
                 usSpinnerService.spin('submitted-label-spinner');
                 request.then(function() {
                     usSpinnerService.stop('submitted-label-spinner');
-                    History.add_record("changeCode:request-end", {message_for_change: $scope.message_for_change,
-                                                                    partner_code: $scope.message_for_change.partner_code.id});
+                    History.add_record("changeCode:request-end", {
+                        message_for_change: $scope.message_for_change,
+                        partner_code: $scope.message_for_change.partner_code.id
+                    });
 
                     // TODO: rewrite to avoid reloading whole; but need to go through all messages for feature color
                     $scope.load_distribution('user');
 
-                    if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0){
+                    var id_list = $scope.allItems.map(function (d) {
+                        return d.message.id;
+                    });
+                    var idx = id_list.indexOf($scope.message_for_change.message.id);
+                    $scope.allItems[idx].user_code = $scope.allItems[idx].partner_code;
+
+                    if ($scope.selectedConfusion && $scope.selectedConfusion.count == 0) {
                         // Unselected confusion pair
                         $scope.selectedConfusion = undefined;
                         History.add_record("changeCode:deselect-no-longer-existed-confusion",
-                                           {selectedConfusion: $scope.selectedConfusion});
+                            {selectedConfusion: $scope.selectedConfusion});
                     }
+
+
+                    // Update the active features for messages whose feature_vector contains this message id
+                    var effectedMessages = $scope.allItems.filter(function (m) {
+                        return m.feature_vector.filter(function (f) {
+                                return f.origin_message_id == $scope.message_for_change.message.id;
+                            }).length > 0;
+                    });
+
+                    for (var i = 0; i < effectedMessages.length; i++) {
+                        var messageItem = effectedMessages[i];
+                        var features = [];
+                        for (i = 0; i < messageItem.feature_vector.length; i++) {
+                            var feature = messageItem.feature_vector[i];
+                            if (feature.origin_message_id == $scope.message_for_change.message.id) {
+                                feature.origin_code_id = $scope.message_for_change.partner_code.id;
+                            }
+
+                            var matchedTokenIndices = Message.match_feature(messageItem.message, feature);
+
+                            matchedTokenIndices.forEach(function (tokenIndex) {
+                                var tokenItem = messageItem.tokens[tokenIndex];
+                                features.push({
+                                    startCharIndex: tokenItem.startIndex,
+                                    endCharIndex: tokenItem.endIndex,
+                                    codeIndex: feature.origin_code_id
+                                });
+                            });
+                        }
+
+                        messageItem.active_features = features;
+                    }
+
+
                     $scope.ask_if_change_code = false;
+
 
                 });
             }
@@ -589,23 +671,31 @@
         $scope.hasDefinition = function(code, source){
             if (!code) return false;
             return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
-                   Code.definitions_by_code[code.code_text][source].trim().length > 0;
+                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('text') &&
+                   Code.definitions_by_code[code.code_text][source].text.trim().length > 0;
+        };
+
+        $scope.hasExample = function(code, source){
+            if (!code) return false;
+            return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
+                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('examples') &&
+                   Code.definitions_by_code[code.code_text][source].examples.length > 0;
         };
 
         $scope.saveDefinition = function(){
             var code = $scope.selectedCode;
             if (code && $scope.hasDefinition(code, "user")) {
                 History.add_record("saveDefinition:request-start", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
                 var request = Code.update_definition(code);
                 if (request) {
                     usSpinnerService.spin('code-detail-spinner');
                     request.then(function () {
                         usSpinnerService.stop('code-detail-spinner');
                         History.add_record("saveDefinition:request-end", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"]});
+                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
 
-                        $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
+                        $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
                     });
                 }
             }
@@ -614,9 +704,7 @@
         $scope.is_definition_different = function(){
             var code = $scope.selectedCode;
             return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== "undefined") &&
-            ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].trim()) );
-
-
+            ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].text.trim()) );
         };
 
         $scope.startEditing = function(){
@@ -624,7 +712,7 @@
             if ($scope.is_editing_definition == false){
                 History.add_record("definition:startEditing", {code: code});
                 $scope.is_editing_definition = true;
-                $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].trim();
+                $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
             }
         };
 
@@ -650,7 +738,7 @@
             }
             else {
                 History.add_record("definition:handleDefinitionChanges:discard", {code: code});
-                Code.definitions_by_code[code.code_text]["user"] = $scope.original_code_definition;
+                Code.definitions_by_code[code.code_text]["user"].text = $scope.original_code_definition;
             }
             $scope.original_code_definition = undefined;
             $scope.ask_if_save_definition = false;
@@ -678,33 +766,11 @@
 
                         $scope.normalized_code_distribution = Message.normalized_code_distribution;
                         $scope.code_distribution = Message.code_distribution;
-
-                        for (var i = 0; i < $scope.allItems.length; i++) {
-                            var prototype = $scope.allItems[i];
-                            // Update all message items
-                            //prototype.characters = prototype.message.text.split("");
-                            prototype.characters = Array.from(prototype.message.text); // make sure it works for unicode
-
-
-                            // Interaction states
-                            prototype.hoveredCharStart = -1;
-                            prototype.hoveredCharEnd = -1;
-                            prototype.clickStartTokenItem = undefined;
-                            prototype.selectedTokens = undefined;
-                            prototype.selectedTokenIndices = new Map();
-
-                        }
                     }
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
-                        Message.all_coded_messages.forEach(function(newItem){
-                            var item = $scope.allItemsMap.get(newItem.id);
-
-                            if (item){
-                                item.active_features = newItem.active_features;
-                            }
-                        });
+                        $scope.allItems = Message.all_coded_messages;
                     }
                 });
             }
@@ -1136,9 +1202,11 @@
         });*/
         $scope.$on('definitions::updated', function($event, data) {
             $scope.codes = data;
+            $scope.code_text_list = [];
             $scope.codes.forEach(function(code){
                 $scope.code_map[code.code_text] = code;
                 $scope.code_map[code.code_id] = code;
+                $scope.code_text_list.push(code.code_text);
             });
 
         });
@@ -1148,7 +1216,6 @@
             }
 
         });
-
 
     };
 
