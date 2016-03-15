@@ -871,6 +871,44 @@ class ProgressView(APIView):
             import pdb
             pdb.set_trace()
 
+class ExperimentProgressView(APIView):
+    """
+    Get the progress of the current user
+
+    **Request:** ``GET /exp_progress/exp_id
+    """
+
+    def get(self, request, exp_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        if not user.is_superuser:
+            return Response("Admin only", status=status.HTTP_400_BAD_REQUEST)
+
+        pair_list = request.query_params.get('pairs', "").split(" ")
+
+        try:
+            users = []
+            if len(pair_list) == 0:
+                progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=exp_id)
+            else:
+                filter_ors = []
+                for pair_id in pair_list:
+                    filter_ors.append(("user__pair_id", pair_id))
+                progresses = experiment_models.Progress.objects.filter(reduce(or_, [Q(x) for x in filter_ors]))
+
+            output = serializers.ProgressSerializer(progresses, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
 class ActionHistoryView(APIView):
     """
     Add a action history record.
