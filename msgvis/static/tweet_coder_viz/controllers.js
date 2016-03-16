@@ -88,7 +88,7 @@
         $scope.selectedMedia = undefined;
 
         $scope.allItems = undefined;
-        $scope.allItemsMap = new Map();
+        $scope.allItemsMap = {};
         $scope.hoveredItem = undefined;
         $scope.confusionPairs = undefined;
         $scope.distribution = undefined;
@@ -492,7 +492,7 @@
                     if (idx != -1){
                         $scope.coded_messages['user'][$scope.selectedCode.code_text].splice(idx, 1);
                     }
-                    $scope.coded_messages['user'][$scope.selectedCode.code_text].push(Message.last_message);
+                    $scope.coded_messages['user'][$scope.selectedCode.code_text].unshift(Message.last_message);
                     $scope.selectedCode = undefined;
 
                     $scope.next_step();
@@ -759,7 +759,7 @@
                         History.add_record("getAllMessages:initialize-all-message", {});
                         $scope.allItems = Message.all_coded_messages;
                         $scope.allItems.forEach(function(item){
-                            $scope.allItemsMap.set(item.id, item);
+                            $scope.allItemsMap[item.message.id] = item;
                         });
 
                         $scope.normalized_code_distribution = Message.normalized_code_distribution;
@@ -768,7 +768,12 @@
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
-                        $scope.allItems = Message.all_coded_messages;
+                        Message.all_coded_messages.forEach(function(item){
+                            if ($scope.allItemsMap.hasOwnProperty(item.message.id)){
+                                $scope.allItemsMap[item.message.id].feature_vector = item.feature_vector;
+                                $scope.allItemsMap[item.message.id].active_features = item.active_features;
+                            }
+                        });
                     }
                 });
             }
@@ -1122,7 +1127,7 @@
                     }
 
 
-                    var newMap = {};
+                    //var newMap = {};
 
                     //item.submittedTokenIndices = new Map();
                     //item.selectedTokenIndices.forEach(function (val, key) {
