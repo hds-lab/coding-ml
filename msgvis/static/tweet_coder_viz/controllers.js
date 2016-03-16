@@ -249,6 +249,10 @@
             }
         };
 
+        $scope.hasTweet = function(){
+            return ($scope.allItems && $scope.allItems.filter($scope.filterTweetsByConfusionAndCode).length > 0)
+        };
+
         $scope.filterTweetsByConfusionAndCode = function(item) {
             if (item){
                 var confusion = $scope.selectedConfusion;
@@ -280,10 +284,15 @@
             return matched;
         };
 
+        $scope.hasConfusion = function(){
+            return ($scope.confusionPairs && ($scope.confusionPairs.filter($scope.filterConfusionByCode).length > 0));
+        };
+
         $scope.filterConfusionByCode = function(confusion){
             if (confusion) {
                 return confusion.count > 0 && $scope.selectedCode && confusion.user_code == $scope.selectedCode.code_text;
             }
+            return false;
         };
 
         $scope.filterFeatures = function(code, feature){
@@ -293,17 +302,6 @@
             return false;
         };
 
-        var objectFilter = function(obj, predicate) {
-            var result = {}, key;
-
-            for (key in obj) {
-                if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
-                    result[key] = obj[key];
-                }
-            }
-
-            return result;
-        };
         $scope.hasFeatureOfCode = function(code, featureList){
             if ( code && featureList ){
                 var count = 0;
