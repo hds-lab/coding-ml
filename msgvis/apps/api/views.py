@@ -17,13 +17,14 @@ The view classes below define the API endpoints.
 """
 import json
 import logging
-from operator import attrgetter, itemgetter
+from operator import attrgetter, itemgetter, or_
 
 from django.db import IntegrityError
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.contrib.auth.models import User
 from django.core.urlresolvers import NoReverseMatch
+
 
 from rest_framework import status
 from rest_framework.views import APIView, Response
@@ -815,7 +816,7 @@ class ProgressView(APIView):
     """
     Get the progress of the current user
 
-    **Request:** ``GET /progress
+    **Request:** ``GET /progress``
     """
 
     def get(self, request, format=None):
@@ -876,6 +877,51 @@ class ProgressView(APIView):
             traceback.print_exc()
             import pdb
             pdb.set_trace()
+
+class ExperimentProgressView(APIView):
+    """
+    Get the progress of the current user
+
+    **Request:** ``GET /exp_progress/exp_id``
+    """
+
+    def get(self, request, exp_id, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        try:
+            progresses = []
+            if user.is_superuser:
+                pair_list = request.query_params.get('pairs')
+
+
+                if not pair_list:
+                    progresses = experiment_models.Progress.objects.filter(user__pair__assignment__experiment_id=int(exp_id))
+                else:
+                    pair_list = pair_list.split(" ")
+                    filter_ors = []
+                    for pair_id in pair_list:
+                        filter_ors.append(("user__pair__id", int(pair_id)))
+                    progresses = experiment_models.Progress.objects.filter(reduce(or_, [Q(x) for x in filter_ors]))
+            else:
+                progresses.append(user.progress)
+                partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+                if partner:
+                    progresses.append(partner.progress)
+
+            output = serializers.ProgressSerializer(progresses, many=True)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+
 
 class ActionHistoryView(APIView):
     """

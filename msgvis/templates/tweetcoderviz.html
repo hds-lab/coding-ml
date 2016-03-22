@@ -432,6 +432,10 @@
                             <div class="box box-light">
                                 <h2>Comparison</h2>
                                 <span us-spinner="spinnerOptions" spinner-key="pairwise-spinner"></span>
+                                <div ng-show="hasConfusion()">
+                                    <div class="confusion-box-title">My Code</div>
+                                    <div class="confusion-box-title">My Partner's</div>
+                                </div>
                                 <div id="confusion" ng-class="{ selected: selectedConfusion==pair}"
                                      ng-repeat="pair in confusionPairs" ng-show="filterConfusionByCode(pair)"
                                      ng-click="selectConfusion(pair)">
@@ -443,7 +447,7 @@
                                     </div>
                                     <div class="confusion-total">{$ pair.count $}</div>
                                 </div>
-                                <p ng-show="confusionPairs!=undefined && (confusionPairs | filter:filterConfusionByCode()).length==0" class="help-text">No disagreements were found.</p>
+                                <p ng-hide="hasConfusion()" class="help-text">No disagreements found.</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -462,7 +466,7 @@
                                 <div class="label-list scroll-y">
                                     <div ng-repeat="item in allItems" ng-show="filterTweetsByConfusionAndCode(item)" class="label-item"
                                          ng-style="{ 'border-color': codeColor(code_map[item.user_code.text]) }"
-                                         ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
+                                         ng-mouseenter="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
                                          ng-class="{ hovered: hoveredItem==item }">
                                         <div class="confusion">
                                             <div class="confusion-box" ng-style="{ 'background': codeColor(code_map[item.user_code.text])}"></div>
@@ -513,11 +517,11 @@
                                             </div>
                                             <div class="item-message" ng-hide="hoveredItem==item" ng-bind-html="item.message.embedded_html"></div>
                                             <div class="source-stage">
-                                                <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
+                                                <span class="stage">from stage {$ item.source_stage_index + 1 $} {$ from_current_stage(item) ? "" : "(Read Only)" $}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <p ng-show="allItems!=undefined && (allItems | filter:filterTweetsByConfusionAndCode()).length==0" class="help-text">No tweets were found.</p>
+                                    <p ng-hide="hasTweet()" class="help-text">No tweets found.</p>
                                 </div>
 
                             </div>
