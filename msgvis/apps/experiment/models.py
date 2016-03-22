@@ -85,8 +85,10 @@ class Experiment(models.Model):
 
     def initialize_experiment(self, num_pairs, output):
 
-        num_conditions = 3  # hard-coded for our study
-        num_stages = 4  # hard-coded for our study
+        # num_conditions = 3  # hard-coded for our study
+        num_conditions = 1  # hard-coded for our study
+        # num_stages = 4  # hard-coded for our study
+        num_stages = 3  # hard-coded for our study
         num_message_sets = 10  # hard-coded for our study
 
         self.num_conditions = num_conditions
@@ -97,7 +99,8 @@ class Experiment(models.Model):
         print >>output, "Initializing the experiment with %d conditions." % num_conditions
 
         # create a list for saving conditions
-        condition_types = ["RRRR", "RDRR", "RRDR"]
+        # condition_types = ["RRRR", "RDRR", "RRDR"]
+        condition_types = ["RDD"]
         condition_list = []
         # create conditions
         for i in range(num_conditions):
