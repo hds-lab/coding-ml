@@ -52,7 +52,7 @@ class CodeAssignment(models.Model):
     @property
     def disagreement_indicator(self):
         partner_assignment = self.partner_assignment()
-        indicator =  self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
+        indicator = self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
         if indicator is None and self.code != partner_assignment.code:
             indicator = DisagreementIndicator(message=self.message, user_assignment=self,
                                               partner_assignment=partner_assignment)

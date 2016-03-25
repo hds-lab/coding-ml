@@ -321,7 +321,6 @@ class FeatureCodeDistributionView(APIView):
         feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
         feature_num = int(request.query_params.get('feature_num', 30))
 
-
         source_map = {
             "system": "system",
             "user": user,
@@ -332,7 +331,7 @@ class FeatureCodeDistributionView(APIView):
         }
         source_list = []
         for feature_source in feature_sources:
-                source_list.append(source_map[feature_source])
+            source_list.append(source_map[feature_source])
 
         features = dictionary.get_feature_list(source_list)
 
@@ -645,9 +644,10 @@ class AllCodedMessageView(APIView):
                                                                           valid=True).all()
 
             assignments = assignments.order_by('-source_stage_index', 'message_id')
+            assignments = assignments.select_related('message')
 
             for assignment in assignments:
-                message = corpus_models.Message.objects.get(id=assignment.message_id)
+                message = assignment.message
                 assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
             output = serializers.CodeAssignmentSerializer(assignments, many=True)
 
