@@ -5,6 +5,7 @@ from django.db import models
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
+from MySQLdb import OperationalError
 
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -495,113 +496,140 @@ class Progress(models.Model):
             return True
         return False
 
+    @transaction.commit_on_success
     def set_to_next_step(self):
         # make sure only one user is making changes to the progress table
-        with transaction.atomic(savepoint=False):
+        # with transaction.atomic(savepoint=False):
+        try:
+            query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (self.id)
+            self_progress_obj = Progress.objects.raw(query)[0]
+
             partner = self.user.pair.first().get_partner(self.user)
             partner_progress = partner.progress
-            if self.is_finished:
-                # This is a backdoor to go through stages when an user has already finished
-                if self.current_status == 'N':
-                    self.current_status = 'C'
-                    self.current_message_index = 0
-                    self.save()
-                elif self.current_status == 'C':
-                    next_message = self.get_next_message()
-                    if next_message is None:  # finish coding this stage
-                        self.current_status = 'R'
-                        self.save()
-                    else:
-                        self.current_message_index = next_message.order
-                        self.save()
-                elif self.current_status == 'R':
-                    try:
-                        next_stage = self.get_next_stage()
-                    except IndexError:
-                        self.current_status = 'F'
-                        self.save()
-                        partner_progress.current_status = 'F'
-                        partner_progress.save()
-                    else:
-                        self.current_status = 'N'
-                        self.current_stage_index = next_stage.order
-                        self.save()
-                        partner_progress.current_status = 'N'
-                        partner_progress.current_stage_index = next_stage.order
-                        partner_progress.save()
-                return True
-            else:
-                if self.current_status == 'N':
-                    self.current_status = 'I'
-                    self.save()
 
-                    # Switch to the next status when both are on the same page
-                    if self.current_status == 'I' and partner_progress.current_status == 'I':
-                        current_stage = self.get_current_stage()
-                        current_stage.initialize_stage()
-                        self.current_status = 'C'
-                        self.current_message_index = 0
-                        self.save()
-                        partner_progress.current_status = 'C'
-                        partner_progress.current_message_index = 0
-                        partner_progress.save()
+        except IndexError:
+           # Handle not found
+           return
+        except OperationalError:
+           # Handle lock timeouts
+           return
+        #import pdb
+        #pdb.set_trace()
 
-                    return True
-
-                elif self.current_status == 'C':
-                    current_message = self.get_current_message()
-
-                    # Check if the current message has been coded
-                    if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
-                                                                       source=self.user, message=current_message).exists():
-                        return False
-
-                    next_message = self.get_next_message()
-                    if next_message is None:  # finish coding this stage
-                        self.current_status = 'W'
-                        self.save()
-                    else:
-                        self.current_message_index = next_message.order
-                        self.save()
-
-                    # Switch to the next status when both are on the same page
-                    if self.current_status == 'W' and partner_progress.current_status == 'W':
-                        self.current_status = 'R'
-                        self.save()
-                        partner_progress.current_status = 'R'
-                        partner_progress.save()
-
-                    return True
-
-                elif self.current_status == 'R':
-                    self.current_status = 'S'
-                    self.save()
-
-                    # Switch to the next status when both are on the same page
-                    if self.current_status == 'S' and partner_progress.current_status == 'S':
-                        current_stage = self.get_current_stage()
-                        current_stage.process_stage()
-                        self.current_status = 'N'
-                        try:
-                            next_stage = self.get_next_stage()
-                        except IndexError:
-                            self.current_status = 'F'
-                            self.is_finished = True
-                            self.save()
-                            partner_progress.current_status = 'F'
-                            partner_progress.is_finished = True
-                            partner_progress.save()
-                        else:
-                            self.current_stage_index = next_stage.order
-                            self.save()
-                            partner_progress.current_status = 'N'
-                            partner_progress.current_stage_index = next_stage.order
-                            partner_progress.save()
-
-                    return True
-
+        if self_progress_obj.is_finished:
+            # This is a backdoor to go through stages when an user has already finished
+            if self_progress_obj.current_status == 'N':
+                self_progress_obj.current_status = 'C'
+                self_progress_obj.current_message_index = 0
+                self_progress_obj.save()
+            elif self_progress_obj.current_status == 'C':
+                next_message = self_progress_obj.get_next_message()
+                if next_message is None:  # finish coding this stage
+                    self_progress_obj.current_status = 'R'
+                    self_progress_obj.save()
                 else:
-                    return False
+                    self_progress_obj.current_message_index = next_message.order
+                    self_progress_obj.save()
+            elif self_progress_obj.current_status == 'R':
+                try:
+                    next_stage = self_progress_obj.get_next_stage()
+                except IndexError:
+                    self_progress_obj.current_status = 'F'
+                    self_progress_obj.save()
+                    query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                    partner_progress_obj = Progress.objects.raw(query)[0]
+                    partner_progress_obj.current_status = 'F'
+                    partner_progress_obj.save()
+                else:
+                    self_progress_obj.current_status = 'N'
+                    self_progress_obj.current_stage_index = next_stage.order
+                    self_progress_obj.save()
+                    query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                    partner_progress_obj = Progress.objects.raw(query)[0]
+                    partner_progress_obj.current_status = 'N'
+                    partner_progress_obj.current_stage_index = next_stage.order
+                    partner_progress_obj.save()
+            return True, self_progress_obj
+        else:
+            if self_progress_obj.current_status == 'N':
+                self_progress_obj.current_status = 'I'
+                self_progress_obj.save()
+
+                # Switch to the next status when both are on the same page
+                if self_progress_obj.current_status == 'I' and partner_progress.current_status == 'I':
+                    current_stage = self_progress_obj.get_current_stage()
+                    current_stage.initialize_stage()
+                    self_progress_obj.current_status = 'C'
+                    self_progress_obj.current_message_index = 0
+                    self_progress_obj.save()
+                    query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                    partner_progress_obj = Progress.objects.raw(query)[0]
+                    partner_progress_obj.current_status = 'C'
+                    partner_progress_obj.current_message_index = 0
+                    partner_progress_obj.save()
+
+                return True, self_progress_obj
+
+            elif self_progress_obj.current_status == 'C':
+                current_message = self_progress_obj.get_current_message()
+
+                # Check if the current message has been coded
+                if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
+                                                                   source=self_progress_obj.user, message=current_message).exists():
+                    return False, self_progress_obj
+
+                next_message = self_progress_obj.get_next_message()
+                if next_message is None:  # finish coding this stage
+                    self_progress_obj.current_status = 'W'
+                    self_progress_obj.save()
+                else:
+                    self_progress_obj.current_message_index = next_message.order
+                    self_progress_obj.save()
+
+                # Switch to the next status when both are on the same page
+                if self_progress_obj.current_status == 'W' and partner_progress.current_status == 'W':
+                    self_progress_obj.current_status = 'R'
+                    self_progress_obj.save()
+                    query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                    partner_progress_obj = Progress.objects.raw(query)[0]
+                    partner_progress_obj.current_status = 'R'
+                    partner_progress_obj.save()
+
+                return True, self_progress_obj
+
+            elif self_progress_obj.current_status == 'R':
+                self_progress_obj.current_status = 'S'
+                self_progress_obj.save()
+
+                # Switch to the next status when both are on the same page
+                if self_progress_obj.current_status == 'S' and partner_progress.current_status == 'S':
+                    current_stage = self_progress_obj.get_current_stage()
+                    current_stage.process_stage()
+                    self_progress_obj.current_status = 'N'
+                    try:
+                        next_stage = self_progress_obj.get_next_stage()
+                    except IndexError:
+                        self_progress_obj.current_status = 'F'
+                        self_progress_obj.is_finished = True
+                        self_progress_obj.save()
+                        query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                        partner_progress_obj = Progress.objects.raw(query)[0]
+                        partner_progress_obj.current_status = 'F'
+                        partner_progress_obj.is_finished = True
+                        partner_progress_obj.save()
+                    else:
+                        self_progress_obj.current_stage_index = next_stage.order
+                        self_progress_obj.save()
+                        query = "SELECT * FROM experiment_progress WHERE id=%d FOR UPDATE" % (partner_progress.id)
+                        partner_progress_obj = Progress.objects.raw(query)[0]
+                        partner_progress_obj.current_status = 'N'
+                        partner_progress_obj.current_stage_index = next_stage.order
+                        partner_progress_obj.save()
+
+                return True, self_progress_obj
+
+            else:
+                return False, self_progress_obj
 
 
 
