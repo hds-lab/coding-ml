@@ -549,7 +549,7 @@ class Progress(models.Model):
                     partner_progress_obj.current_status = 'N'
                     partner_progress_obj.current_stage_index = next_stage.order
                     partner_progress_obj.save()
-            return True
+            return True, self_progress_obj
         else:
             if self_progress_obj.current_status == 'N':
                 self_progress_obj.current_status = 'I'
@@ -568,7 +568,7 @@ class Progress(models.Model):
                     partner_progress_obj.current_message_index = 0
                     partner_progress_obj.save()
 
-                return True
+                return True, self_progress_obj
 
             elif self_progress_obj.current_status == 'C':
                 current_message = self_progress_obj.get_current_message()
@@ -576,7 +576,7 @@ class Progress(models.Model):
                 # Check if the current message has been coded
                 if not coding_models.CodeAssignment.objects.filter(is_user_labeled=True, valid=True,
                                                                    source=self_progress_obj.user, message=current_message).exists():
-                    return False
+                    return False, self_progress_obj
 
                 next_message = self_progress_obj.get_next_message()
                 if next_message is None:  # finish coding this stage
@@ -595,7 +595,7 @@ class Progress(models.Model):
                     partner_progress_obj.current_status = 'R'
                     partner_progress_obj.save()
 
-                return True
+                return True, self_progress_obj
 
             elif self_progress_obj.current_status == 'R':
                 self_progress_obj.current_status = 'S'
@@ -626,10 +626,10 @@ class Progress(models.Model):
                         partner_progress_obj.current_stage_index = next_stage.order
                         partner_progress_obj.save()
 
-                return True
+                return True, self_progress_obj
 
             else:
-                return False
+                return False, self_progress_obj
 
 
 
