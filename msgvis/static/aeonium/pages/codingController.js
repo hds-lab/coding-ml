@@ -456,6 +456,8 @@
                     $scope.selectedCode = undefined;
 
                     // TODO: Get next thing to label????
+                    var messageId = Math.floor(Math.random() * 3900);
+                    $scope.getMessageDetail(messageId);
                 });
             }
         };
@@ -1079,9 +1081,10 @@
 
 
         // Watchers
-        $scope.$watch('Code.codes', function(newVal, oldVal) {
+        $scope.$watch('Code.codes', function (newVal, oldVal) {
             if (newVal && (newVal != oldVal)) {
-                $scope.getMessageDetail(33);
+                var messageId = Math.floor(Math.random() * 3900);
+                $scope.getMessageDetail(messageId);
             }
         });
 
