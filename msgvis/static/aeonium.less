@@ -4,9 +4,9 @@
 // http://blog.stevensanderson.com/2011/10/05/full-height-app-layouts-a-css-trick-to-make-it-easier/
 
 /* Colors */
-@item-background-color: rgba(0,0,0,0.02);
-@item-background-color-hover: rgba(255,255,255,0.5);
-@item-background-color-selected: rgba(0,0,0,0.1);
+@item-background-color: rgba(0, 0, 0, 0.02);
+@item-background-color-hover: rgba(255, 255, 255, 0.5);
+@item-background-color-selected: rgba(0, 0, 0, 0.1);
 @popover-color: #eee;
 
 /* Offsets */
@@ -15,844 +15,841 @@
 @review-top-height: 145px;
 @review-bottom-bar-height: 40px;
 
-
 html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    min-width: 1200px;
-    background: #eee;
-    color: #333;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  min-width: 1200px;
+  background: #eee;
+  color: #333;
 }
+
 body {
-    font-family: 'Calibri', sans-serif;
-    font-weight: 400;
-    font-size: 10pt;
-    min-width: 1200px;
+  font-family: 'Calibri', sans-serif;
+  font-weight: 400;
+  font-size: 10pt;
+  min-width: 1200px;
 
-    .popover {
-        background: @popover-color;
-        border-radius: 0;
-        font-size: 12px;
+  .popover {
+    background: @popover-color;
+    border-radius: 0;
+    font-size: 12px;
 
-        .collapse.in {
-            overflow: visible;
-        }
-
-        &.right {
-            & > .arrow:after {
-                border-right-color: @popover-color;
-            }
-        }
-
-        &.top {
-            & > .arrow:after {
-                border-top-color: @popover-color;
-            }
-        }
-
-        .popover-content {
-            padding: 5px;
-        }
+    .collapse.in {
+      overflow: visible;
     }
-}
-th:hover{
-    cursor: pointer;
-}
-#main,#application{
-    height: 100%;
+
+    &.right {
+      & > .arrow:after {
+        border-right-color: @popover-color;
+      }
+    }
+
+    &.top {
+      & > .arrow:after {
+        border-top-color: @popover-color;
+      }
+    }
+
+    .popover-content {
+      padding: 5px;
+    }
+  }
 }
 
-#titleWrap {
-    padding: 10px;
-    background-color: white;
-    -webkit-box-shadow: 0 1px 1px 1px rgba(0,0,0,.1);
-    -moz-box-shadow: 0 1px 1px 1px rgba(0,0,0,.1);
-    box-shadow: 0 1px 1px 1px rgba(0,0,0,.1);
-
-    .title {
-        font-size: 2em;
-        font-weight: 700;
-    }
-
-    .logo{
-        width: 40px;
-        height: 40px;
-        margin: 0 8px;
-    }
-
-    .description {
-        font-size: 1.6em;
-        margin-left: 10px;
-        margin-right: 20px;
-    }
-
-    .dataset {
-        padding-left: 20px;
-        font-size: 1.6em;
-        position: fixed;
-        top: 15px;
-        right: 10px;
-
-    }
+th:hover {
+  cursor: pointer;
 }
+
+#main, #application {
+  height: 100%;
+}
+
+.navbar {
+  background-color: white;
+  -webkit-box-shadow: 0 1px 1px 1px rgba(0, 0, 0, .1);
+  -moz-box-shadow: 0 1px 1px 1px rgba(0, 0, 0, .1);
+  box-shadow: 0 1px 1px 1px rgba(0, 0, 0, .1);
+  border-radius: 0;
+
+  .navbar-brand {
+    font-size: 2em;
+    font-weight: 700;
+    padding: 5px 15px;
+    line-height: 36px;
+  }
+
+  .logo {
+    width: 36px;
+    height: 36px;
+    margin: 0 8px;
+  }
+
+  ul > li {
+    font-size: 1.5em;
+  }
+
+  .dataset {
+    display:block;
+    line-height: 20px;
+    padding: 15px 0;
+  }
+}
+
 #content {
-    height: ~'calc(100% - 75px)';
+  height: ~'calc(100% - 75px)';
 
-    .modal-content {
-        border-radius: 0;
+  .modal-content {
+    border-radius: 0;
 
-        .modal-body {
-            font-size: 14px;
-            font-weight: 300;
-        }
+    .modal-body {
+      font-size: 14px;
+      font-weight: 300;
     }
+  }
 }
 
 .change-mark {
-    vertical-align: super;
-    font-size: 9px;
-    color: gray;
+  vertical-align: super;
+  font-size: 9px;
+  color: gray;
 }
-.stage-prompt{
-    position: absolute;
-    text-align: center;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.5em;
-    color: #999;
+
+.stage-prompt {
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5em;
+  color: #999;
 }
 
 /* START Shared between coding and reviewing */
 .btn {
-    border-radius: 0;
+  border-radius: 0;
 }
 
 .dropdown-menu {
-    border-radius: 0;
-    .dropdown-item:hover {
-        cursor: pointer;
-    }
+  border-radius: 0;
+  .dropdown-item:hover {
+    cursor: pointer;
+  }
 }
 
-.no-padding{
-    padding: 0;
+.no-padding {
+  padding: 0;
 }
 
-.scroll-y{
-    overflow-y: auto;
-    height: 100%;
+.scroll-y {
+  overflow-y: auto;
+  height: 100%;
 }
 
 .help-text {
-    color: #777;
-    font-size: 14px;
-    font-weight: 300;
+  color: #777;
+  font-size: 14px;
+  font-weight: 300;
 }
 
 h2 {
-    font-weight: 800;
-    font-size: 16px;
-    text-transform: uppercase;
-    margin: 0 0 10px 0;
+  font-weight: 800;
+  font-size: 16px;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
 }
 
 h3 {
-    font-weight: 600;
-    font-size: 14px;
-    margin: 10px 0 5px 0;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 10px 0 5px 0;
 }
 
 .inline {
-    display: inline;
+  display: inline;
 }
 
-
-
 #codes {
-    .btn {
-        margin: 0;
-        opacity: 0.7;
+  .btn {
+    margin: 0;
+    opacity: 0.7;
 
-        &:hover {
-            opacity: 1;
-        }
-
-        > .code-definition {
-            text-align: justify;
-            white-space: normal;
-            font-size: 12px;
-            height: 100px;
-        }
+    &:hover {
+      opacity: 1;
     }
 
-    .btn.active {
-        opacity: 1;
-        color: white;
-        background-color: #AA3333;
-        -webkit-box-shadow: none;
-        box-shadow: none;
-
-        > .code-name {
-            font-weight: 600;
-        }
+    > .code-definition {
+      text-align: justify;
+      white-space: normal;
+      font-size: 12px;
+      height: 100px;
     }
+  }
+
+  .btn.active {
+    opacity: 1;
+    color: white;
+    background-color: #AA3333;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+
+    > .code-name {
+      font-weight: 600;
+    }
+  }
 }
 
 .box {
-    padding: 10px;
-    background: white;
+  padding: 10px;
+  background: white;
 
-    &.box-top {
-        margin-top: 10px;
-    }
+  &.box-top {
+    margin-top: 10px;
+  }
 
-    &.box-bottom {
-        margin-bottom: 10px;
-    }
+  &.box-bottom {
+    margin-bottom: 10px;
+  }
 
-    &.box-left {
-        margin-left: 10px;
-    }
+  &.box-left {
+    margin-left: 10px;
+  }
 
-    &.box-right {
-        margin-right: 10px;
-    }
+  &.box-right {
+    margin-right: 10px;
+  }
 
-    &.box-light {
-        background: rgba(255, 255, 255, 0.5);
-    }
+  &.box-light {
+    background: rgba(255, 255, 255, 0.5);
+  }
 
-    &.box-full {
-        height: 100%;
-    }
+  &.box-full {
+    height: 100%;
+  }
 }
 
-
-
 .features {
-    background: @item-background-color;
-    margin: 5px 0;
-    padding: 5px;
-    width: 100%;
-    height: 32px;
-    font-size: 14px;
-    font-weight: 300;
-    cursor: pointer;
+  background: @item-background-color;
+  margin: 5px 0;
+  padding: 5px;
+  width: 100%;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 300;
+  cursor: pointer;
 
-    &:hover {
-        background: @item-background-color-hover;
+  &:hover {
+    background: @item-background-color-hover;
+  }
+
+  .btn {
+    border: none;
+    width: 18px;
+    height: 20px;
+    font-size: 16px;
+    padding: 0;
+    margin: 0;
+    vertical-align: top;
+    display: inline;
+    color: #777;
+    background: transparent;
+  }
+
+  .feature-text {
+    width: 58%;
+    height: 100%;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    &.user-feature {
+      width: 55%;
+    }
+  }
+
+  .feature-distribution {
+    width: 30%;
+    height: 20px;
+    display: inline-block;
+
+    div {
+      display: inline-block;
+      height: 100%;
     }
 
-    .btn {
-        border: none;
-        width: 18px;
-        height: 20px;
-        font-size: 16px;
-        padding: 0;
-        margin: 0;
-        vertical-align: top;
-        display: inline;
-        color: #777;
-        background: transparent;
+    &.feature-empty {
+      width: 30%;
+      height: 20px;
+      background: #eee;
     }
+  }
 
-    .feature-text {
-        width: 58%;
-        height: 100%;
-        display: inline-block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        &.user-feature {
-            width: 55%;
-        }
-    }
-
-    .feature-distribution {
-        width: 30%;
-        height: 20px;
-        display: inline-block;
-
-        div {
-            display: inline-block;
-            height: 100%;
-        }
-
-        &.feature-empty {
-            width: 30%;
-            height: 20px;
-            background: #eee;
-        }
-    }
-
-    .feature-total {
-        display: inline-block;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        padding-left: 5px;
-    }
+  .feature-total {
+    display: inline-block;
+    height: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 5px;
+  }
 }
 
 .label-item {
-    border: solid 1px transparent;
-    margin: 5px 0;
-    font-size: 14px;
+  border: solid 1px transparent;
+  margin: 5px 0;
+  font-size: 14px;
 
-    &:hover {
-        background: @item-background-color;
+  &:hover {
+    background: @item-background-color;
+  }
+
+  &.hovered {
+    background: @item-background-color-hover;
+
+    .item {
+      font-size: 18px;
+      margin: 20px;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
-    &.hovered {
+  }
+
+  .content {
+    padding: 5px;
+    position: relative;
+    .item-message {
+      padding: 25px 5px 5px;
+
+      &.item-selectable {
+        font-size: 18px;
+        margin-bottom: 10px;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+        &.pointer span {
+          cursor: pointer;
+        }
+      }
+    }
+
+    .source-stage {
+      position: absolute;
+      left: 10px;
+      right: 0px;
+      top: 5px;
+      color: #333;
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .btn-toggle {
+      width: 20px;
+      height: 20px;
+      background: transparent;
+      padding: 2px;
+      border-radius: 100%;
+      border: solid #333 1px;
+      color: #333;
+      text-align: center;
+      font-size: 10px;
+      cursor: pointer;
+      margin: 2px;
+
+      &:hover {
         background: @item-background-color-hover;
+      }
 
-        .item {
-            font-size: 18px;
-            margin: 20px;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
+      &.active {
+        color: white;
+        background: #333;
+      }
     }
 
-    .content {
-        padding: 5px;
-        position: relative;
-        .item-message {
-            padding: 25px 5px 5px;
+    .dropdown {
+      display: inline-block;
 
-            &.item-selectable {
-                font-size: 18px;
-                margin-bottom: 10px;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
+      .dropdown-toggle {
+        font-size: 12px;
+        font-weight: 300;
+        padding: 2px 5px;
+        width: 200px;
+        border: none;
+        text-align: left;
 
-                &.pointer span {
-                    cursor: pointer;
-                }
-            }
+        .caret {
+          margin-top: 7px;
+          float: right;
+        }
+      }
+
+      .dropdown-menu {
+        font-size: 12px;
+        font-weight: 300;
+        padding: 2px 5px;
+        border: none;
+      }
+    }
+
+  }
+}
+
+/* END Shared between coding and reviewing */
+
+/* START Coding interface styles */
+#coding {
+  height: 100%;
+
+  & > div {
+    height: 100%;
+  }
+
+  div[class^="col-"] {
+    padding: 0;
+    height: 100%;
+  }
+
+  #top-area {
+    height: @coding-top-height;
+
+    #labeling {
+      height: @coding-top-labeling-height;
+
+      .tweet-item {
+        .tweet-text {
+          font-size: 24px;
+          font-weight: 300;
+          margin-right: 20px;
+          overflow: hidden;
+          overflow-y: auto;
+          height: 100%;
         }
 
-        .source-stage {
-            position: absolute;
-            left: 10px;
-            right: 0px;
-            top: 5px;
-            color: #333;
-            font-size: 1.1em;
-            font-weight: bold;
+        .btn-image {
+          margin-right: 20px;
+          padding: 0;
+          max-width: 250px;
+          float: left;
+          height: 100%;
+          box-shadow: none;
+          border: 2px solid transparent;
+
+          &:active {
+            box-shadow: none;
+          }
+
+          &:hover {
+            border-color: #777;
+          }
+
+          & > img {
+            max-height: 100%;
+          }
         }
 
-        .btn-toggle {
-            width: 20px;
-            height: 20px;
+        // Style for when feature highlights are enabled
+        //-webkit-touch-callout: none;
+        //-webkit-user-select: none;
+        //-khtml-user-select: none;
+        //-moz-user-select: none;
+        //-ms-user-select: none;
+        //user-select: none;
+        //
+        //span {
+        //    cursor: pointer;
+        //}
+      }
+
+      .tweet-submit {
+        font-size: 14px;
+
+        .tweet-submit-item {
+          margin: 0;
+          margin-bottom: 10px;
+
+          .btn-toggle {
+            width: 25px;
+            height: 25px;
             background: transparent;
-            padding: 2px;
+            padding: 3px;
             border-radius: 100%;
             border: solid #333 1px;
             color: #333;
             text-align: center;
-            font-size: 10px;
+            font-size: 12px;
             cursor: pointer;
-            margin: 2px;
+            margin-right: 5px;
 
             &:hover {
-                background: @item-background-color-hover;
+              background: @item-background-color-hover;
             }
 
             &.active {
-                color: white;
-                background: #333;
+              color: white;
+              background: #333;
             }
+          }
         }
 
-        .dropdown {
-            display: inline-block;
-
-            .dropdown-toggle {
-                font-size: 12px;
-                font-weight: 300;
-                padding: 2px 5px;
-                width: 200px;
-                border: none;
-                text-align: left;
-
-                .caret {
-                    margin-top: 7px;
-                    float: right;
-                }
-            }
-
-            .dropdown-menu {
-                font-size: 12px;
-                font-weight: 300;
-                padding: 2px 5px;
-                border: none;
-            }
+        .btn-default {
+          width: 100%;
         }
-
+      }
     }
-}
-/* END Shared between coding and reviewing */
 
+    #codes {
+      height: calc(@coding-top-height ~ "-" @coding-top-labeling-height ~ "-" 25px);
+      padding-top: 10px;
 
-/* START Coding interface styles */
-#coding {
-    height: 100%;
-
-    &>div {
+      .btn-default {
         height: 100%;
-    }
+        vertical-align: top;
 
-    div[class^="col-"] {
-        padding: 0;
-        height: 100%;
-    }
+        .code-definition {
+          text-align: left;
+          white-space: normal;
+          font-weight: 300;
+          font-size: 12px;
+          height: calc(100% ~ "-" 20px);
+          overflow-y: auto;
 
-    #top-area {
-        height: @coding-top-height;
-
-        #labeling {
-            height: @coding-top-labeling-height;
-
-            .tweet-item {
-                .tweet-text {
-                    font-size: 24px;
-                    font-weight: 300;
-                    margin-right: 20px;
-                    overflow: hidden;
-                    overflow-y: auto;
-                    height: 100%;
-                }
-
-                .btn-image {
-                    margin-right: 20px;
-                    padding: 0;
-                    max-width: 250px;
-                    float: left;
-                    height: 100%;
-                    box-shadow: none;
-                    border: 2px solid transparent;
-
-                    &:active {
-                        box-shadow: none;
-                    }
-
-                    &:hover {
-                        border-color: #777;
-                    }
-
-                    &>img {
-                        max-height: 100%;
-                    }
-                }
-
-                // Style for when feature highlights are enabled
-                //-webkit-touch-callout: none;
-                //-webkit-user-select: none;
-                //-khtml-user-select: none;
-                //-moz-user-select: none;
-                //-ms-user-select: none;
-                //user-select: none;
-                //
-                //span {
-                //    cursor: pointer;
-                //}
-            }
-
-            .tweet-submit {
-                font-size: 14px;
-
-                .tweet-submit-item {
-                    margin: 0;
-                    margin-bottom: 10px;
-
-                    .btn-toggle {
-                        width: 25px;
-                        height: 25px;
-                        background: transparent;
-                        padding: 3px;
-                        border-radius: 100%;
-                        border: solid #333 1px;
-                        color: #333;
-                        text-align: center;
-                        font-size: 12px;
-                        cursor: pointer;
-                        margin-right: 5px;
-
-                        &:hover {
-                            background: @item-background-color-hover;
-                        }
-
-                        &.active {
-                            color: white;
-                            background: #333;
-                        }
-                    }
-                }
-
-                .btn-default {
-                    width: 100%;
-                }
-            }
-        }
-
-        #codes {
-            height: calc(@coding-top-height ~ "-" @coding-top-labeling-height ~ "-" 25px);
-            padding-top: 10px;
-
-            .btn-default {
-                height: 100%;
-                vertical-align: top;
-
-                .code-definition {
-                    text-align: left;
-                    white-space: normal;
-                    font-weight: 300;
-                    font-size: 12px;
-                    height: calc(100% ~ "-" 20px);
-                    overflow-y: auto;
-
-                    & > p {
-                        margin: 0;
-                    }
-                }
-            }
-        }
-    }
-
-    #bottom-area {
-        height: calc(100% ~ "-" @coding-top-height);
-
-        #panel {
+          & > p {
             margin: 0;
-            padding: 10px;
-            height: 100%;
-            font-weight: 300;
-
-            .label-item {
-                border: solid 1px transparent;
-                padding: 5px;
-                margin: 5px;
-            }
-
-            .help-text {
-                color: #777;
-            }
+          }
         }
-
-        #search {
-            .search-label {
-                width: 50px;
-                display: inline-block;
-            }
-
-            .search-feature {
-                border: solid 1px transparent;
-                border-radius: 20px;
-                display: inline;
-                padding: 2px 5px;
-                .btn {
-                    border: none;
-                    width: 18px;
-                    padding: 0;
-                    margin: 0;
-                    vertical-align: top;
-                    display: inline;
-                    color: #777;
-                    background: transparent;
-                }
-            }
-
-            .dropdown {
-                display: inline-block;
-                width: 20%;
-
-                .dropdown-toggle {
-                    font-size: 12px;
-                    font-weight: 300;
-                    padding: 2px 5px;
-                    width: 100%;
-                    border: none;
-                    text-align: left;
-
-                    .caret {
-                        margin-top: 7px;
-                        float: right;
-                    }
-                }
-
-                .dropdown-menu {
-                    font-size: 12px;
-                    font-weight: 300;
-                    padding: 2px 5px;
-                    border: none;
-                }
-            }
-
-            input {
-                width: calc(80% ~ "-" 107px);
-                padding: 5px;
-            }
-        }
+      }
     }
-}
-/* END Coding interface styles */
+  }
 
+  #bottom-area {
+    height: calc(100% ~ "-" @coding-top-height);
+
+    #panel {
+      margin: 0;
+      padding: 10px;
+      height: 100%;
+      font-weight: 300;
+
+      .label-item {
+        border: solid 1px transparent;
+        padding: 5px;
+        margin: 5px;
+      }
+
+      .help-text {
+        color: #777;
+      }
+    }
+
+    #search {
+      .search-label {
+        width: 50px;
+        display: inline-block;
+      }
+
+      .search-feature {
+        border: solid 1px transparent;
+        border-radius: 20px;
+        display: inline;
+        padding: 2px 5px;
+        .btn {
+          border: none;
+          width: 18px;
+          padding: 0;
+          margin: 0;
+          vertical-align: top;
+          display: inline;
+          color: #777;
+          background: transparent;
+        }
+      }
+
+      .dropdown {
+        display: inline-block;
+        width: 20%;
+
+        .dropdown-toggle {
+          font-size: 12px;
+          font-weight: 300;
+          padding: 2px 5px;
+          width: 100%;
+          border: none;
+          text-align: left;
+
+          .caret {
+            margin-top: 7px;
+            float: right;
+          }
+        }
+
+        .dropdown-menu {
+          font-size: 12px;
+          font-weight: 300;
+          padding: 2px 5px;
+          border: none;
+        }
+      }
+
+      input {
+        width: calc(80% ~ "-" 107px);
+        padding: 5px;
+      }
+    }
+  }
+}
+
+/* END Coding interface styles */
 
 /* START Reviewing interface styles */
 #reviewing {
-    height: 100%;
+  height: 100%;
 
-    .next-step {
-        position: absolute;
-        right: 10px;
-        bottom: 10px;
-    }
+  .next-step {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+  }
 
-    #top-area {
-        height: calc(100% ~ "-" @review-bottom-bar-height);
+  #top-area {
+    height: calc(100% ~ "-" @review-bottom-bar-height);
 
-        #tab-area {
-            height: calc(100% ~ "-" 55px);
+    #tab-area {
+      height: calc(100% ~ "-" 55px);
 
-            #definitions {
-                height: @review-top-height;
-                padding: 10px;
+      #definitions {
+        height: @review-top-height;
+        padding: 10px;
 
-                > div {
-                    height: 100%;
-                }
-
-                > div[class^="col-"] {
-                    padding: 0;
-                    height: 100%;
-                }
-
-                h3 {
-                    margin-top: 0;
-                }
-                p {
-                    margin: 0;
-                }
-
-                .code-definition {
-                    text-align: justify;
-                    white-space: normal;
-                    font-weight: 300;
-                    font-size: 14px;
-                    height: calc(100% ~ "-" 40px);
-                    overflow-y: auto;
-
-                    &.help-text {
-                        color: #777;
-                    }
-                }
-                .btn {
-                    line-height: 0.5em;
-                    border: none;
-                    font-size: 10px;
-                }
-
-                textarea {
-                    resize: none;
-                    width: 100%;
-                    background: transparent;
-                }
-            }
-
-            #bottom-area {
-                height: calc(100% ~ "-" @review-top-height);
-                padding: 10px;
-                padding-top: 0;
-
-                div[class^="col-"] {
-                    padding: 0;
-                    height: 100%;
-                }
-
-                #code-distribution {
-                    width: 100%;
-                    height: 20px;
-
-                    .distribution-chart {
-                        width: 90%;
-                        display: inline-block;
-
-                        & > div {
-                            display: inline-block;
-                            height: 20px;
-                        }
-                    }
-
-                    .distribution-total {
-                        display: inline-block;
-                        height: 100%;
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
-                        padding-left: 5px;
-                        font-size: 14px;
-                    }
-                }
-
-                #user-features .feature-text {
-                    width: calc(58% ~ "-" 20px);
-                }
-                .confusion-box-title {
-                        width: 40%;
-                        display: inline-block;
-                        text-align: center;
-                        font-weight: bold;
-                }
-                #confusion {
-                    background: @item-background-color;
-                    margin: 5px 0;
-                    padding: 5px;
-                    width: 100%;
-                    height: 30px;
-                    font-size: 14px;
-                    font-weight: 300;
-                    cursor: pointer;
-
-                    &:hover {
-                        background: @item-background-color-hover;
-                    }
-
-                    &.selected {
-                        background: @item-background-color-selected;
-                    }
-
-                    .confusion-box {
-                        width: 40%;
-                        height: 20px;
-                        display: inline-block;
-                        line-height: 30px;
-                        text-align: center;
-                        color: white;
-                        font-size: 12px;
-
-                        span {
-                            vertical-align: middle;
-                            display: inline-block;
-                            margin-top: -12px;
-                        }
-
-                        &.feature-empty {
-                            width: 30%;
-                            height: 20px;
-                            background: #eee;
-                        }
-                    }
-
-                    .confusion-total {
-                        display: inline-block;
-                        height: 100%;
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
-                        padding-left: 5px;
-                    }
-                }
-
-                #labels {
-                    font-weight: 300;
-                    height: 100%;
-                    .label-list {
-                        height: calc(100% ~ "-" 65px);
-                        margin-top: 10px;
-                    }
-
-                    label {
-                        font-weight: 500;
-                        font-size: 12px;
-                    }
-
-                    .help-text {
-                        padding-top: 20px;
-                        color: #777;
-                        font-size: 14px;
-                    }
-
-                    #search {
-                        div {
-                            width: 50px;
-                            display: inline-block;
-                        }
-
-                        input {
-                            width: calc(100% ~ "-" 50px);
-                            padding: 5px;
-                        }
-
-                        .search-feature {
-                            border: solid 1px transparent;
-                            border-radius: 20px;
-                            display: inline;
-                            padding: 2px 5px;
-                            .btn {
-                                border: none;
-                                width: 18px;
-                                padding: 0;
-                                margin: 0;
-                                vertical-align: top;
-                                display: inline;
-                                color: #777;
-                                background: transparent;
-                            }
-                        }
-                    }
-
-                    .label-item {
-                        position: relative;
-
-                        .confusion {
-                            width: 100%;
-                            position: relative;
-
-                            .confusion-box {
-                                position: absolute;
-                                width: 50%;
-                                height: 10px;
-                                left: 50%;
-
-                                &:first-child {
-                                    left: 0;
-                                }
-                            }
-                        }
-
-                        .content {
-                            padding-top: 25px;
-                        }
-
-                        .source-stage {
-                            position: absolute;
-                            right: 10px;
-                            top: 15px;
-                            color: #333;
-                            font-size: 1.1em;
-                            font-weight: bold;
-                        }
-                    }
-
-
-                }
-            }
+        > div {
+          height: 100%;
         }
+
+        > div[class^="col-"] {
+          padding: 0;
+          height: 100%;
+        }
+
+        h3 {
+          margin-top: 0;
+        }
+        p {
+          margin: 0;
+        }
+
+        .code-definition {
+          text-align: justify;
+          white-space: normal;
+          font-weight: 300;
+          font-size: 14px;
+          height: calc(100% ~ "-" 40px);
+          overflow-y: auto;
+
+          &.help-text {
+            color: #777;
+          }
+        }
+        .btn {
+          line-height: 0.5em;
+          border: none;
+          font-size: 10px;
+        }
+
+        textarea {
+          resize: none;
+          width: 100%;
+          background: transparent;
+        }
+      }
+
+      #bottom-area {
+        height: calc(100% ~ "-" @review-top-height);
+        padding: 10px;
+        padding-top: 0;
+
+        div[class^="col-"] {
+          padding: 0;
+          height: 100%;
+        }
+
+        #code-distribution {
+          width: 100%;
+          height: 20px;
+
+          .distribution-chart {
+            width: 90%;
+            display: inline-block;
+
+            & > div {
+              display: inline-block;
+              height: 20px;
+            }
+          }
+
+          .distribution-total {
+            display: inline-block;
+            height: 100%;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding-left: 5px;
+            font-size: 14px;
+          }
+        }
+
+        #user-features .feature-text {
+          width: calc(58% ~ "-" 20px);
+        }
+        .confusion-box-title {
+          width: 40%;
+          display: inline-block;
+          text-align: center;
+          font-weight: bold;
+        }
+        #confusion {
+          background: @item-background-color;
+          margin: 5px 0;
+          padding: 5px;
+          width: 100%;
+          height: 30px;
+          font-size: 14px;
+          font-weight: 300;
+          cursor: pointer;
+
+          &:hover {
+            background: @item-background-color-hover;
+          }
+
+          &.selected {
+            background: @item-background-color-selected;
+          }
+
+          .confusion-box {
+            width: 40%;
+            height: 20px;
+            display: inline-block;
+            line-height: 30px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+
+            span {
+              vertical-align: middle;
+              display: inline-block;
+              margin-top: -12px;
+            }
+
+            &.feature-empty {
+              width: 30%;
+              height: 20px;
+              background: #eee;
+            }
+          }
+
+          .confusion-total {
+            display: inline-block;
+            height: 100%;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding-left: 5px;
+          }
+        }
+
+        #labels {
+          font-weight: 300;
+          height: 100%;
+          .label-list {
+            height: calc(100% ~ "-" 65px);
+            margin-top: 10px;
+          }
+
+          label {
+            font-weight: 500;
+            font-size: 12px;
+          }
+
+          .help-text {
+            padding-top: 20px;
+            color: #777;
+            font-size: 14px;
+          }
+
+          #search {
+            div {
+              width: 50px;
+              display: inline-block;
+            }
+
+            input {
+              width: calc(100% ~ "-" 50px);
+              padding: 5px;
+            }
+
+            .search-feature {
+              border: solid 1px transparent;
+              border-radius: 20px;
+              display: inline;
+              padding: 2px 5px;
+              .btn {
+                border: none;
+                width: 18px;
+                padding: 0;
+                margin: 0;
+                vertical-align: top;
+                display: inline;
+                color: #777;
+                background: transparent;
+              }
+            }
+          }
+
+          .label-item {
+            position: relative;
+
+            .confusion {
+              width: 100%;
+              position: relative;
+
+              .confusion-box {
+                position: absolute;
+                width: 50%;
+                height: 10px;
+                left: 50%;
+
+                &:first-child {
+                  left: 0;
+                }
+              }
+            }
+
+            .content {
+              padding-top: 25px;
+            }
+
+            .source-stage {
+              position: absolute;
+              right: 10px;
+              top: 15px;
+              color: #333;
+              font-size: 1.1em;
+              font-weight: bold;
+            }
+          }
+
+        }
+      }
     }
+  }
 }
+
 /* End Reviewing interface styles */
 
 
