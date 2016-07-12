@@ -3,7 +3,7 @@
     <div id="coding">
         <div class="box box-top">
             <div id="top-area">
-                <h2><span class="stage">Coding</h2>
+                <h2><span class="stage">Coding</span></h2>
                 <div class="" id="labeling">
                     <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
                     <div class="col-md-9 tweet-item">
@@ -209,7 +209,7 @@
 
                                 <div class="content">
                                     <div class="item" ng-show="hoveredItem==item">
-                                        <div ng-show="from_current_stage(item)">
+                                        <div ng-show="true">
                                             <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
                                                  ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
                                                  data-toggle="tooltip" title="Save this tweet"><span
@@ -226,10 +226,6 @@
                                     </div>
                                     <div class="item-message" ng-hide="hoveredItem==item"
                                          ng-bind-html="item.message.embedded_html"></div>
-
-                                    <div class="source-stage">
-                                        <span class="stage">from stage {$ item.source_stage_index + 1 $}</span>
-                                    </div>
                                 </div>
                             </div>
 
