@@ -104,7 +104,8 @@
             </div><!-- /.container-fluid -->
         </nav>
 
-        <div ng-view></div>
+        <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
+        <div ng-view id="content"></div>
     </div>
 {% endblock %}
 {% block footer %}

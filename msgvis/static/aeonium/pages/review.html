@@ -1,9 +1,9 @@
-<div id="content" class="ng-cloak" ng-cloak ng-controller="Aeonium.controllers.ReviewController">
+<div class="ng-cloak" ng-cloak ng-controller="Aeonium.controllers.ReviewController">
     <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
 
     <div id="reviewing">
         <div class="box box-top" id="top-area">
-            <h2><span class="stage">Review</h2>
+            <h2><span class="stage">Review</span></h2>
             <div class="" data-toggle="buttons" id="codes">
                 <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
                 <div class="btn btn-default" ng-repeat="code in codes"
@@ -195,7 +195,7 @@
                                     <div class="content">
                                         <div ng-show="hoveredItem==item">
                                             <div class="item">
-                                                <div class="inline" ng-show="from_current_stage(item)">
+                                                <div class="inline" ng-show="true">
                                                     <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
                                                          ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
                                                          data-toggle="tooltip" title="Save this tweet"><span
@@ -239,7 +239,7 @@
                                                           ng-mouseup="onCharMouseUp(item, $index, $event)"
                                                           ng-style="charStyle(item, $index)">{$ char $}</span>
                                                 </div>
-                                                <button ng-show="from_current_stage(item)" class="btn btn-default"
+                                                <button class="btn btn-default"
                                                         ng-click="addFeature(item)">Add Keywords
                                                 </button>
 
@@ -247,9 +247,6 @@
                                         </div>
                                         <div class="item-message" ng-hide="hoveredItem==item"
                                              ng-bind-html="item.message.embedded_html"></div>
-                                        <div class="source-stage">
-                                            <span class="stage">from stage {$ item.source_stage_index + 1 $} {$ from_current_stage(item) ? "" : "(Read Only)" $}</span>
-                                        </div>
                                     </div>
                                 </div>
                                 <p ng-hide="hasTweet()" class="help-text">No tweets found.</p>

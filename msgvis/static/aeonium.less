@@ -13,7 +13,7 @@
 @coding-top-height: 320px;
 @coding-top-labeling-height: 140px;
 @review-top-height: 145px;
-@review-bottom-bar-height: 40px;
+@review-bottom-bar-height: 0px;
 
 html, body {
   width: 100%;
@@ -71,6 +71,7 @@ th:hover {
   -moz-box-shadow: 0 1px 1px 1px rgba(0, 0, 0, .1);
   box-shadow: 0 1px 1px 1px rgba(0, 0, 0, .1);
   border-radius: 0;
+  margin-bottom: 10px;
 
   .navbar-brand {
     font-size: 2em;
@@ -90,7 +91,7 @@ th:hover {
   }
 
   .dataset {
-    display:block;
+    display: block;
     line-height: 20px;
     padding: 15px 0;
   }
@@ -106,6 +107,10 @@ th:hover {
       font-size: 14px;
       font-weight: 300;
     }
+  }
+
+  & > div {
+    height: 100%;
   }
 }
 
@@ -612,12 +617,6 @@ h3 {
 #reviewing {
   height: 100%;
 
-  .next-step {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-  }
-
   #top-area {
     height: calc(100% ~ "-" @review-bottom-bar-height);
 
@@ -831,7 +830,6 @@ h3 {
             }
 
             .content {
-              padding-top: 25px;
             }
 
             .source-stage {
