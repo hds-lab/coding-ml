@@ -11,4 +11,5 @@ urlpatterns = patterns('',
                        url(r'^textcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TextCoderView.as_view(), name='textcoder'),
                        url(r'^tweetcoder(?:/(?P<dictionary_pk>\d+))?/$', views.TweetCoderView.as_view(), name='tweetcoder'),
                        url(r'^tweetcoderviz(?:/(?P<experiment_pk>\d+))?/$', views.TweetCoderVizView.as_view(), name='tweetcoderviz'),
+                       url(r'^aeonium(?:/(?P<experiment_pk>\d+))?/$', views.AeoniumView.as_view(), name='aeonium'),
 )

@@ -1,0 +1,112 @@
+{% extends '_layouts/base.html' %}
+{% load staticfiles djangular_tags %}
+
+{% block page_title %}Aeonium{% endblock %}
+
+{% block meta %}
+    <meta name="twitter:widgets:csp" content="on">
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'theme.less' %}" type="text/less">
+    <link rel="stylesheet" href="{% static 'style.less' %}" type="text/less">
+    <link rel="stylesheet" href="{% static 'bower/c3/c3.css' %}">
+    <link rel="stylesheet" href="{% static 'aeonium.less' %}" type="text/less">
+
+{% endblock %}
+
+{% block js %}
+    {{ block.super }}
+
+    <script src="{% static 'bower/angular/angular.js' %}"></script>
+    <script src="{% static 'bower/angular-cookies/angular-cookies.js' %}"></script>
+    <script src="{% static 'bower/angular-route/angular-route.js' %}"></script>
+    <script src="{% static 'bower/angular-resource/angular-resource.js' %}"></script>
+    <script src="{% static 'bower/angular-animate/angular-animate.js' %}"></script>
+    <script src="{% static 'bower/angular-sanitize/angular-sanitize.js' %}"></script>
+    <script src="{% static 'bower/angucomplete-alt/angucomplete-alt.js' %}"></script>
+    <script src="{% static 'bower/angular-smart-table/dist/smart-table.js' %}"></script>
+
+    <script src="{% static 'bower/jquery-ui/ui/core.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/widget.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/mouse.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/draggable.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/droppable.js' %}"></script>
+    <script src="{% static 'bower/angular-dragdrop/src/angular-dragdrop.js' %}"></script>
+
+    <script src="{% static 'djangular/js/django-angular.js' %}"></script>
+
+    <script src="{% static 'bower/spin.js/spin.js' %}"></script>
+    <script src="{% static 'bower/angular-spinner/angular-spinner.js' %}"></script>
+
+    <script src="{% static 'bower/moment/moment.js' %}"></script>
+    <script src="{% static 'bower/d3/d3.js' %}"></script>
+    <script src="{% static 'bower/c3/c3.js' %}"></script>
+
+    <script src="{% static 'aeonium/app.js' %}"></script>
+    <script src="{% static 'aeonium/services.js' %}"></script>
+    <script src="{% static 'aeonium/controllers.js' %}"></script>
+    <script src="{% static 'aeonium/pages/codingController.js' %}"></script>
+    <script src="{% static 'aeonium/pages/reviewController.js' %}"></script>
+
+
+{% endblock %}
+
+{% block navigation_bar %}
+{% endblock %}
+
+{% block bootstrapping %}
+    {{ block.super }}
+    <script>
+        angular.module('ng.django.urls')
+                .constant('patterns', {% load_djng_urls %});
+
+        angular.module('Aeonium.bootstrap')
+                .constant('Aeonium.bootstrap.experiment', {{ object.pk }})
+                .constant('Aeonium.bootstrap.dictionary', {{ object.dictionary.pk }});
+
+    </script>
+
+{% endblock %}
+
+{% block content %}
+    <base href='/aeonium'></base>
+    <div ng-app="Aeonium" id="application" class="container-fluid">
+
+        <nav class="navbar navbar-default row" ng-cloak="" ng-controller="Aeonium.controllers.DictionaryController">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                            data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/aeonium"><span><img class="logo" ng-src="{% static 'images/aeonium.png' %}"/>
+                        </span>Aeonium</a>
+                </div>
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li><a href="/aeonium/#/coding">Coding</a></li>
+                        <li><a href="/aeonium/#/review">Review</a></li>
+                    </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <span class="dataset">{$ Dictionary.dataset.description $} ({$ Dictionary.dataset.message_count $} messages)</span>
+                        </li>
+                    </ul>
+                </div><!-- /.navbar-collapse -->
+            </div><!-- /.container-fluid -->
+        </nav>
+
+        <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
+        <div ng-view id="content"></div>
+    </div>
+{% endblock %}
+{% block footer %}
+{% endblock %}
