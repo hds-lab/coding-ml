@@ -862,13 +862,11 @@ class ProgressView(APIView):
             success = False
             while True:
                 try:
-                    success = progress.set_to_next_step()
+                    success, progress = progress.set_to_next_step()
                     break
                 except IntegrityError:
                         import time
                         time.sleep(1)
-            if success:
-                progress = user.progress
             output = serializers.ProgressSerializer(progress)
             return Response(output.data, status=status.HTTP_200_OK)
 
