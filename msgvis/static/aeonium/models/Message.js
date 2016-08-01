@@ -11,8 +11,8 @@
 
             var Message = function () {
                 var self = this;
-                self.allMessages = [];
-                self.userCodedMessages = [];
+                self.allMessages = []; // Message[]
+                self.userCodedMessages = []; // Message[]
             };
 
             //class Message {
@@ -50,7 +50,7 @@
 
                     var request = {
                         params: {
-                            stage: use_current_stage || undefined
+                            stage: undefined
                         }
                     };
 
@@ -58,7 +58,7 @@
                         .success(function (data) {
                             self.allMessages = data.map(function(d){ return Utils.extractMessageDetail(d);});
 
-                            $rootScope.$broadcast("messages::allMessages", data);
+                            $rootScope.$broadcast("messages::allMessages", self.allMessages);
                         });
 
                 },
