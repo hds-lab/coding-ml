@@ -75,7 +75,7 @@
 
                             self.codeDefinitions = self.definitionsByCodeName.map(function(codeName) { return self.definitionsByCodeName[codeName]; });
 
-                            $rootScope.$broadcast('Code::updated', self.codeDefinitions);
+                            $rootScope.$broadcast('Code::codeDefinitions', self.codeDefinitions);
                         });
 
                 },
