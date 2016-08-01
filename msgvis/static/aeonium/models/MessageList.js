@@ -53,7 +53,7 @@
 
             });
 
-            return new Message();
+            return new MessageList();
         }
     ]);
 })();
