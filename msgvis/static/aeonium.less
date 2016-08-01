@@ -412,6 +412,7 @@ h3 {
 /* START Coding interface styles */
 #coding {
   height: 100%;
+  position: relative;
 
   & > div {
     height: 100%;
@@ -420,6 +421,33 @@ h3 {
   div[class^="col-"] {
     padding: 0;
     height: 100%;
+  }
+
+  #list-view {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: white;
+  }
+
+  #labeling-view {
+    position: absolute;
+    left: 100px;
+    top: 0;
+    bottom: 0;
+    width: calc(50% ~ "-" 50px);
+    background: #eee;
+  }
+
+  #code-detail-view {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: calc(50% ~ "-" 50px);
+    background: white;
   }
 
   #top-area {
