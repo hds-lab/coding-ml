@@ -13,7 +13,7 @@
             angular.extend(Utils.prototype, {
                 // messageData: any
                 // returns MessageDetail
-                extractMessageDetail: function(messageData) {
+                extractMessageDetail: function (messageData) {
                     var self = this;
 
                     var text = messageData.message.text;
@@ -68,7 +68,7 @@
 
                     // Extract token level features
                     var features = [];
-                    if (feature_vector && feature_vector.length > 0){
+                    if (feature_vector && feature_vector.length > 0) {
                         for (i = 0; i < messageData.feature_vector.length; i++) {
                             var feature = messageData.feature_vector[i];
                             var code_id = feature.origin_code_id;
@@ -95,6 +95,7 @@
                         isSaved: (messageData.is_saved || false),
                         isExample: (messageData.is_example || false),
 
+                        mediaUrl: messageData.message.media_url,
                         text: text,
                         tokens: tokenItems,
                         filteredTokens: filtered_tokens,
@@ -113,10 +114,9 @@
                     };
                 },
 
-
                 // Searches the tokens for the given feature and returns the matched token indices
                 //message: MessageDetail
-                canMatchFeature: function(message, feature) {
+                canMatchFeature: function (message, feature) {
                     var matchedTokenIndices = [];
                     var featureText = feature.text;
 
@@ -169,7 +169,7 @@
 
                 // Searches the full message text for the given search text and returns a boolean
                 // message: MessageDetail
-                canMatchText: function(message, searchText) {
+                canMatchText: function (message, searchText) {
                     if (searchText && searchText.length > 0) {
 
                         // Search the text in the full text
@@ -187,6 +187,20 @@
                 // returns number
                 toggleSort: function (previousSortOption) {
                     return (previousSortOption + 1) % 3;
+                },
+
+                // messageDetail: MessageDetail
+                // charIndex: character index
+                // returns boolean
+                isTokenSelectedAtCharIndex: function (messageDetail, charIndex) {
+                    if (messageDetail && messageDetail.selectedTokenIndices) {
+                        var tokenIndex = messageDetail.charToToken[charIndex];
+                        if (tokenIndex != undefined && messageDetail.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
             });
 

@@ -2,14 +2,93 @@
     <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
     <div id="coding">
         <div class="box" id="list-view">
+            <span us-spinner="spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
-            <div ng-repeat="message in allMessages" class="btn btn-default">{$ message.id $}</div>
+            <div ng-repeat="message in allMessages"
+                 class="btn btn-default"
+                 ng-click="viewMessageDetail(message)"
+                 ng-show="codeDefinitions">{$ message.id $}
+            </div>
         </div>
         <div class="box" id="labeling-view">
-            <h2>Labeling</h2>
+            <span us-spinner="spinnerOptions" spinner-key="labeling-view-spinner"></span>
+            <h2>Coding</h2>
+            <div ng-show="!selectedMessageDetail">
+                Select an item to label.
+            </div>
+            <div ng-show="selectedMessageDetail">
+                <div class="tweet-item">
+                    <div class="btn btn-image"
+                         ng-show="selectedMessageDetail.mediaUrl && selectedMessageDetail.mediaUrl.length > 0"
+                         data-toggle="modal" data-target="#image-modal"
+                         ng-click="openMedia(selectedMessageDetail.mediaUrl)">
+                        <img class="img-responsive center-block" ng-src="{$ selectedMessageDetail.mediaUrl $}">
+                    </div>
+
+                    <div class="tweet-text">
+                    <span ng-repeat="char in selectedMessageDetail.characters track by $index"
+                          ng-style="Style.charStyle(selectedMessageDetail, $index)">{$ char $}</span>
+                    </div>
+                </div>
+
+                <div class="tweet-submit">
+
+                    <div class="btn btn-default" ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                         ng-click="selectCode(codeDefinition)"
+                         ng-class="{'active': codeDefinition == selectedCodeDefinition}"
+                         ng-style="Style.buttonStyle(codeDefinition.codeId, selectedCodeDefinition.codeId)">
+                        <div class="code-name">{$ codeDefinition.name $}</div>
+                    </div>
+                    
+                    <div class="tweet-submit-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isSaved}"
+                             ng-click="selectedMessageDetail.isSaved=!selectedMessageDetail.isSaved"
+                             data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span>
+                        </div>
+                        <span> Save this tweet</span>
+                    </div>
+
+                    <div class="tweet-submit-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isExample}"
+                             ng-click="selectedMessageDetail.isExample=!selectedMessageDetail.isExample"
+                             data-toggle="tooltip" title="Save as an example"><span
+                                class="glyphicon glyphicon-star"></span>
+                        </div>
+                        <span> Save as an example tweet</span>
+                    </div>
+
+                    <div class="tweet-submit-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isAmbiguous}"
+                             ng-click="selectedMessageDetail.isAmbiguous=!selectedMessageDetail.isAmbiguous"
+                             data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
+                        <span> Mark as an ambiguous tweet</span>
+                    </div>
+                    <button class="btn btn-default" ng-disabled="!selectedCodeDefinition" ng-click="submitLabel()">
+                        Submit
+                        Code
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="box" id="code-detail-view">
+            <span us-spinner="spinnerOptions" spinner-key="code-detail-view-spinner"></span>
             <h2>Code Detail</h2>
         </div>
     </div>
+
+    <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h2 class="modal-title">Embedded image</h2>
+                </div>
+                <div class="modal-body">
+                    <img class="img-responsive center-block" ng-src="{$ selectedMediaUrl $}">
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+</div>
 </div>

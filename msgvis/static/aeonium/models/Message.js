@@ -25,6 +25,7 @@
             //}
 
             //class MessageDetail extends MessageData {
+            //  mediaUrl: string;
             //	text: string;
             //	tokens: string[];
             //	filteredToFull: Map<number, number>;
@@ -41,8 +42,15 @@
             //  selectedTokenIndices: Map<number, number>;
             //}
 
+            //class FeatureHighlight {
+            //	startCharIndex: number;
+            //	endCharIndex: number;
+            //	codeIndex: number;
+            //}
+
+
             angular.extend(Message.prototype, {
-                getAllMessages: function(){
+                getAllMessages: function () {
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
@@ -54,17 +62,27 @@
                         }
                     };
 
+                    $rootScope.$broadcast("Message::allMessages::loading");
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.allMessages = data.map(function(d){ return Utils.extractMessageDetail(d);});
+                            self.allMessages = data.map(function (d) {
+                                return {
+                                    id: d.message.id,
+                                    label: d.code,
+                                    source: d.source,
+                                    isAmbiguous: d.is_ambiguous,
+                                    isSaved: d.is_saved,
+                                    isExample: d.is_example
+                                };
+                            });
 
-                            $rootScope.$broadcast("messages::allMessages", self.allMessages);
+                            $rootScope.$broadcast("Message::allMessages::loaded", self.allMessages);
                         });
 
                 },
 
                 // code: Code
-                getCodedMessages: function(code){
+                getCodedMessages: function (code) {
                     var self = this;
                     var param = {};
                     var source = "user";
@@ -81,10 +99,13 @@
                         }
                     };
 
+                    $rootScope.$broadcast("Message::userCodedMessages::loading", code);
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.userCodedMessages[code.name] = data.assignments.map(function(d){ return Utils.extractMessageDetail(d);});
-                            $rootScope.$broadcast("messages::userCodedMessages::" + code.name, self.userCodedMessages);
+                            self.userCodedMessages[code.name] = data.assignments.map(function (d) {
+                                return Utils.extractMessageDetail(d);
+                            });
+                            $rootScope.$broadcast("Message::userCodedMessages::loaded", self.userCodedMessages);
                         });
 
                 },
@@ -102,10 +123,13 @@
 
                     var apiUrl = djangoUrl.reverse('vector', request);
 
+                    $rootScope.$broadcast("Message::messageDetail::loading");
                     return $http.get(apiUrl, request)
                         .success(function (data) {
+                            // Label information is in Message, and message detail only contains text info
                             var messageDetail = Utils.extractMessageDetail(data);
-                            $rootScope.$broadcast("messages::messageDetail::" + message.id, messageDetail);
+                            angular.extend(messageDetail, message);
+                            $rootScope.$broadcast("Message::messageDetail::loaded", messageDetail);
                         });
 
                 },
@@ -122,13 +146,21 @@
                         is_saved: message.isSaved
                     };
 
-
+                    $rootScope.$broadcast("Message::submitLabel::submitting");
                     return $http.post(apiUrl, request)
                         .success(function (data) {
-                            $rootScope.$broadcast("messages::submitLabel::" + message.id, message);
+                            self.allMessages.filter(function(m) { return m.id == message.id; })
+                                .forEach(function(m) {
+                                    m.label = message.label;
+                                    m.isExample = message.isExample;
+                                    m.isAmbiguous = message.isAmbiguous;
+                                    m.isSaved = message.isSaved;
+                                });
+
+                            $rootScope.$broadcast("Message::submitLabel::submitted", message);
                         });
 
-                },
+                }
             });
 
             return new Message();
