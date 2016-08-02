@@ -107,6 +107,22 @@
                     }
 
                     return css;
+                },
+
+                // codeId: number
+                // returns style object
+                definitionStyle: function (codeId) {
+                    var self = this;
+                    var colorIndex = codeId;
+                    var color = self.colors[colorIndex % self.colors.length];
+                    var colorLight = self.colorsLight[colorIndex % self.colors.length];
+
+                    var css = {
+                        'background-color': colorLight,
+                        'border': 'solid 2px ' + color
+                    };
+
+                    return css;
                 }
             });
 

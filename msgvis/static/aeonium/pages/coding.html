@@ -39,7 +39,7 @@
                          ng-style="Style.buttonStyle(codeDefinition.codeId, selectedCodeDefinition.codeId)">
                         <div class="code-name">{$ codeDefinition.name $}</div>
                     </div>
-                    
+
                     <div class="tweet-submit-item">
                         <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isSaved}"
                              ng-click="selectedMessageDetail.isSaved=!selectedMessageDetail.isSaved"
@@ -70,25 +70,68 @@
                 </div>
             </div>
         </div>
-        <div class="box" id="code-detail-view">
+        <div id="code-detail-view">
             <span us-spinner="spinnerOptions" spinner-key="code-detail-view-spinner"></span>
-            <h2>Code Detail</h2>
+            <div class="box" ng-show="!selectedCodeDefinition">
+                <h2>Code Detail</h2>
+                <div>Select a message and a code to view details</div>
+            </div>
+            <div class="box" ng-show="selectedCodeDefinition"
+                 ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
+                <div class="box-section">
+                    <h2>Definitions for {$ selectedCodeDefinition.name $}</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>Master definition</h3>
+                            <p>{$ selectedCodeDefinition.masterDescription.text $}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>My definition</h3>
+                            <p>{$ selectedCodeDefinition.userDescription.text $}</p>
+                            <p ng-hide="selectedCodeDefinition.userDescription.text && selectedCodeDefinition.userDescription.text.length > 0"
+                               class="help-text">You have not provided a definition yet.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Partner definition</h3>
+                            <p>{$ selectedCodeDefinition.partnerDescription.text $}</p>
+                            <p ng-hide="selectedCodeDefinition.partnerDescription.text && selectedCodeDefinition.partnerDescription.text.length > 0"
+                               class="help-text">Your partner has not provided a definition yet.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-section">
+                    <h2>Keyword distributions for {$ selectedCodeDefinition.name $}</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>System keywords</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>My keywords</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Partner keywords</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-section">
+                    My tweets
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h2 class="modal-title">Embedded image</h2>
-                </div>
-                <div class="modal-body">
-                    <img class="img-responsive center-block" ng-src="{$ selectedMediaUrl $}">
-                </div>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-</div>
+        <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title">Embedded image</h2>
+                    </div>
+                    <div class="modal-body">
+                        <img class="img-responsive center-block" ng-src="{$ selectedMediaUrl $}">
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+    </div>
 </div>

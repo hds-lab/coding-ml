@@ -11,7 +11,9 @@
             //class CodeDefinition {
             //	codeId: number;
             //	name: string;
-            //	descriptions: CodeDescription[];
+            //	masterDescription: CodeDescription;
+            //	userDescription: CodeDescription;
+            //	partnerDescription: CodeDescription;
             //}
             //
             //class CodeDescription {
@@ -61,15 +63,27 @@
                                         self.codeDefinitions[def.code_id] = {
                                             codeId: def.code_id,
                                             name: def.code_text,
-                                            descriptions: []
+                                            masterDescription: {},
+                                            userDescription: {},
+                                            partnerDescription: {}
                                         }
                                     }
 
-                                    self.codeDefinitions[def.code_id].descriptions.push({
-                                        source: def.source,
-                                        text: def.text,
-                                        examples: def.examples
-                                    });
+                                    var description;
+
+                                    if (def_set.source == 'master') {
+                                        description = self.codeDefinitions[def.code_id].masterDescription;
+                                    }
+                                    else if (def_set.source == 'user') {
+                                        description = self.codeDefinitions[def.code_id].userDescription;
+                                    }
+                                    else {
+                                        description = self.codeDefinitions[def.code_id].partnerDescription;
+                                    }
+
+                                    description.source = def.source;
+                                    description.text = def.text;
+                                    description.examples = def.examples;
                                 });
                             });
 
