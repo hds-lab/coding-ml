@@ -11,7 +11,9 @@
             //class CodeDefinition {
             //	codeId: number;
             //	name: string;
-            //	descriptions: CodeDescription[];
+            //	masterDescription: CodeDescription;
+            //	userDescription: CodeDescription;
+            //	partnerDescription: CodeDescription;
             //}
             //
             //class CodeDescription {
@@ -28,13 +30,12 @@
 
             var Code = function () {
                 var self = this;
-                self.definitionsByCodeName = {}; // Map<string, CodeDefinition>
-                self.codeDefinitions = []; // CodeDefinition[]
+                self.codeDefinitions = {}; // Map<number, CodeDefinition> keyed by codeId
             };
 
             angular.extend(Code.prototype, {
                 // returns void
-                loadCodeDefinitions: function(){
+                loadCodeDefinitions: function () {
                     var self = this;
 
                     var sources = ["master", "user", "partner"];
@@ -53,29 +54,40 @@
                     //"text": definition.text,
                     //"examples": definition.examples
 
+                    $rootScope.$broadcast('Code::codeDefinitions::loading');
                     return $http.get(apiUrl, request)
                         .success(function (def_sets) {
-                            def_sets.forEach(function(def_set){
-                                def_set.definitions.forEach(function(def){
-                                    if (!self.definitionsByCodeName[def.code_text]){
-                                        self.definitionsByCodeName[def.code_text] = {
+                            def_sets.forEach(function (def_set) {
+                                def_set.definitions.forEach(function (def) {
+                                    if (!self.codeDefinitions[def.code_id]) {
+                                        self.codeDefinitions[def.code_id] = {
                                             codeId: def.code_id,
                                             name: def.code_text,
-                                            descriptions: []
+                                            masterDescription: {},
+                                            userDescription: {},
+                                            partnerDescription: {}
                                         }
                                     }
 
-                                    self.definitionsByCodeName[def.code_text].descriptions.push({
-                                        source: def.source,
-                                        text: def.text,
-                                        examples: def.examples
-                                    });
+                                    var description;
+
+                                    if (def_set.source == 'master') {
+                                        description = self.codeDefinitions[def.code_id].masterDescription;
+                                    }
+                                    else if (def_set.source == 'user') {
+                                        description = self.codeDefinitions[def.code_id].userDescription;
+                                    }
+                                    else {
+                                        description = self.codeDefinitions[def.code_id].partnerDescription;
+                                    }
+
+                                    description.source = def.source;
+                                    description.text = def.text;
+                                    description.examples = def.examples;
                                 });
                             });
 
-                            self.codeDefinitions = self.definitionsByCodeName.map(function(codeName) { return self.definitionsByCodeName[codeName]; });
-
-                            $rootScope.$broadcast('Code::codeDefinitions', self.codeDefinitions);
+                            $rootScope.$broadcast('Code::codeDefinitions::loaded', self.codeDefinitions);
                         });
 
                 },
@@ -83,7 +95,7 @@
                 // codeDefinition: CodeDefinition
                 // newDefinitionText: string
                 // returns void
-                updateDefinition: function(codeDefinition, newDefinitionText){
+                updateDefinition: function (codeDefinition, newDefinitionText) {
                     var self = this;
                     var apiUrl = djangoUrl.reverse('definition', {code_id: codeDefinition.codeId});
 
@@ -91,9 +103,11 @@
                         text: newDefinitionText
                     };
 
+                    $rootScope.$broadcast('Code::codeDefinitions::updating');
                     return $http.put(apiUrl, request)
                         .success(function (data) {
                             console.log("Update definition for ", code);
+                            $rootScope.$broadcast('Code::codeDefinitions::updated', self.codeDefinitions);
                         });
 
 
