@@ -4,6 +4,7 @@
 
     var module = angular.module('Aeonium.controllers', [
         'Aeonium.services',
+        'Aeonium.models',
         'angularSpinner',
         'angucomplete-alt',
         'smart-table'

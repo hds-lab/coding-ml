@@ -7,6 +7,12 @@
         'ngSanitize'
     ]);
 
+    var models = angular.module('Aeonium.models', [
+        'ng.django.urls',
+        'Aeonium.bootstrap',
+        'ngSanitize'
+    ]);
+
     module.factory('Aeonium.services.Dictionary', [
         '$http', 'djangoUrl',
         'Aeonium.bootstrap.dictionary',
@@ -662,10 +668,10 @@
                         return "Are you sure you want to leave the page?";
                     };
                 }*/
-                window.onbeforeunload = function(){
+              /*  window.onbeforeunload = function(){
                     self.submit_records.call(self);
                         return "Are you sure you want to leave the page?";
-                };
+                };*/
 
                 self.init();
 
