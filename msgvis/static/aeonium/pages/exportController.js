@@ -1,56 +1,19 @@
 (function () {
     'use strict';
 
+    var module = angular.module('Aeonium.controllers');
 
-    var module = angular.module('Aeonium.controllers', [
-        'Aeonium.services',
-        'angularSpinner',
-        'angucomplete-alt',
-        'smart-table'
-    ]);
+    var ExportController = function ($scope, $timeout, Dictionary, Code, Message, Feature, History, usSpinnerService) {
 
-    module.config(['$interpolateProvider', function ($interpolateProvider) {
-        $interpolateProvider.startSymbol('{$');
-        $interpolateProvider.endSymbol('$}');
-    }]);
-
-
-    module.config(['usSpinnerConfigProvider', function (usSpinnerConfigProvider) {
-        usSpinnerConfigProvider.setDefaults({
-            color: '#111'
-        });
-    }]);
-
-    var DictionaryController = function ($scope, Dictionary, Progress) {
-        $scope.Dictionary = Dictionary;
-        $scope.Progress = Progress;
-
-    };
-    DictionaryController.$inject = [
-        '$scope',
-        'Aeonium.services.Dictionary',
-        'Aeonium.services.Progress'
-    ];
-    module.controller('Aeonium.controllers.DictionaryController', DictionaryController);
-
-    var ViewController = function ($scope, $timeout, Dictionary, Code, Message, Feature, Progress, History, usSpinnerService) {
-
-        $scope.Progress = Progress;
         $scope.Message = Message;
         $scope.Code = Code;
-
-        $scope.statusText = "Initializing...";
-
-        $scope.is_status = function(status){
-            return Progress.current_status == status
-        };
 
         var sortOption_None = 0;
         var sortOption_Descending = 1;
         var sortOption_Ascending = 2;
 
-        var toggleSort = function(previousSortOption){
-            return (previousSortOption+1) % 3;
+        var toggleSort = function (previousSortOption) {
+            return (previousSortOption + 1) % 3;
         };
 
         $scope.colors = ["#1f77b4", "#2ca02c", "#d62728", "#ff7f0e", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
@@ -108,55 +71,43 @@
             'P': 'My partner\'s code is correct'
         };
 
-        $scope.stage_desc = {
-            N: 'Not yet start',
-            I: 'Initialization',
-            C: 'Coding',
-            W: 'Waiting',
-            R: 'Review',
-            S: 'Switching stage',
-            E: 'Export'
-        };
-
-        $scope.code_map = function(distribution){
-            if ($scope.codes && distribution){
+        $scope.code_map = function (distribution) {
+            if ($scope.codes && distribution) {
                 var dist = [];
-                $scope.codes.forEach(function(code){
+                $scope.codes.forEach(function (code) {
                     dist.push(distribution[code.code_text]);
                 });
                 return dist;
             }
         };
 
-        $scope.selectLabel = function(code){
+        $scope.selectLabel = function (code) {
             History.add_record("selectLabel", {code: code});
-            if ($scope.Progress.current_status == 'R'){
-                if ($scope.is_definition_different())
-                    $scope.ask_if_save_definition = true;
-                $scope.selectedConfusion = undefined;
-            }
+            if ($scope.is_definition_different())
+                $scope.ask_if_save_definition = true;
+            $scope.selectedConfusion = undefined;
             $scope.selectedCode = code;
             $scope.search = {text: "", feature: undefined};
 
             // set hover state on the first tweet
             if ($scope.coded_messages && $scope.coded_messages['user'][code.code_text] &&
-                $scope.coded_messages['user'][code.code_text].length > 0){
+                $scope.coded_messages['user'][code.code_text].length > 0) {
                 $scope.hoveredItem = $scope.coded_messages['user'][code.code_text][0];
             }
         };
 
-        $scope.selectMedia = function(media_url){
+        $scope.selectMedia = function (media_url) {
             History.add_record("selectMedia", {media_url: media_url});
             $scope.selectedMedia = media_url;
         };
 
-        $scope.selectFilter = function(filter){
+        $scope.selectFilter = function (filter) {
             History.add_record("selectFilter", {filter: filter});
             $scope.selectedFilter = filter;
         };
 
-        $scope.selectConfusion = function(pair){
-            if ($scope.selectedConfusion == pair){
+        $scope.selectConfusion = function (pair) {
+            if ($scope.selectedConfusion == pair) {
                 History.add_record("selectConfusion:deselect", {pair: pair});
                 $scope.selectedConfusion = undefined;
             }
@@ -166,7 +117,7 @@
             }
         };
 
-        $scope.searchFeature = function(feature) {
+        $scope.searchFeature = function (feature) {
             // Check if the previous feature matches the current one
             if ($scope.search.feature != feature) {
                 History.add_record("selectFeature:select", {feature: feature});
@@ -180,14 +131,14 @@
             $scope.search.text = undefined;
         };
 
-        $scope.removeSearchFeature = function(){
+        $scope.removeSearchFeature = function () {
             History.add_record("removeSearchFeature", {});
             $scope.search.feature = undefined;
             $scope.search.text = undefined;
         };
 
-        $scope.filterTweetsFlag = function() {
-            return function(item) {
+        $scope.filterTweetsFlag = function () {
+            return function (item) {
                 var filter = $scope.selectedFilter;
 
                 // Apply filters
@@ -213,8 +164,8 @@
             }
         };
 
-        $scope.filterTweets = function(filter) {
-            return function(item) {
+        $scope.filterTweets = function (filter) {
+            return function (item) {
                 var searchText = $scope.search.text;
 
                 // Apply filters
@@ -238,7 +189,7 @@
             }
         };
 
-        $scope.filterTweetsConfusion = function(item) {
+        $scope.filterTweetsConfusion = function (item) {
             if (item) {
                 var confusion = $scope.selectedConfusion;
                 var searchText = $scope.search.text;
@@ -250,12 +201,12 @@
             }
         };
 
-        $scope.hasTweet = function(){
+        $scope.hasTweet = function () {
             return ($scope.allItems && $scope.allItems.filter($scope.filterTweetsByConfusionAndCode).length > 0)
         };
 
-        $scope.filterTweetsByConfusionAndCode = function(item) {
-            if (item){
+        $scope.filterTweetsByConfusionAndCode = function (item) {
+            if (item) {
                 var confusion = $scope.selectedConfusion;
                 var flagged = !confusion || (item.user_code.text == confusion.user_code && item.partner_code.text == confusion.partner_code);
                 var rightCode = ($scope.selectedCode) && (item.user_code.id == $scope.selectedCode.code_id);
@@ -267,7 +218,7 @@
 
         };
 
-        $scope.searchTweets = function(message, search) {
+        $scope.searchTweets = function (message, search) {
             var matched = false;
 
             // Are we searching for text or features?
@@ -285,29 +236,29 @@
             return matched;
         };
 
-        $scope.hasConfusion = function(){
+        $scope.hasConfusion = function () {
             return ($scope.confusionPairs && ($scope.confusionPairs.filter($scope.filterConfusionByCode).length > 0));
         };
 
-        $scope.filterConfusionByCode = function(confusion){
+        $scope.filterConfusionByCode = function (confusion) {
             if (confusion) {
                 return confusion.count > 0 && $scope.selectedCode && confusion.user_code == $scope.selectedCode.code_text;
             }
             return false;
         };
 
-        $scope.filterFeatures = function(code, feature){
-            if (code && feature){
+        $scope.filterFeatures = function (code, feature) {
+            if (code && feature) {
                 return feature.distribution && feature.distribution[code.code_text] > 0;
             }
             return false;
         };
 
-        $scope.hasFeatureOfCode = function(code, featureList){
-            if ( code && featureList ){
+        $scope.hasFeatureOfCode = function (code, featureList) {
+            if (code && featureList) {
                 var count = 0;
-                for (var key in featureList){
-                    if (featureList.hasOwnProperty(key)){
+                for (var key in featureList) {
+                    if (featureList.hasOwnProperty(key)) {
                         count += ($scope.filterFeatures(code, featureList[key]) == true);
                     }
                 }
@@ -316,7 +267,7 @@
             return false;
         };
 
-        $scope.pillColor = function(code_id){
+        $scope.pillColor = function (code_id) {
             if (code_id) {
                 return $scope.colors[code_id % $scope.colors.length];
             }
@@ -325,7 +276,7 @@
             }
         };
 
-        $scope.myKeywordStyle = function(feature){
+        $scope.myKeywordStyle = function (feature) {
             if (feature && feature.source != "system") {
                 var color = $scope.colors[feature.origin_code_id % $scope.colors.length];
                 return {'border': '1px solid ' + color};
@@ -335,28 +286,28 @@
             }
         };
 
-        $scope.codeColor = function(code){
+        $scope.codeColor = function (code) {
             if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colors[colorIndex % $scope.colors.length];
             return color;
         };
 
-        $scope.codeColorLight = function(code){
+        $scope.codeColorLight = function (code) {
             if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
             return color;
         };
 
-        $scope.codeColorLighter = function(code){
+        $scope.codeColorLighter = function (code) {
             if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLighter[colorIndex % $scope.colorsLighter.length];
             return color;
         };
 
-        $scope.buttonStyle = function(code){
+        $scope.buttonStyle = function (code) {
             if (!code) return;
 
             var colorIndex = code.code_id;
@@ -368,7 +319,7 @@
                 width: (100 / $scope.codes.length) + '%'
             };
 
-            if ($scope.selectedCode == code){
+            if ($scope.selectedCode == code) {
                 css['background-color'] = color;
             }
             else {
@@ -380,34 +331,34 @@
             return css;
         };
 
-        $scope.definitionStyle = function(code){
-            if (!code) return;
+        // $scope.definitionStyle = function (code) {
+        //     if (!code) return;
 
-            var colorIndex = code.code_id;
-            var color = $scope.colors[colorIndex % $scope.colors.length];
-            var colorLight = $scope.colorsLight[colorIndex % $scope.colors.length];
+        //     var colorIndex = code.code_id;
+        //     var color = $scope.colors[colorIndex % $scope.colors.length];
+        //     var colorLight = $scope.colorsLight[colorIndex % $scope.colors.length];
 
-            var css = {
-                'background-color': colorLight,
-                'border': 'solid 2px ' + color
-            };
+        //     var css = {
+        //         'background-color': colorLight,
+        //         'border': 'solid 2px ' + color
+        //     };
 
-            return css;
-        };
+        //     return css;
+        // };
 
 
-        $scope.panelStyle = function(code){
+        $scope.panelStyle = function (code) {
             if (!code) return;
             var colorIndex = code.code_id;
             var color = $scope.colorsLight[colorIndex % $scope.colorsLight.length];
 
             var css = {
-                'background-color' : color
+                'background-color': color
             };
             return css;
         };
 
-        $scope.distributionStyle = function(label, distribution){
+        $scope.distributionStyle = function (label, distribution) {
             var color;
             var width;
 
@@ -422,20 +373,20 @@
             }
 
             var css = {
-                'background-color' : color,
-                'width' : width
+                'background-color': color,
+                'width': width
             };
 
             return css;
         };
 
-        $scope.charStyle = function(item, charIndex) {
+        $scope.charStyle = function (item, charIndex) {
 
             var tokenIndex = item.charToToken[charIndex];
             var filtered = item.message.fullToFiltered.get(tokenIndex);
 
             if (charIndex >= item.hoveredCharStart && charIndex <= item.hoveredCharEnd) {
-                return { 'background' : "rgba(0,0,0,0.1)" };
+                return {'background': "rgba(0,0,0,0.1)"};
             }
             else if (isTokenSelectedAtCharIndex(item, charIndex) || (isTokenSelectedAtCharIndex(item, charIndex - 1) && isTokenSelectedAtCharIndex(item, charIndex + 1))) {
                 if (filtered) {
@@ -450,25 +401,25 @@
                     var feature = item.active_features[i];
                     if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
                         if (filtered) {
-                            return {'background': $scope.colorsLight[feature.codeIndex % $scope.colors.length] };
+                            return {'background': $scope.colorsLight[feature.codeIndex % $scope.colors.length]};
                         }
                         else {
-                            return {'background': $scope.colorsLighter[feature.codeIndex % $scope.colors.length] };
+                            return {'background': $scope.colorsLighter[feature.codeIndex % $scope.colors.length]};
                         }
                     }
                 }
 
-                return { 'background': 'transparent' };
+                return {'background': 'transparent'};
             }
         };
 
-        $scope.getMessageDetail = function(){
+        $scope.getMessageDetail = function () {
             History.add_record("getMessageDetail:request-start", {});
 
             var request = Message.load_message_details();
             if (request) {
                 usSpinnerService.spin('label-spinner');
-                request.then(function() {
+                request.then(function () {
                     usSpinnerService.stop('label-spinner');
                     History.add_record("getMessageDetail:request-end", {});
                     $scope.currentMessage = Message.current_message;
@@ -476,21 +427,24 @@
             }
         };
 
-        $scope.submitLabel = function(){
+        // TODO: Remove. Need to rethink label submittion in export
+        $scope.submitLabel = function () {
             History.add_record("submitLabel:request-start", {});
 
             var request = Message.submit($scope.selectedCode.code_id);
             if (request) {
                 usSpinnerService.spin('label-spinner');
-                request.then(function() {
+                request.then(function () {
                     usSpinnerService.stop('label-spinner');
                     History.add_record("submitLabel:request-end", {});
 
                     // Save the submitted message to the list and reset selected code
                     var idx = $scope.coded_messages['user'][$scope.selectedCode.code_text]
-                        .map(function(d){ return d.message.id; })
+                        .map(function (d) {
+                            return d.message.id;
+                        })
                         .indexOf(Message.last_message.message.id);
-                    if (idx != -1){
+                    if (idx != -1) {
                         $scope.coded_messages['user'][$scope.selectedCode.code_text].splice(idx, 1);
                     }
                     $scope.coded_messages['user'][$scope.selectedCode.code_text].unshift(Message.last_message);
@@ -502,50 +456,8 @@
         };
 
         $scope.processing = false;
-        $scope.next_step = function(){
-            var request;
-            if (Progress.current_status == 'W'){
-                History.add_record("next_step:refresh:request-start", {});
-                request = Progress.init_load();
-                if (request) {
-                    usSpinnerService.spin('page-spinner');
-                    $scope.processing = true;
-                    request.then(function() {
-                        usSpinnerService.stop('page-spinner');
-                        History.add_record("next_step:refresh:request-end", {});
-                        $scope.processing = false;
-                    });
-                }
-            }
-            else{
-                History.add_record("next_step:next:request-start", {});
-                request = Progress.next_step();
-                if (request) {
-                    usSpinnerService.spin('page-spinner');
-                    $scope.processing = true;
-                    request.then(function() {
-                        usSpinnerService.stop('page-spinner');
-                        History.add_record("next_step:next:request-end", {});
-                        $scope.processing = false;
-                    });
-                }
-            }
-            if (window.getSelection) {
-                if (window.getSelection().empty) {  // Chrome
-                    window.getSelection().empty();
-                }
-                else if (window.getSelection().removeAllRanges) {  // Firefox
-                    window.getSelection().removeAllRanges();
-                }
-            }
-            else if (document.selection) {  // IE?
-                document.selection.empty();
-            }
 
-        };
-
-
-        $scope.updateItem = function(item, is_saved, is_example, is_ambiguous){
+        $scope.updateItem = function (item, is_saved, is_example, is_ambiguous) {
             item.is_saved = is_saved;
             item.is_example = is_example;
             item.is_ambiguous = is_ambiguous;
@@ -563,14 +475,11 @@
 
         $scope.ask_if_change_code = false;
         $scope.message_for_change = undefined;
-        $scope.showIndicator = function(item){
+        $scope.showIndicator = function (item) {
             return item.disagreement_indicator && $scope.from_current_stage(item);
         };
-        $scope.from_current_stage = function(item){
-            return Progress.current_stage_index == item.source_stage_index;
-        };
 
-        $scope.updateIndicator = function(item, disagreement){
+        $scope.updateIndicator = function (item, disagreement) {
 
             if (disagreement && item.disagreement_indicator != disagreement) {
                 History.add_record("updateIndicator:request-start", {item: item, disagreement: disagreement});
@@ -581,7 +490,7 @@
                         usSpinnerService.stop('submitted-label-spinner');
                         item.disagreement_indicator = disagreement;
                         History.add_record("updateIndicator:request-end", {item: item, disagreement: disagreement});
-                        if (disagreement == 'P'){
+                        if (disagreement == 'P') {
                             History.add_record("updateIndicator:show-dialog", {item: item, disagreement: disagreement});
                             $scope.ask_if_change_code = true;
                             $scope.message_for_change = item;
@@ -592,15 +501,17 @@
             }
         };
 
-        $scope.changeCode = function(){
+        $scope.changeCode = function () {
 
-            History.add_record("changeCode:request-start", {message_for_change: $scope.message_for_change,
-                                                            partner_code: $scope.message_for_change.partner_code.id});
+            History.add_record("changeCode:request-start", {
+                message_for_change: $scope.message_for_change,
+                partner_code: $scope.message_for_change.partner_code.id
+            });
             var request = Message.update_code($scope.message_for_change,
-                                              $scope.message_for_change.partner_code.id);
+                $scope.message_for_change.partner_code.id);
             if (request) {
                 usSpinnerService.spin('submitted-label-spinner');
-                request.then(function() {
+                request.then(function () {
                     usSpinnerService.stop('submitted-label-spinner');
                     History.add_record("changeCode:request-end", {
                         message_for_change: $scope.message_for_change,
@@ -667,32 +578,36 @@
 
         /** Functions for handling definitions start */
 
-        $scope.hasDefinition = function(code, source){
+        $scope.hasDefinition = function (code, source) {
             if (!code) return false;
             return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
-                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('text') &&
-                   Code.definitions_by_code[code.code_text][source].text.trim().length > 0;
+                Code.definitions_by_code[code.code_text][source].hasOwnProperty('text') &&
+                Code.definitions_by_code[code.code_text][source].text.trim().length > 0;
         };
 
-        $scope.hasExample = function(code, source){
+        $scope.hasExample = function (code, source) {
             if (!code) return false;
             return Code.definitions_by_code && Code.definitions_by_code[code.code_text][source] &&
-                   Code.definitions_by_code[code.code_text][source].hasOwnProperty('examples') &&
-                   Code.definitions_by_code[code.code_text][source].examples.length > 0;
+                Code.definitions_by_code[code.code_text][source].hasOwnProperty('examples') &&
+                Code.definitions_by_code[code.code_text][source].examples.length > 0;
         };
 
-        $scope.saveDefinition = function(){
+        $scope.saveDefinition = function () {
             var code = $scope.selectedCode;
             if (code && $scope.hasDefinition(code, "user")) {
-                History.add_record("saveDefinition:request-start", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
+                History.add_record("saveDefinition:request-start", {
+                    code: code,
+                    definition: Code.definitions_by_code[code.code_text]["user"].text
+                });
                 var request = Code.update_definition(code);
                 if (request) {
                     usSpinnerService.spin('code-detail-spinner');
                     request.then(function () {
                         usSpinnerService.stop('code-detail-spinner');
-                        History.add_record("saveDefinition:request-end", {code: code,
-                                                                    definition: Code.definitions_by_code[code.code_text]["user"].text});
+                        History.add_record("saveDefinition:request-end", {
+                            code: code,
+                            definition: Code.definitions_by_code[code.code_text]["user"].text
+                        });
 
                         $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
                     });
@@ -700,24 +615,24 @@
             }
         };
 
-        $scope.is_definition_different = function(){
+        $scope.is_definition_different = function () {
             var code = $scope.selectedCode;
             return ($scope.is_editing_definition && (typeof($scope.original_code_definition) !== "undefined") &&
             ($scope.original_code_definition.trim() !== Code.definitions_by_code[code.code_text]["user"].text.trim()) );
         };
 
-        $scope.startEditing = function(){
+        $scope.startEditing = function () {
             var code = $scope.selectedCode;
-            if ($scope.is_editing_definition == false){
+            if ($scope.is_editing_definition == false) {
                 History.add_record("definition:startEditing", {code: code});
                 $scope.is_editing_definition = true;
                 $scope.original_code_definition = Code.definitions_by_code[code.code_text]["user"].text.trim();
             }
         };
 
-        $scope.finishEditing = function(){
+        $scope.finishEditing = function () {
             var code = $scope.selectedCode;
-            if ( $scope.is_definition_different() ){
+            if ($scope.is_definition_different()) {
                 History.add_record("definition:finishEditing:handle-unsaved-definition", {code: code});
                 $scope.ask_if_save_definition = true;
             }
@@ -729,9 +644,9 @@
 
         };
 
-        $scope.handleDefinitionChanges = function(save){
+        $scope.handleDefinitionChanges = function (save) {
             var code = $scope.selectedCode;
-            if (save){
+            if (save) {
                 History.add_record("definition:handleDefinitionChanges:save", {code: code});
                 $scope.saveDefinition();
             }
@@ -747,7 +662,7 @@
         /** Functions for handling definitions end */
 
 
-        $scope.getAllMessages = function(updateFeaturesOnly) {
+        $scope.getAllMessages = function (updateFeaturesOnly) {
             History.add_record("getAllMessages:request-start", {updateFeaturesOnly: updateFeaturesOnly});
             var request = Message.load_all_coded_messages(/*"current"*/);
             if (request) {
@@ -759,7 +674,7 @@
                     if (!updateFeaturesOnly) {
                         History.add_record("getAllMessages:initialize-all-message", {});
                         $scope.allItems = Message.all_coded_messages;
-                        $scope.allItems.forEach(function(item){
+                        $scope.allItems.forEach(function (item) {
                             $scope.allItemsMap[item.message.id] = item;
                         });
 
@@ -769,8 +684,8 @@
                     else {
                         History.add_record("getAllMessages:update-features", {});
                         // Iterate through all messages and update the features
-                        Message.all_coded_messages.forEach(function(item){
-                            if ($scope.allItemsMap.hasOwnProperty(item.message.id)){
+                        Message.all_coded_messages.forEach(function (item) {
+                            if ($scope.allItemsMap.hasOwnProperty(item.message.id)) {
                                 $scope.allItemsMap[item.message.id].feature_vector = item.feature_vector;
                                 $scope.allItemsMap[item.message.id].active_features = item.active_features;
                             }
@@ -780,50 +695,41 @@
             }
         };
 
-        $scope.getCodeDetail = function(){
+        $scope.getCodeDetail = function () {
             History.add_record("getCodeDetail:request-start", {});
             var request = Code.init_load();
             if (request) {
                 usSpinnerService.spin('page-spinner');
-                request.then(function() {
+                request.then(function () {
                     usSpinnerService.stop('page-spinner');
                     History.add_record("getCodeDetail:request-end", {});
                     $scope.statusText = undefined;
 
                     $scope.codes = Code.codes;
-                    if (Progress.current_status == 'R'){
-                        $scope.selectedCode = $scope.codes[0];
-                        $scope.load_distribution("user");
-                        $scope.load_distribution("partner");
-                        $scope.load_distribution("system");
-                        $scope.load_pairwise_distribution();
-                        $scope.getAllMessages();
-                    }
-                    else if (Progress.current_status == 'C') {
-                        $scope.getMessageDetail();
-                        $scope.load_distribution("user");
-                        $scope.load_distribution("partner");
-                        $scope.load_distribution("system");
-                        $scope.getCodedMessages();
+                    $scope.selectedCode = $scope.codes[0];
+                    $scope.load_distribution("user");
+                    $scope.load_distribution("partner");
+                    $scope.load_distribution("system");
+                    $scope.load_pairwise_distribution();
+                    $scope.getAllMessages();
 
-                    }
                 });
             }
         };
 
         var num_coded_message_requests = 0;
-        $scope.getCodedMessages = function(){
-            if ($scope.codes){
-                $scope.codes.forEach(function(code){
+        $scope.getCodedMessages = function () {
+            if ($scope.codes) {
+                $scope.codes.forEach(function (code) {
                     var request = Message.load_coded_messages(code);
                     if (request) {
                         usSpinnerService.spin('code-detail-spinner');
                         History.add_record("getCodeMessages:request-start", {code: code});
                         num_coded_message_requests += 1;
-                        request.then(function() {
+                        request.then(function () {
                             num_coded_message_requests -= 1;
                             History.add_record("getCodeMessages:request-end", {code: code});
-                            if (num_coded_message_requests == 0){
+                            if (num_coded_message_requests == 0) {
                                 usSpinnerService.stop('code-detail-spinner');
                                 $scope.coded_messages = Message.coded_messages;
                             }
@@ -835,15 +741,15 @@
         };
 
         var num_distribution_queries = 0;
-        $scope.load_distribution = function(source){
+        $scope.load_distribution = function (source) {
             History.add_record("load_distribution:request-start", {source: source});
             var request = Feature.get_distribution(source);
             if (request) {
                 usSpinnerService.spin('feature-spinner');
                 num_distribution_queries += 1;
-                request.then(function() {
+                request.then(function () {
                     num_distribution_queries -= 1;
-                    if (num_distribution_queries <= 0 )
+                    if (num_distribution_queries <= 0)
                         usSpinnerService.stop('feature-spinner');
                     History.add_record("load_distribution:request-end", {source: source});
                     $scope.featureList[source] = Feature.distributions[source];
@@ -851,12 +757,12 @@
             }
 
         };
-        $scope.load_pairwise_distribution = function(){
+        $scope.load_pairwise_distribution = function () {
             History.add_record("load_pairwise_distribution:request-start", {});
             var request = Code.get_pairwise();
             if (request) {
                 usSpinnerService.spin('pairwise-spinner');
-                request.then(function() {
+                request.then(function () {
                     usSpinnerService.stop('pairwise-spinner');
                     History.add_record("load_pairwise_distribution:request-end", {});
                     $scope.confusionPairs = Code.pairwise_distribution;
@@ -866,15 +772,16 @@
         };
 
 
-
         // Feature selection logic and states
 
-        var updateSelection = function(item, startIndex, endIndex, isSelected, shouldClear) {
-            History.add_record("tokens:updateSelection", {item: item,
-                                                           startIndex: startIndex,
-                                                           endIndex: endIndex,
-                                                           isSelected: isSelected,
-                                                           shouldClear: shouldClear});
+        var updateSelection = function (item, startIndex, endIndex, isSelected, shouldClear) {
+            History.add_record("tokens:updateSelection", {
+                item: item,
+                startIndex: startIndex,
+                endIndex: endIndex,
+                isSelected: isSelected,
+                shouldClear: shouldClear
+            });
             if (shouldClear) {
                 item.selectedTokenIndices.clear();
             }
@@ -894,7 +801,7 @@
             //console.log("updateSelection: " + JSON.stringify(values));
         };
 
-        var isTokenSelectedAtCharIndex = function (item, charIndex){
+        var isTokenSelectedAtCharIndex = function (item, charIndex) {
             if (item && item.selectedTokenIndices) {
                 var tokenIndex = item.charToToken[charIndex];
                 if (tokenIndex != undefined && item.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
@@ -905,13 +812,10 @@
             return false;
         };
 
-        $scope.onCharMouseEnter = function(item, charIndex){
+        $scope.onCharMouseEnter = function (item, charIndex) {
             //console.log("onCharMouseEnter:" + charIndex);
-            if (!$scope.from_current_stage(item)){
-                return
-            }
 
-            if (item){
+            if (item) {
                 History.add_record("tokens:onCharMouseEnter:item-exists", {item: item, charIndex: charIndex});
                 var tokenIndex = item.charToToken[charIndex];
 
@@ -941,28 +845,24 @@
             }
         };
 
-        $scope.onCharMouseLeave = function(item, charIndex){
-            if (!$scope.from_current_stage(item)){
-                return
-            }
+        $scope.onCharMouseLeave = function (item, charIndex) {
             //console.log("onCharMouseLeave:" + charIndex);
             History.add_record("tokens:onCharMouseLeave", {item: item, charIndex: charIndex});
             item.hoveredCharStart = -1;
             item.hoveredCharEnd = -1;
         };
 
-        $scope.onCharMouseDown = function(item, charIndex, event){
-            if (!$scope.from_current_stage(item)){
-                return
-            }
+        $scope.onCharMouseDown = function (item, charIndex, event) {
             //console.log("onCharMouseDown:" + charIndex);
 
             if (item) {
                 var tokenIndex = item.charToToken[charIndex];
 
                 if (tokenIndex != undefined && item.tokens[tokenIndex] != undefined) {
-                    History.add_record("tokens:onCharMouseDown:token-exists", {item: item, charIndex: charIndex,
-                                                                               tokenIndex: tokenIndex});
+                    History.add_record("tokens:onCharMouseDown:token-exists", {
+                        item: item, charIndex: charIndex,
+                        tokenIndex: tokenIndex
+                    });
 
                     var tokenItem = item.tokens[tokenIndex];
 
@@ -987,10 +887,7 @@
             }
         };
 
-        $scope.onCharMouseUp = function(item, charIndex) {
-            if (!$scope.from_current_stage(item)){
-                return
-            }
+        $scope.onCharMouseUp = function (item, charIndex) {
             item.clickStartTokenItem = undefined;
             item.selectedTokens = undefined;
 
@@ -1022,7 +919,7 @@
             }
         };
 
-        $scope.onItemHover = function(item){
+        $scope.onItemHover = function (item) {
             if ($scope.hoveredItem && $scope.hoveredItem != item && $scope.hoveredItem.selectedTokenIndices) {
                 $scope.hoveredItem.selectedTokens = undefined;
                 $scope.hoveredItem.selectedTokenIndices.clear();
@@ -1041,20 +938,20 @@
             }
         };
 
-        $scope.onItemLeave = function(item){
+        $scope.onItemLeave = function (item) {
         };
-        $scope.stageSelectable = function(item){
-            return ($scope.from_current_stage(item)) ? "pointer" : "";
+        $scope.stageSelectable = function (item) {
+            return "pointer";
         };
 
-        $scope.replaceFeature = function(featureConflict){
+        $scope.replaceFeature = function (featureConflict) {
             $scope.featureConflict = null;
             History.add_record("replaceFeature", {featureConflict: featureConflict});
             if (featureConflict) {
                 if (featureConflict.existingFeatureText) {
                     $scope.removeFeature(featureConflict.existingFeatureText);
                 }
-                else if (featureConflict.existingMessageFeature){
+                else if (featureConflict.existingMessageFeature) {
                     $scope.removeFeature(featureConflict.existingMessageFeature);
                 }
 
@@ -1062,17 +959,17 @@
             }
         };
 
-        $scope.addFeature = function(item){
+        $scope.addFeature = function (item) {
             if (item && item.selectedTokens && item.selectedTokens.length > 0) {
                 History.add_record("addFeature", {item: item});
                 var tokens = [];
                 // selectedTokenIndices are ordered by the tokens added, not by their index
                 var tokenIndices = [];
-                item.selectedTokenIndices.forEach(function(value, key) {
+                item.selectedTokenIndices.forEach(function (value, key) {
                     tokenIndices.push(key);
                 });
 
-                tokenIndices.sort(function(a, b) {
+                tokenIndices.sort(function (a, b) {
                     return a - b;
                 }).forEach(function (tokenIndex) {
                     tokens.push(item.message.lemmatized_tokens[tokenIndex]);
@@ -1140,8 +1037,8 @@
             }
         };
 
-        $scope.removeFeature = function(feature, $event){
-            if ($event){
+        $scope.removeFeature = function (feature, $event) {
+            if ($event) {
                 $event.preventDefault();
                 $event.stopPropagation();
             }
@@ -1151,7 +1048,7 @@
 
                 // Remove from list
                 var index = $scope.featureList.user.indexOf(feature);
-                if (index > -1){
+                if (index > -1) {
                     $scope.featureList.user.splice(index, 1);
                 }
 
@@ -1174,53 +1071,27 @@
             }
         };
 
-        // Watchers
-        $scope.$watch('Progress.current_message_id', function(newVal, oldVal) {
-            if (newVal && (newVal != oldVal)) {
-                $scope.getMessageDetail();
-            }
-        });
+        $scope.selectedCode = undefined;
+        $scope.getCodeDetail();
 
-        $scope.$watch('Progress.current_status', function(newVal, oldVal) {
-            if (newVal && (newVal != oldVal)) {
-                switch (newVal) {
-                    case 'C':  // coding
-                        $scope.selectedCode = undefined;
-                        $scope.statusText = "Initializing coding interface...";
-                        $scope.getCodeDetail();
-                        break;
-                    case 'R':  // review
-                        $scope.selectedCode = undefined;
-                        $scope.statusText = "Initializing review interface...";
-                        $scope.getCodeDetail();
-                        break;
-                    case 'E':  // export
-                        $scope.selectedCode = undefined;
-                        $scope.statusText = "Initializing export interface...";
-                        $scope.getCodeDetail();
-                        break;
-                    default:
-                        $scope.statusText = undefined;
-                }
-            }
-        });
+        // Watchers
 
         // Specific event handlers
-       /* $scope.$on('messages::load_coded_messages', function($event, data) {
-            $scope.coded_messages = data;
-        });*/
-        $scope.$on('definitions::updated', function($event, data) {
+        /* $scope.$on('messages::load_coded_messages', function($event, data) {
+         $scope.coded_messages = data;
+         });*/
+        $scope.$on('definitions::updated', function ($event, data) {
             $scope.codes = data;
             $scope.code_text_list = [];
-            $scope.codes.forEach(function(code){
+            $scope.codes.forEach(function (code) {
                 $scope.code_map[code.code_text] = code;
                 $scope.code_map[code.code_id] = code;
                 $scope.code_text_list.push(code.code_text);
             });
 
         });
-        $scope.$on('modal-hidden', function($event) {
-            if ($scope.is_definition_different()){
+        $scope.$on('modal-hidden', function ($event) {
+            if ($scope.is_definition_different()) {
                 $('#code-definition').focus();
             }
 
@@ -1228,51 +1099,17 @@
 
     };
 
-    ViewController.$inject = [
+    ExportController.$inject = [
         '$scope',
         '$timeout',
         'Aeonium.services.Dictionary',
         'Aeonium.services.Code',
         'Aeonium.services.Message',
         'Aeonium.services.Feature',
-        'Aeonium.services.Progress',
         'Aeonium.services.ActionHistory',
         'usSpinnerService'
     ];
-    module.controller('Aeonium.controllers.ViewController', ViewController);
 
-    module.directive('popover', function() {
-        return function(scope, elem){
-            elem.popover({ container: 'body' });
-        }
-    });
-
-    module.directive('modal', function() {
-        var link = function (scope, elem) {
-            elem.on('hidden.bs.modal', function () {
-                scope.showModal = false;
-                scope.$parent.$broadcast("modal-hidden");
-            });
-
-            scope.$watch('showModal', function (newVals, oldVals) {
-                if (newVals)
-                    elem.modal('show');
-                else
-                    elem.modal('hide');
-            }, false);
-        };
-
-        return {
-            //Use as a tag only
-            restrict: 'E',
-            replace: false,
-
-            //Directive's inner scope
-            scope: {
-                showModal: '=showModal'
-            },
-            link: link
-        };
-    });
+    module.controller('Aeonium.controllers.ExportController', ExportController);
 
 })();

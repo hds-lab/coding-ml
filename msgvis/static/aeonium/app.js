@@ -31,6 +31,10 @@
                         templateUrl : 'static/aeonium/pages/review.html',
                         controller  : 'ReviewController'
                         })
+            .when('/export', {
+                        templateUrl : 'static/aeonium/pages/export.html',
+                        controller  : 'ExportController'
+                        })
             .otherwise({redirectTo: '/'});
     });
 
@@ -53,6 +57,10 @@
 
     app.controller('ReviewController', function($scope) {
         $scope.message = 'Hello from ReviewController';
+    });
+
+    app.controller('ExportController', function($scope) {
+        $scope.message = 'Hello from ExportController';
     });
 
 

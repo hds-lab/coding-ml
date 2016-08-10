@@ -14,6 +14,9 @@
 @coding-top-labeling-height: 140px;
 @review-top-height: 145px;
 @review-bottom-bar-height: 0px;
+@export-top-height: 145px;
+@export-bottom-height: 0px;
+
 
 html, body {
   width: 100%;
@@ -130,7 +133,7 @@ th:hover {
   color: #999;
 }
 
-/* START Shared between coding and reviewing */
+/* START Shared between all pages */
 .btn {
   border-radius: 0;
 }
@@ -407,7 +410,7 @@ h3 {
   }
 }
 
-/* END Shared between coding and reviewing */
+/* END Shared between all pages */
 
 /* START Coding interface styles */
 #coding {
@@ -849,5 +852,62 @@ h3 {
 }
 
 /* End Reviewing interface styles */
+
+/* START Export interface styles */
+#exporting {
+  height: 100%;
+
+  #top-area {
+    height: calc(100% ~ "-" @export-bottom-height);
+
+    #progress-area {
+      height: calc(100% ~ "-" 55px);
+
+      #phases {
+        height: @export-top-height;
+        padding: 10px;
+
+        > div {
+          height: 100%;
+        }
+
+        > div[class^="col-"] {
+          padding: 0;
+          text-align: center;
+          height: 100%;
+        }
+
+        h3 {
+          margin-top: 0;
+        }
+        p {
+          margin: 0;
+        }
+
+        .arrow-img {
+          display: block;
+          height: 36px;
+          margin: 0 auto;
+          width: 36px;
+        }
+
+        .btn {
+          line-height: 0.5em;
+          border: none;
+          font-size: 10px;
+        }
+
+        textarea {
+          resize: none;
+          width: 100%;
+          background: transparent;
+        }
+      }
+
+    }
+
+  }
+}
+/* END Export interface styles */
 
 
