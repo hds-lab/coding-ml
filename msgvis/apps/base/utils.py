@@ -1,6 +1,9 @@
-from django.core.management.base import BaseCommand, make_option, CommandError
 import os
 from math import log
+
+from django.core.management.base import BaseCommand, make_option, CommandError
+from django.db.models import Q, Count
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay, ExtractHour
 
 def _mkdir_recursive( path):
     sub_path = os.path.dirname(path)
@@ -46,6 +49,7 @@ class AttributeDict(dict):
 
 _stoplist = None
 
+
 def get_stoplist():
     global _stoplist
     if not _stoplist:
@@ -53,3 +57,33 @@ def get_stoplist():
 
         _stoplist = stopwords.words('english')
     return _stoplist
+
+# fields for grouping
+unit_fields = ["year", "month", "day", "hour"]
+unit_list_range = dict((("YEARLY", 1), ("MONTHLY", 2), ("DAILY", 3), ("HOURLY", 4)))
+
+def get_best_time_bucket(timediff_in_seconds):
+    if timediff_in_seconds <= 86400 * 5:
+        return "HOURLY"
+    elif timediff_in_seconds <= 86400 * 30:
+        return "DAILY"
+    elif timediff_in_seconds <= 86400 * 30 * 12 * 3:
+        return "MONTHLY"
+    else:
+        return "YEARLY"
+
+
+def group_messages_by_time(queryset, field_name, unit):
+
+    queryset = queryset.filter(Q(field_name + "__isnull", filter))
+    queryset = queryset.annotate(
+        year=ExtractYear(field_name),
+        month=ExtractMonth(field_name),
+        day=ExtractDay(field_name),
+        hour=ExtractHour(field_name)
+    )
+
+    grouping_fields = unit_fields[:unit_list_range[unit]]
+    queryset.value(*grouping_fields).annotate(c=Count('id'))
+
+
