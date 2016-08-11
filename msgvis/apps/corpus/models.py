@@ -61,6 +61,10 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_time_span_in_seconds(self):
+        timediff = self.end_time - self.start_time
+        return timediff.total_seconds()
+
     def get_message_set(self):
         return self.message_set.filter(time__isnull=False).all()
 

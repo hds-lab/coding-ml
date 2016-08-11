@@ -1,9 +1,12 @@
-import os
+from datetime import datetime
 from math import log
+from operator import attrgetter
+import os
 
 from django.core.management.base import BaseCommand, make_option, CommandError
+from django.db import connection
 from django.db.models import Q, Count
-from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay, ExtractHour
+
 
 def _mkdir_recursive( path):
     sub_path = os.path.dirname(path)
@@ -11,6 +14,7 @@ def _mkdir_recursive( path):
         _mkdir_recursive(sub_path)
     if not os.path.exists(path):
         os.mkdir(path)
+
 
 def check_or_create_dir(dir_path):
     if os.path.exists(dir_path):
@@ -75,15 +79,28 @@ def get_best_time_bucket(timediff_in_seconds):
 
 def group_messages_by_time(queryset, field_name, unit):
 
-    queryset = queryset.filter(Q(field_name + "__isnull", filter))
-    queryset = queryset.annotate(
-        year=ExtractYear(field_name),
-        month=ExtractMonth(field_name),
-        day=ExtractDay(field_name),
-        hour=ExtractHour(field_name)
-    )
+    #queryset = queryset.filter(Q(field_name + "__isnull", False))
+    # queryset = queryset.annotate(
+    #     year=ExtractYear(field_name),
+    #     month=ExtractMonth(field_name),
+    #     day=ExtractDay(field_name),
+    #     hour=ExtractHour(field_name)
+    # )
+
+    truncate = dict((('year', connection.ops.date_trunc_sql('year', field_name)),
+                ('month',connection.ops.date_trunc_sql('month', field_name)),
+                ('day', connection.ops.date_trunc_sql('day', field_name)),
+                ('hour', connection.ops.date_trunc_sql('hour', field_name))))
+    queryset = queryset.extra(truncate)
 
     grouping_fields = unit_fields[:unit_list_range[unit]]
-    queryset.value(*grouping_fields).annotate(c=Count('id'))
-
+    results = queryset.values(*grouping_fields).annotate(count=Count('id')).order_by(*grouping_fields)
+    default_datetime = datetime(2016, 1, 1)
+    for idx, result in enumerate(results):
+        obj_time_fields = {}
+        for field in grouping_fields:
+            field_obj = result[field]
+            obj_time_fields[field] = attrgetter(field)(field_obj)
+        results[idx]['time'] = default_datetime.replace(**obj_time_fields)
+    return results
 
