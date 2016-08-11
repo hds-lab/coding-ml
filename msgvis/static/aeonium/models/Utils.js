@@ -5,7 +5,8 @@
 
     //A service for code definition
     module.factory('Aeonium.models.Utils', [
-        function utilsFactory() {
+        'Aeonium.models.Code',
+        function utilsFactory(Code) {
             var Utils = function () {
                 var self = this;
             };
@@ -15,7 +16,6 @@
                 // returns MessageDetail
                 extractMessageDetail: function (messageData) {
                     var self = this;
-
                     var text = messageData.message.text;
                     //var characters = text.split("");
                     var characters = Array.from(text);
@@ -66,28 +66,7 @@
                     messageData.message.filteredToFull = filteredToFull;
                     messageData.message.fullToFiltered = fullToFiltered;
 
-                    // Extract token level features
-                    var features = [];
-                    if (feature_vector && feature_vector.length > 0) {
-                        for (i = 0; i < messageData.feature_vector.length; i++) {
-                            var feature = messageData.feature_vector[i];
-                            var code_id = feature.origin_code_id;
-
-                            var matchedTokenIndices = self.match_feature(messageData.message, feature);
-
-                            // TODO: For now, treat all as non-continuous token features
-                            matchedTokenIndices.forEach(function (tokenIndex) {
-                                var tokenItem = tokenItems[tokenIndex];
-                                features.push({
-                                    startCharIndex: tokenItem.startIndex,
-                                    endCharIndex: tokenItem.endIndex,
-                                    codeIndex: code_id
-                                });
-                            });
-                        }
-                    }
-
-                    return {
+                    var messageDetail = {
                         id: messageData.message.id,
                         label: messageData.message.code,
                         source: messageData.source,
@@ -101,7 +80,7 @@
                         filteredTokens: filtered_tokens,
                         filteredToFull: filteredToFull,
                         fullToFiltered: fullToFiltered,
-                        featureHighlights: features,
+                        featureHighlights: [],
                         characters: characters,
                         charToToken: charToToken,
 
@@ -112,6 +91,28 @@
                         selectedTokens: undefined,
                         selectedTokenIndices: new Map()
                     };
+
+                    // Extract token level features
+                    if (feature_vector && feature_vector.length > 0) {
+                        for (i = 0; i < messageData.feature_vector.length; i++) {
+                            var feature = messageData.feature_vector[i];
+                            var code_id = feature.origin_code_id;
+
+                            var matchedTokenIndices = self.canMatchFeature(messageDetail, feature);
+
+                            // TODO: For now, treat all as non-continuous token features
+                            matchedTokenIndices.forEach(function (tokenIndex) {
+                                var tokenItem = tokenItems[tokenIndex];
+                                messageDetail.featureHighlights.push({
+                                    startCharIndex: tokenItem.startIndex,
+                                    endCharIndex: tokenItem.endIndex,
+                                    codeIndex: code_id
+                                });
+                            });
+                        }
+                    }
+
+                    return messageDetail;
                 },
 
                 // Searches the tokens for the given feature and returns the matched token indices
@@ -216,6 +217,54 @@
                     else {
                         return string1.trim() === string2.trim();
                     }
+                },
+
+                // featureData: any
+                // return Feature
+                extractFeature: function (featureData) {
+                    //class Feature {
+                    //    id: number;
+                    //    index: number;
+                    //    text: string;
+                    //    source: string;
+                    //    distribution: Map<number, FeatureDistribution>; // keyed by codeId
+                    //    totalCount: number;
+                    //    entropy: number;
+                    //    messageId: number;
+                    //    codeId: number;
+                    //}
+
+                    //class FeatureDistribution {
+                    //    distribution: number;
+                    //    count: number;
+                    //}
+
+                    var distributions = {};
+                    for (var prop in featureData.distribution) {
+                        var codeName = prop;
+                        var codeId = Code.getCodeIdFromCodeName(codeName);
+
+                        if (codeId >= 0) {
+                            distributions[codeId] = {
+                                distribution: featureData.normalized_distribution[prop],
+                                count: featureData.distribution[prop]
+                            };
+                        }
+                    }
+
+                    var item = {
+                        id: featureData.feature_id,
+                        index: featureData.feature_index,
+                        text: featureData.feature_text,
+                        source: featureData.source,
+                        distribution: distributions,
+                        totalCount: featureData.total_count,
+                        entropy: featureData.entropy,
+                        messageId: featureData.origin_message_id ? featureData.origin_message_id : -1,
+                        codeId: featureData.origin_code_id ? featureData.origin_code_id : -1,
+                    };
+
+                    return item;
                 }
             });
 

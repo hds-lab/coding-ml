@@ -31,6 +31,7 @@
             var Code = function () {
                 var self = this;
                 self.codeDefinitions = {}; // Map<number, CodeDefinition> keyed by codeId
+                self.codeNameToId = {}; // Map<string, number> Mapping from code name to code id
             };
 
             angular.extend(Code.prototype, {
@@ -66,7 +67,9 @@
                                             masterDescription: {},
                                             userDescription: {},
                                             partnerDescription: {}
-                                        }
+                                        };
+
+                                        self.codeNameToId[def.code_text] = def.code_id;
                                     }
 
                                     var description;
@@ -111,6 +114,13 @@
                         });
 
 
+                },
+
+                // codeName: string
+                // return number
+                getCodeIdFromCodeName: function(codeName) {
+                    var self = this;
+                    return self.codeNameToId[codeName];
                 }
 
             });

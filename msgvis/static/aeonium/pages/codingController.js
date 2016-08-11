@@ -21,9 +21,15 @@
         $scope.codeDefinitions = undefined; // Map<number, CodeDefinition>
         $scope.selectedCodeDefinition = undefined; // CodeDefinition
 
+        // Comment
         $scope.selectedMessageComment = undefined; // string
         $scope.showSaveComment = false; // boolean
         $scope.nextMessageOnSaveComment = undefined; // Message
+
+        // Keywords
+        $scope.userKeywords = undefined; // Feature[]
+        $scope.systemKeywords = undefined; // Feature[]
+        $scope.partnerKeywords= undefined; // Feature[]
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -111,11 +117,22 @@
             $scope.codeDefinitions = codeDefinitions;
             usSpinnerService.stop('code-detail-view-spinner');
             usSpinnerService.stop('page-spinner');
+
+            Message.getAllMessages();
+            Feature.getAllFeatures();
+        });
+
+        $scope.$on('Feature::allFeatures::loading', function ($event) {
+        });
+
+        $scope.$on('Feature::allFeatures::loaded', function ($event, systemFeatures, userFeatures, partnerFeatures) {
+            $scope.systemKeywords = systemFeatures;
+            $scope.userKeywords = userFeatures;
+            $scope.partnerKeywords = partnerFeatures;
         });
 
         // View methods
         $scope.initializeController = function () {
-            Message.getAllMessages();
             Code.loadCodeDefinitions();
         };
 
@@ -170,6 +187,16 @@
                 $scope.viewMessageDetail($scope.nextMessageOnSaveComment);
                 $scope.nextMessageOnSaveComment = null;
             }
+        };
+
+        $scope.getKeywordsForSelectedCode = function(features){
+            if ($scope.selectedCodeDefinition && features){
+                return features.filter(function(feature) {
+                    return feature.distribution[$scope.selectedCodeDefinition.codeId].count > 0;
+                });
+            }
+
+            return [];
         };
 
         $scope.initializeController();

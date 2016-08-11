@@ -334,70 +334,73 @@ class FeatureCodeDistributionView(APIView):
         for feature_source in feature_sources:
                 source_list.append(source_map[feature_source])
 
-        features = dictionary.get_feature_list(source_list)
 
-        distributions = []
-        distribution_map = {}
         try:
+            all_distributions = [];
+            for source in source_list:
+                features = dictionary.get_feature_list([source])
 
-            for feature in features:
-                source = feature.source if hasattr(feature, 'source') else "system"
+                distributions = []
+                distribution_map = {}
 
-                item = {
-                    "feature_id": feature.id,
-                    "feature_index": feature.index,
-                    "feature_text": feature.text,
-                    "source": source_map[source],
-                    "distribution": {},
-                    "normalized_distribution": {},
-                    "total_count": 0,
-                    "entropy": None
-                }
+                for feature in features:
+                    source = feature.source if hasattr(feature, 'source') else "system"
 
-                if feature.origin:
-                    item["origin_message_id"] = feature.origin.id
-                    code = feature.get_origin_message_code()
-                    if code:
-                        item["origin_code_id"] = code.id
-                item = AttributeDict(item)
-                for code in corpus_models.Code.objects.all():
-                    item["distribution"][code.text] = 0
-                distributions.append(item)
-                distribution_map[feature.index] = item
+                    item = {
+                        "feature_id": feature.id,
+                        "feature_index": feature.index,
+                        "feature_text": feature.text,
+                        "source": source_map[source],
+                        "distribution": {},
+                        "normalized_distribution": {},
+                        "total_count": 0,
+                        "entropy": None
+                    }
 
-            counts = features.filter(messages__code_assignments__isnull=False,
-                                     messages__code_assignments__source=user,
-                                     messages__code_assignments__is_user_labeled=True,
-                                     messages__code_assignments__valid=True)\
-                .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
-                .annotate(count=Count('messages')).order_by('id', 'count').all()
-            for count in counts:
-                count = AttributeDict(count)
-                distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
+                    if feature.origin:
+                        item["origin_message_id"] = feature.origin.id
+                        code = feature.get_origin_message_code()
+                        if code:
+                            item["origin_code_id"] = code.id
+                    item = AttributeDict(item)
+                    for code in corpus_models.Code.objects.all():
+                        item["distribution"][code.text] = 0
+                    distributions.append(item)
+                    distribution_map[feature.index] = item
 
-            for item in distributions:
-                item["total_count"] = 0
-                for code in item.distribution:
-                    item["total_count"] += item.distribution[code]
+                counts = features.filter(messages__code_assignments__isnull=False,
+                                         messages__code_assignments__source=user,
+                                         messages__code_assignments__is_user_labeled=True,
+                                         messages__code_assignments__valid=True)\
+                    .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
+                    .annotate(count=Count('messages')).order_by('id', 'count').all()
+                for count in counts:
+                    count = AttributeDict(count)
+                    distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
 
-                for code in item.distribution:
-                    if item["total_count"] > 0:
-                        item.normalized_distribution[code] = float(item.distribution[code]) / float(item["total_count"])
-                    else:
-                        item.normalized_distribution[code] = 0
+                for item in distributions:
+                    item["total_count"] = 0
+                    for code in item.distribution:
+                        item["total_count"] += item.distribution[code]
 
-                item["entropy"] = entropy(item.distribution)
+                    for code in item.distribution:
+                        if item["total_count"] > 0:
+                            item.normalized_distribution[code] = float(item.distribution[code]) / float(item["total_count"])
+                        else:
+                            item.normalized_distribution[code] = 0
+
+                    item["entropy"] = entropy(item.distribution)
 
 
 
-            # first sort by total count
-            distributions.sort(key=attrgetter("total_count"), reverse=True)
-            # Then sort by entropy. The order will be equivalent to (entropy, -total_count)
-            distributions.sort(key=attrgetter("entropy"))
+                # first sort by total count
+                distributions.sort(key=attrgetter("total_count"), reverse=True)
+                # Then sort by entropy. The order will be equivalent to (entropy, -total_count)
+                distributions.sort(key=attrgetter("entropy"))
 
-            distributions = distributions[:feature_num]
+                all_distributions = all_distributions + distributions[:feature_num]
 
-            output = serializers.FeatureCodeDistributionSerializer(distributions, many=True)
+            output = serializers.FeatureCodeDistributionSerializer(all_distributions, many=True)
 
             return Response(output.data, status=status.HTTP_200_OK)
         except:

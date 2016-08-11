@@ -111,12 +111,68 @@
                     <div class="row">
                         <div class="col-md-4">
                             <h3>System keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(systemKeywords).length > 0" class="help-text">There are no system keywords for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
+                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(systemKeywords) track by $index"
+                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <h3>My keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(userKeywords).length > 0" class="help-text">You have not
+                                provided any keywords from items coded as '<span>{$ selectedCodeDefinition.name $}</span>'.
+                                You can do so in review.</p>
+                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(userKeywords) track by $index"
+                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <h3>Partner keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(partnerKeywords).length > 0" class="help-text">Your partner does not have any keyword for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
+                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(partnerKeywords) track by $index"
+                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
