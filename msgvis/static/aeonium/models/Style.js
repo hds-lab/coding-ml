@@ -129,13 +129,8 @@
                 // returns style object
                 keywordStyle: function (feature) {
                     var self = this;
-                    if (feature && feature.source != "system") {
-                        var color = self.colors[feature.codeId % self.colors.length];
-                        return {'border': '1px solid ' + color};
-                    }
-                    else {
-                        return {};
-                    }
+                    var color = self.colors[feature.codeId % self.colors.length];
+                    return {'border': '1px solid ' + color};
                 },
 
                 // codeId: number
@@ -162,6 +157,16 @@
                     };
 
                     return css;
+                },
+
+                pillColor: function (codeId) {
+                    var self = this;
+                    if (codeId) {
+                        return self.colors[codeId % self.colors.length];
+                    }
+                    else {
+                        return "#aaa";
+                    }
                 }
             });
 

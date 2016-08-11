@@ -68,12 +68,13 @@
 
                     var messageDetail = {
                         id: messageData.message.id,
-                        label: messageData.message.code,
+                        label: messageData.code,
                         source: messageData.source,
                         isAmbiguous: (messageData.is_ambiguous || false),
                         isSaved: (messageData.is_saved || false),
                         isExample: (messageData.is_example || false),
 
+                        html: messageData.message.embedded_html,
                         mediaUrl: messageData.message.media_url,
                         text: text,
                         tokens: tokenItems,
@@ -98,7 +99,7 @@
                             var feature = messageData.feature_vector[i];
                             var code_id = feature.origin_code_id;
 
-                            var matchedTokenIndices = self.canMatchFeature(messageDetail, feature);
+                            var matchedTokenIndices = self.getMatchedTokenIndices(messageDetail, feature);
 
                             // TODO: For now, treat all as non-continuous token features
                             matchedTokenIndices.forEach(function (tokenIndex) {
@@ -117,7 +118,7 @@
 
                 // Searches the tokens for the given feature and returns the matched token indices
                 //message: MessageDetail
-                canMatchFeature: function (message, feature) {
+                getMatchedTokenIndices: function (message, feature) {
                     var matchedTokenIndices = [];
                     var featureText = feature.text;
 
@@ -151,8 +152,8 @@
                         var iNgram = 0;
 
                         var tempIndices = [];
-                        for (var i = 0; i < message.filtered_tokens.length; i++) {
-                            var tokenText = message.filtered_tokens[i].toLowerCase();
+                        for (var i = 0; i < message.filteredTokens.length; i++) {
+                            var tokenText = message.filteredTokens[i].toLowerCase();
                             if (tokenText == ngrams[iNgram]) {
                                 tempIndices.push(message.filteredToFull.get(i));
                                 iNgram++;
@@ -168,10 +169,20 @@
                     return matchedTokenIndices;
                 },
 
+                canMatchFeature: function (message, feature) {
+                    var self = this;
+                    var matchedTokenIndices = self.getMatchedTokenIndices(message, feature);
+
+                    return matchedTokenIndices && matchedTokenIndices.length > 0;
+                },
+
                 // Searches the full message text for the given search text and returns a boolean
                 // message: MessageDetail
                 canMatchText: function (message, searchText) {
-                    if (searchText && searchText.length > 0) {
+                    if (!searchText || searchText.length == 0) {
+                        return true;
+                    }
+                    else if (searchText && searchText.length > 0) {
 
                         // Search the text in the full text
                         var charIndex = message.text.toLowerCase().search(searchText.toLowerCase());

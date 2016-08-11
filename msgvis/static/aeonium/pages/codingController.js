@@ -13,6 +13,7 @@
 
         // View states
         $scope.allMessages = []; // Message[]
+        $scope.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
 
         // Selected message
         $scope.selectedMessage = undefined; // Message
@@ -29,7 +30,24 @@
         // Keywords
         $scope.userKeywords = undefined; // Feature[]
         $scope.systemKeywords = undefined; // Feature[]
-        $scope.partnerKeywords= undefined; // Feature[]
+        $scope.partnerKeywords = undefined; // Feature[]
+
+        // Filter
+        $scope.FILTER_ALL = 0;
+        $scope.FILTER_EXAMPLE = 1;
+        $scope.FILTER_SAVED = 2;
+        $scope.FILTER_AMBIGUOUS = 3;
+
+        $scope.availableFilters = {};
+        $scope.availableFilters[$scope.FILTER_ALL] = 'All';
+        $scope.availableFilters[$scope.FILTER_EXAMPLE] = 'Example';
+        $scope.availableFilters[$scope.FILTER_SAVED] = 'Saved';
+        $scope.availableFilters[$scope.FILTER_AMBIGUOUS] = 'Ambiguous';
+
+        $scope.selectedFilter = $scope.FILTER_ALL;
+
+        // Search
+        $scope.searchModel = {value: undefined, keyword: undefined};
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -55,6 +73,15 @@
             //	isSaved: boolean;
             //	isExample: boolean;
             //}
+        });
+
+        $scope.$on('Message::userCodedMessages::loading', function ($event) {
+            usSpinnerService.spin('code-detail-view-spinner');
+        });
+
+        $scope.$on('Message::userCodedMessages::loaded', function ($event, codeId, messages) {
+            $scope.userCodedMessages[codeId] = messages; // MessageDetail[]
+            usSpinnerService.stop('code-detail-view-spinner');
         });
 
         $scope.$on('Message::messageDetail::loading', function ($event, messageDetail) {
@@ -120,6 +147,11 @@
 
             Message.getAllMessages();
             Feature.getAllFeatures();
+
+            for (var codeId in codeDefinitions){
+                $scope.userCodedMessages[codeId] = [];
+                Message.getCodedMessages(codeId);
+            }
         });
 
         $scope.$on('Feature::allFeatures::loading', function ($event) {
@@ -189,14 +221,72 @@
             }
         };
 
-        $scope.getKeywordsForSelectedCode = function(features){
-            if ($scope.selectedCodeDefinition && features){
-                return features.filter(function(feature) {
+        $scope.getKeywordsForSelectedCode = function (features) {
+            if ($scope.selectedCodeDefinition && features) {
+                return features.filter(function (feature) {
                     return feature.distribution[$scope.selectedCodeDefinition.codeId].count > 0;
                 });
             }
 
             return [];
+        };
+
+        $scope.getUserMessages = function () {
+            if ($scope.selectedCodeDefinition) {
+                return $scope.userCodedMessages[$scope.selectedCodeDefinition.codeId];
+            }
+            else {
+                return [];
+            }
+        };
+
+        $scope.getFilteredUserMessages = function () {
+            return $scope.getUserMessages().filter($scope.filterMessages());
+        };
+
+        $scope.addSearchKeyword = function (feature) {
+            $scope.searchModel.keyword = feature;
+        };
+
+        $scope.removeSearchKeyword = function () {
+            $scope.searchModel.keyword = null;
+        };
+
+        $scope.selectFilter = function (filterId) {
+            $scope.selectedFilter = +filterId;
+        };
+
+        $scope.filterMessages = function () {
+            return function (message) {
+                var filter = $scope.selectedFilter;
+
+                // Apply filters
+                var flagged = false;
+                switch (filter) {
+                    case $scope.FILTER_ALL:
+                        flagged = true;
+                        break;
+                    case $scope.FILTER_EXAMPLE:
+                        flagged = message.isExample;
+                        break;
+                    case $scope.FILTER_SAVED:
+                        flagged = message.isSaved;
+                        break;
+                    case $scope.FILTER_AMBIGUOUS:
+                        flagged = message.isAmbiguous;
+                        break;
+                }
+
+                var matched = false;
+                if ($scope.searchModel.keyword) {
+                    matched = Utils.canMatchFeature(message, $scope.searchModel.keyword);
+                }
+                else {
+                    matched = Utils.canMatchText(message, $scope.searchModel.value);
+                }
+
+                return matched && flagged;
+            }
         };
 
         $scope.initializeController();

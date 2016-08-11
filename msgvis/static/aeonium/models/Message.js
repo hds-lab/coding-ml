@@ -12,7 +12,7 @@
             var Message = function () {
                 var self = this;
                 self.allMessages = []; // Message[]
-                self.userCodedMessages = []; // Message[]
+                self.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
             };
 
             //class Message {
@@ -23,11 +23,12 @@
             //	isSaved: boolean;
             //	isExample: boolean;
             //	comment: text;
+            //  html: string;
+            //  mediaUrl: string;
+            //	text: string;
             //}
 
             //class MessageDetail extends MessageData {
-            //  mediaUrl: string;
-            //	text: string;
             //	tokens: string[];
             //	filteredToFull: Map<number, number>;
             //	fullToFiltered: Map<number, number>;
@@ -73,7 +74,10 @@
                                     source: d.source,
                                     isAmbiguous: d.is_ambiguous,
                                     isSaved: d.is_saved,
-                                    isExample: d.is_example
+                                    isExample: d.is_example,
+                                    html: d.message.embedded_html,
+                                    mediaUrl: d.message.media_url,
+                                    text: d.message.text
                                 };
                             });
 
@@ -82,8 +86,8 @@
 
                 },
 
-                // code: Code
-                getCodedMessages: function (code) {
+                // codeId: number
+                getCodedMessages: function (codeId) {
                     var self = this;
                     var param = {};
                     var source = "user";
@@ -95,18 +99,18 @@
 
                     var request = {
                         params: {
-                            code: code.codeId,
+                            code: codeId,
                             source: source
                         }
                     };
 
-                    $rootScope.$broadcast("Message::userCodedMessages::loading", code);
+                    $rootScope.$broadcast("Message::userCodedMessages::loading", codeId);
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.userCodedMessages[code.name] = data.assignments.map(function (d) {
+                            self.userCodedMessages[codeId] = data.assignments.map(function (d) {
                                 return Utils.extractMessageDetail(d);
                             });
-                            $rootScope.$broadcast("Message::userCodedMessages::loaded", self.userCodedMessages);
+                            $rootScope.$broadcast("Message::userCodedMessages::loaded", codeId, self.userCodedMessages[codeId]);
                         });
 
                 },

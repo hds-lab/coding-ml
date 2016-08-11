@@ -73,9 +73,9 @@
                                 }
                             });
 
-                            self.userFeatures = []; //userFeatures;
-                            self.systemFeatures = [];//systemFeatures;
-                            self.partnerFeatures = [];//partnerFeatures;
+                            self.userFeatures = userFeatures;
+                            self.systemFeatures = systemFeatures;
+                            self.partnerFeatures = partnerFeatures;
 
                             $rootScope.$broadcast('Feature::allFeatures::loaded', self.systemFeatures, self.userFeatures, self.partnerFeatures);
                         });

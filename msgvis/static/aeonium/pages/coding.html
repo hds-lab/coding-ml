@@ -111,9 +111,11 @@
                     <div class="row">
                         <div class="col-md-4">
                             <h3>System keywords</h3>
-                            <p ng-hide="getKeywordsForSelectedCode(systemKeywords).length > 0" class="help-text">There are no system keywords for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
-                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(systemKeywords) track by $index"
-                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                            <p ng-hide="getKeywordsForSelectedCode(systemKeywords).length > 0" class="help-text">There
+                                are no system keywords for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(systemKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
                                     <span class="feature-text"
                                           popover data-toggle="popover" data-trigger="hover" data-html="true"
                                           ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
@@ -132,11 +134,14 @@
                         </div>
                         <div class="col-md-4">
                             <h3>My keywords</h3>
-                            <p ng-hide="getKeywordsForSelectedCode(userKeywords).length > 0" class="help-text">You have not
-                                provided any keywords from items coded as '<span>{$ selectedCodeDefinition.name $}</span>'.
+                            <p ng-hide="getKeywordsForSelectedCode(userKeywords).length > 0" class="help-text">You have
+                                not
+                                provided any keywords from items coded as
+                                '<span>{$ selectedCodeDefinition.name $}</span>'.
                                 You can do so in review.</p>
-                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(userKeywords) track by $index"
-                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(userKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
                                     <span class="feature-text"
                                           popover data-toggle="popover" data-trigger="hover" data-html="true"
                                           ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
@@ -155,9 +160,12 @@
                         </div>
                         <div class="col-md-4">
                             <h3>Partner keywords</h3>
-                            <p ng-hide="getKeywordsForSelectedCode(partnerKeywords).length > 0" class="help-text">Your partner does not have any keyword for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
-                            <div class="features" ng-repeat="feature in getKeywordsForSelectedCode(partnerKeywords) track by $index"
-                                 ng-click="searchFeature(feature)" ng-style="Style.keywordStyle(feature)">
+                            <p ng-hide="getKeywordsForSelectedCode(partnerKeywords).length > 0" class="help-text">Your
+                                partner does not have any keyword for '<span>{$ selectedCodeDefinition.name $}</span>'.
+                            </p>
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(partnerKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
                                     <span class="feature-text"
                                           popover data-toggle="popover" data-trigger="hover" data-html="true"
                                           ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
@@ -177,7 +185,53 @@
                     </div>
                 </div>
                 <div class="box-section">
-                    My labeled items
+                    <h2>My items coded as {$ selectedCodeDefinition.name $}</h2>
+                    <div id="search">
+                        <div class="search-label">Show:</div>
+                        <div class="dropdown item-filter">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                <span>{$ availableFilters[selectedFilter] $}</span>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterMenu">
+                                <li ng-repeat="(filterId, filterText) in availableFilters"><a ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
+                            </ul>
+                        </div>
+                        <div class="search-label">Search:</div>
+                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value" placeholder="Type in search keywords">
+                        <div class="search-feature" ng-if="searchModel.keyword"
+                             ng-style="{ 'border-color': Style.pillColor(searchModel.keyword.codeId) }">{$
+                            searchModel.keyword.text $}
+                            <button class="btn btn-default" ng-click="removeSearchKeyword()"
+                                    data-toggle="tooltip" title="Remove this keyword from search">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div ng-repeat="message in getUserMessages() | filter:filterMessages()"
+                         class="label-item" ng-style="{ 'border-color': Style.codeColor(message.label) }">
+
+                        <div class="content">
+                            <div class="item">
+                                <div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isSaved}"
+                                         data-toggle="tooltip" title="Saved item"><span
+                                            class="glyphicon glyphicon-tag"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isExample}"
+                                         data-toggle="tooltip" title="Example item"><span
+                                            class="glyphicon glyphicon-star"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isAmbiguous}"
+                                         data-toggle="tooltip" title="Ambiguous item"><span>?</span></div>
+                                </div>
+                                <div ng-bind-html="message.html"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p ng-show="getFilteredUserMessages().length==0"
+                       class="help-text">No items were found.</p>
+
                 </div>
             </div>
         </div>
