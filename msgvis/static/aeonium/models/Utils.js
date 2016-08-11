@@ -201,6 +201,21 @@
                     }
 
                     return false;
+                },
+
+                // string1: string
+                // string2: string
+                // returns boolean
+                stringEquals: function (string1, string2) {
+                    if (string1 == null && string2 == null) {
+                        return true;
+                    }
+                    else if (string1 == null || string2 == null) {
+                        return false;
+                    }
+                    else {
+                        return string1.trim() === string2.trim();
+                    }
                 }
             });
 

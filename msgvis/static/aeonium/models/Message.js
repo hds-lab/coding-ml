@@ -22,6 +22,7 @@
             //	isAmbiguous: boolean;
             //	isSaved: boolean;
             //	isExample: boolean;
+            //	comment: text;
             //}
 
             //class MessageDetail extends MessageData {
@@ -149,8 +150,10 @@
                     $rootScope.$broadcast("Message::submitLabel::submitting");
                     return $http.post(apiUrl, request)
                         .success(function (data) {
-                            self.allMessages.filter(function(m) { return m.id == message.id; })
-                                .forEach(function(m) {
+                            self.allMessages.filter(function (m) {
+                                    return m.id == message.id;
+                                })
+                                .forEach(function (m) {
                                     m.label = message.label;
                                     m.isExample = message.isExample;
                                     m.isAmbiguous = message.isAmbiguous;
@@ -159,7 +162,14 @@
 
                             $rootScope.$broadcast("Message::submitLabel::submitted", message);
                         });
+                },
 
+                saveComment: function (message) {
+                    // TODO
+                    $rootScope.$broadcast("Message::saveComment::saving");
+                    setTimeout(function () {
+                        $rootScope.$broadcast("Message::saveComment::saved", message);
+                    }, 500);
                 }
             });
 

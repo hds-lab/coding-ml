@@ -3,7 +3,7 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var CodingController = function ($scope, $timeout, Dictionary, Code, Message, Feature, History, Style, usSpinnerService) {
+    var CodingController = function ($scope, $timeout, Dictionary, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
 //1. get all messages and list on the left
 //2. click on a message from the left list to show in the middle
 //3. select a label and show details on the right
@@ -13,11 +13,17 @@
 
         // View states
         $scope.allMessages = []; // Message[]
+
+        // Selected message
         $scope.selectedMessage = undefined; // Message
         $scope.selectedMessageDetail = undefined; // MessageDetail
         $scope.selectedMediaUrl = undefined; // string
         $scope.codeDefinitions = undefined; // Map<number, CodeDefinition>
         $scope.selectedCodeDefinition = undefined; // CodeDefinition
+
+        $scope.selectedMessageComment = undefined; // string
+        $scope.showSaveComment = false; // boolean
+        $scope.nextMessageOnSaveComment = undefined; // Message
 
         $scope.spinnerOptions = {
             radius: 20,
@@ -51,11 +57,12 @@
 
         $scope.$on('Message::messageDetail::loaded', function ($event, messageDetail) {
             usSpinnerService.stop('labeling-view-spinner');
-            if ($scope.selectedMessage.id == messageDetail.id){
+            if ($scope.selectedMessage.id == messageDetail.id) {
                 $scope.selectedMessageDetail = messageDetail;
+                $scope.selectedMessageComment = messageDetail.comment;
 
                 // If the message is already labeled, select the code
-                if (messageDetail.label >= 0 && $scope.codeDefinitions[messageDetail.label]){
+                if (messageDetail.label >= 0 && $scope.codeDefinitions[messageDetail.label]) {
                     $scope.selectedCodeDefinition = $scope.codeDefinitions[messageDetail.label];
                 }
                 else {
@@ -72,9 +79,26 @@
         $scope.$on('Message::submitLabel::submitted', function ($event, message) {
             usSpinnerService.stop('labeling-view-spinner');
             History.add_record("submitLabel:request-end", {});
-            if ($scope.selectedMessage.id == message.id){
+            if ($scope.selectedMessage.id == message.id) {
                 $scope.selectedMessageDetail = null;
                 $scope.selectedMessage = null;
+            }
+        });
+
+        $scope.$on('Message::saveComment::saving', function ($event) {
+            usSpinnerService.spin('labeling-view-spinner');
+            History.add_record("saveComment:request-start", {});
+            $scope.showSaveComment = false;
+        });
+
+        $scope.$on('Message::saveComment::saved', function ($event, message) {
+            usSpinnerService.stop('labeling-view-spinner');
+            History.add_record("saveComment:request-end", {});
+            $scope.showSaveComment = false;
+
+            if ($scope.nextMessageOnSaveComment) {
+                $scope.viewMessageDetail($scope.nextMessageOnSaveComment);
+                $scope.nextMessageOnSaveComment = null;
             }
         });
 
@@ -90,33 +114,62 @@
         });
 
         // View methods
-        $scope.initializeController = function() {
+        $scope.initializeController = function () {
             Message.getAllMessages();
             Code.loadCodeDefinitions();
         };
 
         $scope.viewMessageDetail = function (message) {
             if (!$scope.selectedMessage || $scope.selectedMessage.id != message.id) {
-                $scope.selectedMessage = message;
-                $scope.selectedMessageDetail = null;
 
-                Message.getMessageDetail(message);
+                // Check to see if there's unsaved comment
+                if ($scope.enableCommentSave()) {
+                    $scope.showSaveComment = true;
+                    $scope.nextMessageOnSaveComment = message;
+                }
+                else {
+                    $scope.selectedMessage = message;
+                    $scope.selectedMessageDetail = null;
+                    $scope.selectedMessageComment = null;
+
+                    Message.getMessageDetail(message);
+                }
             }
         };
 
-        $scope.openMedia = function(mediaUrl){
+        $scope.openMedia = function (mediaUrl) {
             History.add_record("selectMedia", {media_url: mediaUrl});
             $scope.selectedMediaUrl = mediaUrl;
         };
 
-        $scope.selectCode = function(codeDefinition) {
+        $scope.selectCode = function (codeDefinition) {
             History.add_record("selectLabel", {code: codeDefinition});
             $scope.selectedCodeDefinition = codeDefinition;
         };
 
-        $scope.submitLabel = function() {
+        $scope.submitLabel = function () {
             $scope.selectedMessageDetail.label = $scope.selectedCodeDefinition.codeId;
             Message.submitLabel($scope.selectedMessageDetail);
+        };
+
+        $scope.enableCommentSave = function () {
+            return $scope.selectedMessage && !Utils.stringEquals($scope.selectedMessageComment, $scope.selectedMessage.comment);
+        };
+
+        $scope.saveMessageComment = function () {
+            $scope.selectedMessage.comment = $scope.selectedMessageComment;
+            Message.saveComment($scope.selectedMessage);
+
+        };
+
+        $scope.resetMessageComment = function () {
+            $scope.selectedMessageComment = null;
+            $scope.showSaveComment = false;
+
+            if ($scope.nextMessageOnSaveComment) {
+                $scope.viewMessageDetail($scope.nextMessageOnSaveComment);
+                $scope.nextMessageOnSaveComment = null;
+            }
         };
 
         $scope.initializeController();
@@ -130,6 +183,7 @@
         'Aeonium.models.Message',
         'Aeonium.models.Feature',
         'Aeonium.services.ActionHistory',
+        'Aeonium.models.Utils',
         'Aeonium.models.Style',
         'usSpinnerService'
     ];

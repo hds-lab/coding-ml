@@ -17,7 +17,7 @@
                 Select an item to label.
             </div>
             <div ng-show="selectedMessageDetail">
-                <div class="tweet-item">
+                <div class="message-item">
                     <div class="btn btn-image"
                          ng-show="selectedMessageDetail.mediaUrl && selectedMessageDetail.mediaUrl.length > 0"
                          data-toggle="modal" data-target="#image-modal"
@@ -25,13 +25,13 @@
                         <img class="img-responsive center-block" ng-src="{$ selectedMessageDetail.mediaUrl $}">
                     </div>
 
-                    <div class="tweet-text">
+                    <div class="message-text">
                     <span ng-repeat="char in selectedMessageDetail.characters track by $index"
                           ng-style="Style.charStyle(selectedMessageDetail, $index)">{$ char $}</span>
                     </div>
                 </div>
 
-                <div class="tweet-submit">
+                <div class="message-label-submit">
 
                     <div class="btn btn-default" ng-repeat="(codeId, codeDefinition) in codeDefinitions"
                          ng-click="selectCode(codeDefinition)"
@@ -40,33 +40,40 @@
                         <div class="code-name">{$ codeDefinition.name $}</div>
                     </div>
 
-                    <div class="tweet-submit-item">
+                    <div class="message-toggle-item">
                         <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isSaved}"
                              ng-click="selectedMessageDetail.isSaved=!selectedMessageDetail.isSaved"
-                             data-toggle="tooltip" title="Save this tweet"><span class="glyphicon glyphicon-tag"></span>
+                             data-toggle="tooltip" title="Save this item"><span class="glyphicon glyphicon-tag"></span>
                         </div>
-                        <span> Save this tweet</span>
+                        <span> Save this item</span>
                     </div>
 
-                    <div class="tweet-submit-item">
+                    <div class="message-toggle-item">
                         <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isExample}"
                              ng-click="selectedMessageDetail.isExample=!selectedMessageDetail.isExample"
                              data-toggle="tooltip" title="Save as an example"><span
                                 class="glyphicon glyphicon-star"></span>
                         </div>
-                        <span> Save as an example tweet</span>
+                        <span> Save as an example item</span>
                     </div>
 
-                    <div class="tweet-submit-item">
+                    <div class="message-toggle-item">
                         <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isAmbiguous}"
                              ng-click="selectedMessageDetail.isAmbiguous=!selectedMessageDetail.isAmbiguous"
                              data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                        <span> Mark as an ambiguous tweet</span>
+                        <span> Mark as an ambiguous item</span>
                     </div>
                     <button class="btn btn-default" ng-disabled="!selectedCodeDefinition" ng-click="submitLabel()">
-                        Submit
-                        Code
+                        Submit Code
                     </button>
+
+                    <textarea class="message-comment"
+                              ng-model="selectedMessageComment"
+                              placeholder="Enter any comments you may have for this item."></textarea>
+                    <div ng-show="enableCommentSave()">
+                        <button class="btn btn-primary" ng-mousedown="saveMessageComment()">Save</button>
+                        <button class="btn btn-default" ng-mousedown="resetMessageComment()">Reset</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -114,7 +121,7 @@
                     </div>
                 </div>
                 <div class="box-section">
-                    My tweets
+                    My labeled items
                 </div>
             </div>
         </div>
@@ -133,5 +140,30 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
+
+        <modal show-modal="showSaveComment" ng-model="showSaveComment" class="modal fade"
+               tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h2 class="modal-title">Save comments?</h2>
+                    </div>
+                    <div class="modal-body">
+                        Do you want to save your comments for this item?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" ng-click="resetMessageComment()"
+                                data-dismiss="modal">Discard
+                        </button>
+                        <button type="button" class="btn btn-primary" ng-click="saveMessageComment()">Save
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
     </div>
 </div>
