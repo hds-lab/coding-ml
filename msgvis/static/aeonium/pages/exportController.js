@@ -71,6 +71,18 @@
             'P': 'My partner\'s code is correct'
         };
 
+        /* Export Functions */
+        $scope.saveSelections = function (save) {
+            var code = $scope.selectedCode;
+            if (save) {
+                //save selections and navigate to next step
+            }
+            else {
+                //do we even need this??? what's the point of the "Cancel" button?
+            }
+        };
+        /* END Export Functions */
+
         $scope.code_map = function (distribution) {
             if ($scope.codes && distribution) {
                 var dist = [];
