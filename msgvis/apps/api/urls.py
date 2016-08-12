@@ -7,6 +7,7 @@ api_root_urls = {
 
     'dataset': url(r'^dataset/$', csrf_exempt(views.DatasetView.as_view()), name='dataset'),
     'message': url(r'^message/(?P<message_id>[0-9]+)$', csrf_exempt(views.MessageView.as_view()), name='message'),
+    'list_distribution': url(r'^list_distribution/(?P<dataset_id>[0-9]+)$', csrf_exempt(views.ListDistributionView.as_view()), name='list_distribution'),
     'dictionary': url(r'^dictionary/$', csrf_exempt(views.DictionaryView.as_view()), name='dictionary'),
     'svm': url(r'^svm/$', csrf_exempt(views.SVMResultView.as_view()), name='svm'),
     'vector': url(r'^vector/(?P<message_id>[0-9]+)$', csrf_exempt(views.FeatureVectorView.as_view()), name='vector'),

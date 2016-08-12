@@ -32,7 +32,7 @@ from rest_framework.reverse import reverse
 from rest_framework.compat import get_resolver_match, OrderedDict
 
 from msgvis.apps.api import serializers
-from msgvis.apps.base.utils import AttributeDict, entropy
+from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -88,6 +88,35 @@ class MessageView(APIView):
         except:
             return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
 
+
+class ListDistributionView(APIView):
+    """
+    Get distribution of a dataset
+
+    **Request:** ``GET /api/list_distribution/1``
+    """
+
+    def get(self, request, dataset_id, format=None):
+
+        dataset_id = int(dataset_id)
+        try:
+            dataset = corpus_models.Dataset.objects.get(id=dataset_id)
+
+            order_by = request.query_params.get('order_by', 'time')
+
+            if order_by == 'time':
+                timediff = dataset.get_time_span_in_seconds()
+                unit = get_best_time_bucket(timediff)
+                results = group_messages_by_time(dataset.message_set.filter(time__isnull=False), 'time', unit)
+
+                output = serializers.TimeListDistributionSerializer(results, many=True)
+                return Response(output.data, status=status.HTTP_200_OK)
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+            return Response("Dataset not exist", status=status.HTTP_400_BAD_REQUEST)
 
 class DictionaryView(APIView):
     """
