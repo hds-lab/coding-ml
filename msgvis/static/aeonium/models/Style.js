@@ -123,6 +123,50 @@
                     };
 
                     return css;
+                },
+
+                // feature: Feature
+                // returns style object
+                keywordStyle: function (feature) {
+                    var self = this;
+                    var color = self.colors[feature.codeId % self.colors.length];
+                    return {'border': '1px solid ' + color};
+                },
+
+                // codeId: number
+                // distribution: number
+                // returns style object
+                distributionStyle: function (codeId, distribution) {
+                    var self = this;
+                    var color;
+                    var width;
+
+                    if (distribution > 0) {
+                        var colorIndex = codeId;
+                        color = self.colors[colorIndex % self.colorsLight.length];
+                        width = Math.floor(distribution * 100) + "%";
+                    }
+                    else {
+                        color = "transparent";
+                        width = "0";
+                    }
+
+                    var css = {
+                        'background-color': color,
+                        'width': width
+                    };
+
+                    return css;
+                },
+
+                pillColor: function (codeId) {
+                    var self = this;
+                    if (codeId) {
+                        return self.colors[codeId % self.colors.length];
+                    }
+                    else {
+                        return "#aaa";
+                    }
                 }
             });
 

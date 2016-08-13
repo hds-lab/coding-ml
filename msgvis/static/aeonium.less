@@ -18,7 +18,7 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  //overflow: hidden;
   min-width: 1200px;
   background: #eee;
   color: #333;
@@ -261,7 +261,7 @@ h3 {
   }
 
   .feature-text {
-    width: 58%;
+    width: 50%;
     height: 100%;
     display: inline-block;
     white-space: nowrap;
@@ -440,8 +440,8 @@ h3 {
     width: calc(50% ~ "-" 50px);
     background: #eee;
 
-    .tweet-item {
-      .tweet-text {
+    .message-item {
+      .message-text {
         font-size: 24px;
         font-weight: 300;
         margin-right: 20px;
@@ -485,10 +485,10 @@ h3 {
       //}
     }
 
-    .tweet-submit {
+    .message-label-submit {
       font-size: 14px;
 
-      .tweet-submit-item {
+      .message-toggle-item {
         margin: 0;
         margin-bottom: 10px;
 
@@ -518,6 +518,12 @@ h3 {
 
       .btn-default {
         width: 100%;
+      }
+    }
+
+    .message-comment {
+      textarea {
+        resize: none;
       }
     }
   }
