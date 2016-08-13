@@ -25,20 +25,25 @@
         <div class="box box-top box-light" id="bottom-area">
             <div id="selections">
                 <div class="col-md-2"></div> <!-- for spacing -->
-                <div class="col-md-3 box" id="data-properties">
+                <div class="col-md-3 box scroll-y" id="data-properties">
                     <h3>Data Properties:</h3>
                 </div>
                 <div class="col-md-1"></div> <!-- for spacing -->
-                <div class="col-md-3 box" id="coder-data">
+                <div class="col-md-3 box scroll-y" id="coder-data"> <!-- not sure how we're referencing coders; testing with codes for now -->
                     <h3>Coder Data:</h3>
+                    <div ng-repeat="code in codes"
+                         class="btn btn-default"
+                         ng-click="viewMessageDetail(message)"
+                         ng-show="codeDefinitions">{$ message.id $}
+                    </div>
                 </div>
             </div>
             <div id="bottom-buttons">
                 <div class="col-md-5"></div> <!-- for spacing -->
                 <div class="col-md-2">
-                    <button class="btn btn-primary" ng-mousedown="saveSelections(false)">Cancel
+                    <button class="btn-small btn-default" ng-mousedown="saveSelections(false)">Cancel
                     </button>
-                    <button class="btn btn-default" ng-mousedown="saveSelections(true)">Save
+                    <button class="btn-small btn-primary" ng-mousedown="saveSelections(true)">Save
                     </button>
                 </div>
                 <div class="col-md-4"></div> <!-- for spacing -->
