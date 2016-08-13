@@ -22,20 +22,17 @@
             </div>    
         </div>
 
-        <div class="box box-top box-light" id="bottom-area">
+        <div class="box box-top box-bottom box-light" id="bottom-area">
             <div id="selections">
                 <div class="col-md-2"></div> <!-- for spacing -->
                 <div class="col-md-3 box scroll-y" id="data-properties">
                     <h3>Data Properties:</h3>
+                    <span ng-repeat="property in dataProperties"><input type="checkbox" checklist-model="selections.dataProperties" checklist-value="property" /> {$ property.name $} <br/></span>
                 </div>
                 <div class="col-md-1"></div> <!-- for spacing -->
                 <div class="col-md-3 box scroll-y" id="coder-data"> <!-- not sure how we're referencing coders; testing with codes for now -->
                     <h3>Coder Data:</h3>
-                    <div ng-repeat="code in codes"
-                         class="btn btn-default"
-                         ng-click="viewMessageDetail(message)"
-                         ng-show="codeDefinitions">{$ message.id $}
-                    </div>
+                    <span ng-repeat="code in codes"><input type="checkbox" checklist-model="selections.codes" checklist-value="code" /> {$ code.code_text $} <br/></span>
                 </div>
             </div>
             <div id="bottom-buttons">

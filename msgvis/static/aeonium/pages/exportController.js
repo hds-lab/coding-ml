@@ -35,6 +35,7 @@
         $scope.exportPhase = undefined;
         $scope.currentMessage = undefined;
         $scope.selectedCode = undefined;
+        $scope.selections = [];
         $scope.codes = [];
         $scope.code_map = {};
         $scope.code_text_list = [];
@@ -72,6 +73,18 @@
             'P': 'My partner\'s code is correct'
         };
 
+        $scope.dataProperties = [
+            {id: 0, name: 'Original ID'},
+            {id: 1, name: 'Original Text'},
+            {id: 2, name: 'Ambiguous'},
+            {id: 3, name: 'Example'},
+            {id: 4, name: 'Saved'},
+            {id: 5, name: 'Full Agreement'},
+            {id: 6, name: 'Disagreement'},
+            {id: 7, name: 'Validation'},
+            {id: 8, name: 'Detailed Definition Change History'}
+          ];
+
         /* Export Functions */
         $scope.saveSelections = function (save) {
             var code = $scope.selectedCode;
@@ -83,10 +96,24 @@
             }
         };
 
-        //create a blank array to store selected objects.
-        $scope.selected = {
-            codes: []
+        $scope.selections = {
+            codes: [],
+            dataProperties: []
         };
+
+        // TODO: update with subcategories
+        $scope.checkAll = function() {
+             if ($scope.codes && distribution) {
+                $scope.codes.forEach(function (code) {
+                    $scope.selections.codes.push(distribution[code.code_text]);
+                });
+                return $scope.selections.codes;
+            }
+          };
+
+        $scope.uncheckAll = function() {
+              $scope.selections.codes = [];  // Is this a memory leak?
+          };
         /* END Export Functions */
 
         /* General functions */

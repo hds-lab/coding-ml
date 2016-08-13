@@ -15,7 +15,7 @@
 @review-top-height: 145px;
 @review-bottom-bar-height: 0px;
 @export-top-height: 110px;
-@export-button-height: 20px;
+@export-button-height: 30px;
 @export-bottom-height: 0px;
 
 
@@ -1050,14 +1050,14 @@ h3 {
 
     #selections {
       height: calc(100% ~ "-" @export-button-height);
-      padding: 10px;
+      padding: 10px 10px;
 
       > div {
           height: 100%;
         }
 
       > div[class^="col-"] {
-          padding: 0;
+          padding: 10px 10px;
           height: 100%;
       }
 
@@ -1076,7 +1076,7 @@ h3 {
 
     #bottom-buttons {
       height: @export-button-height;
-      padding: 10px;
+      padding: 10px 10px;
 
       > div {
         height: 100%;
