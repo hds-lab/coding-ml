@@ -62,6 +62,10 @@ def get_stoplist():
         _stoplist = stopwords.words('english')
     return _stoplist
 
+def get_time_span_in_seconds(start_time, end_time):
+    timediff = end_time - start_time
+    return timediff.total_seconds()
+
 # fields for grouping
 unit_fields = ["year", "month", "day", "hour"]
 unit_list_range = dict((("YEARLY", 1), ("MONTHLY", 2), ("DAILY", 3), ("HOURLY", 4)))
@@ -77,7 +81,7 @@ def get_best_time_bucket(timediff_in_seconds):
         return "YEARLY"
 
 
-def group_messages_by_time(queryset, field_name, unit):
+def group_messages_by_time(queryset, field_name, start_time, end_time):
 
     #queryset = queryset.filter(Q(field_name + "__isnull", False))
     # queryset = queryset.annotate(
@@ -86,6 +90,8 @@ def group_messages_by_time(queryset, field_name, unit):
     #     day=ExtractDay(field_name),
     #     hour=ExtractHour(field_name)
     # )
+    timediff = get_time_span_in_seconds(start_time, end_time)
+    unit = get_best_time_bucket(timediff)
 
     truncate = dict((('year', connection.ops.date_trunc_sql('year', field_name)),
                 ('month',connection.ops.date_trunc_sql('month', field_name)),

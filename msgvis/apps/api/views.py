@@ -21,7 +21,7 @@ from operator import attrgetter, itemgetter, or_
 
 from django.db import IntegrityError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max, Min
 from django.contrib.auth.models import User
 from django.core.urlresolvers import NoReverseMatch
 
@@ -105,12 +105,29 @@ class ListDistributionView(APIView):
             order_by = request.query_params.get('order_by', 'time')
 
             if order_by == 'time':
-                timediff = dataset.get_time_span_in_seconds()
-                unit = get_best_time_bucket(timediff)
-                results = group_messages_by_time(dataset.message_set.filter(time__isnull=False), 'time', unit)
-
+                results = group_messages_by_time(dataset.message_set.filter(time__isnull=False), 'time', dataset.start_time, dataset.end_time)
                 output = serializers.TimeListDistributionSerializer(results, many=True)
                 return Response(output.data, status=status.HTTP_200_OK)
+            elif order_by == 'last_updated':
+                if not self.request.user:
+                    pass
+                else:
+                    user = self.request.user
+                    if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                        participant = User.objects.get(id=self.request.user.id)
+                        valid_code_assignments = participant.code_assignments.filter(valid=True).all()
+                        aggregate_time_info = valid_code_assignments.aggregate(start_time = Min('last_updated'), end_time = Max('last_updated'))
+                        results = group_messages_by_time(valid_code_assignments, 'last_updated', aggregate_time_info['start_time'], aggregate_time_info['end_time'])
+                        output = serializers.TimeListDistributionSerializer(results, many=True)
+                        return Response(output.data, status=status.HTTP_200_OK)
+            elif order_by == 'ambiguity':
+                pass
+
+
+
+
+
+
         except:
             import traceback
             traceback.print_exc()
