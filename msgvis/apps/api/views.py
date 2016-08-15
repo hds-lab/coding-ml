@@ -120,9 +120,10 @@ class ListDistributionView(APIView):
                         results = group_messages_by_time(valid_code_assignments, 'last_updated', aggregate_time_info['start_time'], aggregate_time_info['end_time'])
                         output = serializers.TimeListDistributionSerializer(results, many=True)
                         return Response(output.data, status=status.HTTP_200_OK)
-            elif order_by == 'ambiguity':
+            elif order_by == 'disagreement':
                 pass
-
+            elif order_by == 'predicted_ambiguity':
+                pass
 
 
 

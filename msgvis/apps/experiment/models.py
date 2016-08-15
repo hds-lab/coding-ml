@@ -13,25 +13,26 @@ from msgvis.apps.coding import models as coding_models
 from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
 
-def create_a_pair(output):
-
+def create_an_user():
     current_user_count = User.objects.exclude(is_superuser=True).count()
 
+    username = "user_%03d" % (current_user_count + 1)
+    password = User.objects.make_random_password()
+    user = User.objects.create_user(username=username,
+                                     password=password)
+    return user, username, password
+
+def create_a_pair(output):
+
+
     # user 1
-    username1 = "user_%03d" % (current_user_count + 1)
-    password1 = User.objects.make_random_password()
-    user1 = User.objects.create_user(username=username1,
-                                     password=password1)
+    user1, username1, password1 = create_an_user()
 
     # set the user to the default stage
     Progress.objects.get_or_create(user=user1)
 
     # user 2
-    username2 = "user_%03d" % (current_user_count + 2)
-    password2 = User.objects.make_random_password()
-    user2 = User.objects.create_user(username=username2,
-                                     password=password2)
-
+    user2, username2, password2 = create_an_user()
     # set the user to the default stage
     Progress.objects.get_or_create(user=user2)
 
@@ -44,7 +45,7 @@ def create_a_pair(output):
     print >> output, "username: %s | password: %s" %(username1, password1)
     print >> output, "username: %s | password: %s" %(username2, password2)
 
-    return pair
+    return pair, [user1, user2]
 
 
 class Experiment(models.Model):
@@ -74,6 +75,10 @@ class Experiment(models.Model):
 
     num_message_sets = models.IntegerField(default=10)
 
+    users = models.ManyToManyField(User, related_name="experiment")
+
+    isControlled = models.BooleanField(default=True)
+
     @property
     def user_count(self):
         return self.users.count()
@@ -84,7 +89,7 @@ class Experiment(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def initialize_experiment(self, num_pairs, output):
+    def initialize_controlled_experiment(self, num_pairs, output):
 
         # num_conditions = 3  # hard-coded for our study
         num_conditions = 1  # hard-coded for our study
@@ -120,10 +125,13 @@ class Experiment(models.Model):
         print >>output, "========="
         # create a list for saving pairs
         pair_list = []
+        user_list = []
         num_total_pairs = num_conditions * num_pairs
         for i in range(num_total_pairs):
-            pair = create_a_pair(output)
+            pair, new_users = create_a_pair(output)
             pair_list.append(pair)
+            user_list.extend(new_users)
+        self.users.add(*user_list)
 
         print >>output, "Assignment list"
         print >>output, "==============="
@@ -146,9 +154,21 @@ class Experiment(models.Model):
                     sa.save()
                     message_set_ids.append(message_sets[stage_idx].id)
 
-
                 print >>output, "Pair #%d" % pair_list[idx * num_pairs + i].id
                 print >>output, message_set_ids
+
+    def initialize_noncontrolled_experiment(self, num_users, output):
+        user_list = []
+
+        print >> output, "username\tpassword"
+        for idx in range(num_users):
+            user, username, password = create_an_user()
+            user_list.append(user)
+
+            # save the generated username and password to output file
+            print >> output, "%s\t%s" %(username, password)
+
+        self.users.add(*user_list)
 
     def random_assign_messages(self):
         messages = self.dictionary.dataset.get_non_master_message_set()
