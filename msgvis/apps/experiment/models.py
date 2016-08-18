@@ -131,7 +131,10 @@ class Experiment(models.Model):
             pair, new_users = create_a_pair(output)
             pair_list.append(pair)
             user_list.extend(new_users)
+
         self.users.add(*user_list)
+        user_connections = user_list.map(lambda user: UserExperimentConnect(user=user, experiment=self))
+        UserExperimentConnect.objects.bulk_create(user_connections)
 
         print >>output, "Assignment list"
         print >>output, "==============="
@@ -169,6 +172,8 @@ class Experiment(models.Model):
             print >> output, "%s\t%s" %(username, password)
 
         self.users.add(*user_list)
+        user_connections = user_list.map(lambda user: UserExperimentConnect(user=user, experiment=self))
+        UserExperimentConnect.objects.bulk_create(user_connections)
 
     def random_assign_messages(self):
         messages = self.dictionary.dataset.get_non_master_message_set()
@@ -191,6 +196,10 @@ class Experiment(models.Model):
             message_sets.append(message_set)
 
         return message_sets
+
+class UserExperimentConnect(models.Model):
+    user = models.OneToOneField(User, related_name="experiment_connection")
+    experiment = models.ForeignKey(Experiment, related_name="user_connections")
 
 class Condition(models.Model):
     """

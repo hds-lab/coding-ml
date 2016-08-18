@@ -121,6 +121,7 @@ class ListDistributionView(APIView):
                         output = serializers.TimeListDistributionSerializer(results, many=True)
                         return Response(output.data, status=status.HTTP_200_OK)
             elif order_by == 'disagreement':
+                # TODO: calc distribution
                 pass
             elif order_by == 'predicted_ambiguity':
                 pass

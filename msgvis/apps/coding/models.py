@@ -36,9 +36,28 @@ class CodeAssignment(models.Model):
     """ Whether this code is valid (False indicate the code to the message has been removed) """
 
     def partner_assignment(self):
+        # TODO: add condition to get more than one
         partner = self.source.pair.first().get_partner(self.source)
         return partner.code_assignments.filter(valid=True, is_user_labeled=True,
                                                message=self.message).first()
+
+    def partner_assignments(self):
+        return CodeAssignment.objects.filter(valid=True, is_user_labeled=True,
+                                             message=self.message,
+                                             source__experiment_connection__experiment=self.source.experiment_connection.experiment)
+    def partner_code_distribution(self):
+        same = 0
+        different = 0
+
+        partner_codes = self.partner_assignment().map(lambda x: x.code_id)
+        for code_id in partner_codes:
+            if code_id == self.code_id:
+                same += 1
+            else:
+                different += 1
+
+        return [same, different]
+
 
     @property
     def partner_code(self):
