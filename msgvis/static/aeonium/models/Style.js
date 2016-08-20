@@ -23,6 +23,9 @@
                     length: 10,
                     color: "#000000"
                 };
+                self.uncodedColor = "#777";
+                self.uncodedColorLight = "#ddd";
+                self.uncodedColorLighter = "#eee";
             };
 
             angular.extend(Style.prototype, {
@@ -30,7 +33,7 @@
                 // returns string
                 codeColor: function (codeIndex) {
                     var self = this;
-                    var color = self.colors[codeIndex % self.colors.length];
+                    var color = codeIndex != Utils.UNCODED_CODE_ID ? self.colors[codeIndex % self.colors.length] : self.uncodedColor;
                     return color;
                 },
 
@@ -38,7 +41,7 @@
                 // returns string
                 codeColorLight: function (codeIndex) {
                     var self = this;
-                    var color = self.colorsLight[codeIndex % self.colorsLight.length];
+                    var color = codeIndex != Utils.UNCODED_CODE_ID ? self.colorsLight[codeIndex % self.colorsLight.length] : self.uncodedColorLight;
                     return color;
                 },
 
@@ -46,7 +49,7 @@
                 // returns string
                 codeColorLighter: function (codeIndex) {
                     var self = this;
-                    var color = self.colorsLighter[codeIndex % self.colorsLighter.length];
+                    var color = codeIndex != Utils.UNCODED_CODE_ID ? self.colorsLighter[codeIndex % self.colorsLighter.length] : self.uncodedColorLighter;
                     return color;
                 },
 
@@ -78,10 +81,10 @@
                             var feature = messageDetail.featureHighlights[i];
                             if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
                                 if (filtered) {
-                                    return {'background': self.colorsLight[feature.codeIndex % self.colors.length]};
+                                    return {'background': self.codeColor(feature.codeIndex)};
                                 }
                                 else {
-                                    return {'background': self.colorsLighter[feature.codeIndex % self.colors.length]};
+                                    return {'background': self.codeColorLighter(feature.codeIndex)};
                                 }
                             }
                         }
@@ -94,8 +97,7 @@
                 // returns style object
                 buttonStyle: function (codeId, selectedCodeId) {
                     var self = this;
-                    var colorIndex = codeId;
-                    var color = self.colors[colorIndex % self.colors.length];
+                    var color = self.codeColor(codeId);
 
                     var css = {
                         border: 'solid 1px transparent',
@@ -119,9 +121,8 @@
                 // returns style object
                 definitionStyle: function (codeId) {
                     var self = this;
-                    var colorIndex = codeId;
-                    var color = self.colors[colorIndex % self.colors.length];
-                    var colorLight = self.colorsLight[colorIndex % self.colors.length];
+                    var color = self.codeColor(codeId);
+                    var colorLight = self.codeColorLight(codeId);
 
                     var css = {
                         'background-color': colorLight,
@@ -135,7 +136,7 @@
                 // returns style object
                 keywordStyle: function (feature) {
                     var self = this;
-                    var color = self.colors[feature.codeId % self.colors.length];
+                    var color = self.codeColor(feature.codeId);
                     return {'border': '1px solid ' + color};
                 },
 
@@ -148,8 +149,7 @@
                     var width;
 
                     if (distribution > 0) {
-                        var colorIndex = codeId;
-                        color = self.colors[colorIndex % self.colorsLight.length];
+                        color = self.codeColor(codeId);
                         width = Math.floor(distribution * 100) + "%";
                     }
                     else {
@@ -167,12 +167,7 @@
 
                 pillColor: function (codeId) {
                     var self = this;
-                    if (codeId) {
-                        return self.colors[codeId % self.colors.length];
-                    }
-                    else {
-                        return "#aaa";
-                    }
+                    return self.codeColor(codeId);
                 }
             });
 

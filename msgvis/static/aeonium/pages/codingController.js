@@ -3,10 +3,10 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var CodingController = function ($scope, $timeout, Dictionary, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
-//1. get all messages and list on the left
-//2. click on a message from the left list to show in the middle
-//3. select a label and show details on the right
+    var CodingController = function ($scope, $timeout, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
+        //1. get all messages and list on the left
+        //2. click on a message from the left list to show in the middle
+        //3. select a label and show details on the right
 
         // Helpers
         $scope.Style = Style;
@@ -288,7 +288,6 @@
     CodingController.$inject = [
         '$scope',
         '$timeout',
-        'Aeonium.services.Dictionary',
         'Aeonium.models.Code',
         'Aeonium.models.Message',
         'Aeonium.models.Feature',

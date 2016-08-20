@@ -9,6 +9,9 @@
         function utilsFactory(Code) {
             var Utils = function () {
                 var self = this;
+
+                self.UNCODED_CODE_ID = 9999;
+                self.UNCODED_CODE_NAME = "Uncoded";
             };
 
             angular.extend(Utils.prototype, {
@@ -69,6 +72,7 @@
                     var messageDetail = {
                         id: messageData.message.id,
                         label: messageData.code,
+                        partnerLabel: messageData.partner_code ? messageData.partner_code.id: -1,
                         source: messageData.source,
                         isAmbiguous: (messageData.is_ambiguous || false),
                         isSaved: (messageData.is_saved || false),
@@ -222,8 +226,11 @@
                     if (string1 == null && string2 == null) {
                         return true;
                     }
-                    else if (string1 == null || string2 == null) {
-                        return false;
+                    else if (string1 == null && string2 != null) {
+                        return string2.trim().length == 0;
+                    }
+                    else if (string2 == null && string1 != null){
+                        return string1.trim().length == 0;
                     }
                     else {
                         return string1.trim() === string2.trim();

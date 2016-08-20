@@ -79,6 +79,47 @@
 
                             $rootScope.$broadcast('Feature::allFeatures::loaded', self.systemFeatures, self.userFeatures, self.partnerFeatures);
                         });
+                },
+
+                // feature: Feature
+                removeFeature: function (feature) {
+                    var self = this;
+
+                    var index = self.userFeatures.indexOf(feature);
+                    if (index < 0) {
+                        return;
+                    }
+
+                    var request = {};
+
+                    var itemApiUrl = djangoUrl.reverse('feature', {feature_id: feature.id});
+                    $rootScope.$broadcast('Feature::removeFeature::removing');
+                    return $http.delete(itemApiUrl, request)
+                        .success(function (data) {
+                            // Remove feature from list;
+                            self.userFeatures.splice(index, 1);
+                            $rootScope.$broadcast('Feature::removeFeature::removed', feature);
+                        });
+                },
+
+                // tokens: string[]
+                // messageId: number
+                addFeature: function (tokens, messageId) {
+                    var self = this;
+
+                    var request = {
+                        token_list: tokens,
+                        origin: messageId
+                    };
+
+                    var listApiUrl = djangoUrl.reverse('feature_list');
+                    $rootScope.$broadcast('Feature::addFeature::adding');
+                    return $http.post(listApiUrl, request)
+                        .success(function (data) {
+                            var feature = Utils.extractFeature(data);
+                            self.userFeatures.unshift(feature);
+                            $rootScope.$broadcast('Feature::addFeature::added', feature);
+                        });
                 }
             });
 

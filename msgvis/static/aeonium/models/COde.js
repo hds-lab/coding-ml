@@ -28,10 +28,17 @@
             //	text: string;
             //}
 
+            //class PairwiseComparison {
+            //    userCodeId: number;
+            //    partnerCodeId: number;
+            //    count: number;
+            //}
+
             var Code = function () {
                 var self = this;
                 self.codeDefinitions = {}; // Map<number, CodeDefinition> keyed by codeId
                 self.codeNameToId = {}; // Map<string, number> Mapping from code name to code id
+                self.pairwiseComparisons = []; // PairwiseComparison[]
             };
 
             angular.extend(Code.prototype, {
@@ -100,27 +107,56 @@
                 // returns void
                 updateDefinition: function (codeDefinition, newDefinitionText) {
                     var self = this;
-                    var apiUrl = djangoUrl.reverse('definition', {code_id: codeDefinition.codeId});
+                    var codeId = codeDefinition.codeId;
+                    var apiUrl = djangoUrl.reverse('definition', {code_id: codeId});
 
                     var request = {
                         text: newDefinitionText
                     };
 
-                    $rootScope.$broadcast('Code::codeDefinitions::updating');
+                    $rootScope.$broadcast('Code::codeDefinitions::updating', codeId);
                     return $http.put(apiUrl, request)
                         .success(function (data) {
                             console.log("Update definition for ", code);
-                            $rootScope.$broadcast('Code::codeDefinitions::updated', self.codeDefinitions);
+                            $rootScope.$broadcast('Code::codeDefinitions::updated', codeId, self.codeDefinitions[codeId]);
                         });
-
-
                 },
 
                 // codeName: string
                 // return number
-                getCodeIdFromCodeName: function(codeName) {
+                getCodeIdFromCodeName: function (codeName) {
                     var self = this;
                     return self.codeNameToId[codeName];
+                },
+
+                getPairwiseComparison: function () {
+                    var self = this;
+                    var request = {
+                        params: {
+                            stage: undefined
+                        }
+                    };
+
+                    var apiUrl = djangoUrl.reverse('pairwise');
+
+                    $rootScope.$broadcast('Code::pairwiseComparison::loading');
+
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.pairwiseComparisons = data.map(function (pair) {
+                                //class PairwiseComparison {
+                                //    userCodeId: number;
+                                //    partnerCodeId: number;
+                                //    count: number;
+                                //}
+                                return {
+                                    userCodeId: self.getCodeIdFromCodeName(pair.user_code),
+                                    partnerCodeId: self.getCodeIdFromCodeName(pair.partner_code),
+                                    count: pair.count
+                                };
+                            });
+                            $rootScope.$broadcast('Code::pairwiseComparison::loaded', self.pairwiseComparisons);
+                        });
                 }
 
             });
