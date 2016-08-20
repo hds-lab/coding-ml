@@ -49,13 +49,6 @@
         // Search
         $scope.searchModel = {value: undefined, keyword: undefined};
 
-        $scope.spinnerOptions = {
-            radius: 20,
-            width: 6,
-            length: 10,
-            color: "#000000"
-        };
-
         // Handle events
         $scope.$on('Message::allMessages::loading', function ($event) {
             usSpinnerService.spin('list-view-spinner');

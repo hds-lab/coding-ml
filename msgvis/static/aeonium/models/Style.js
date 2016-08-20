@@ -17,6 +17,12 @@
                 self.colorsLighter = ["rgba(31,119,180,0.1)", "rgba(44,160,44,0.1)", "rgba(214,39,40,0.1)", "rgba(255,127,14,0.1)",
                     "rgba(148,103,189,0.1)", "rgba(140,86,75,0.1)", "rgba(227,119,194,0.1)", "rgba(127,127,127,0.1)", "rgba(188,189,34,0.1)",
                     "rgba(23,190,207,0.1)"];
+                self.spinnerOptions = {
+                    radius: 20,
+                    width: 6,
+                    length: 10,
+                    color: "#000000"
+                };
             };
 
             angular.extend(Style.prototype, {

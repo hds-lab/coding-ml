@@ -1,8 +1,8 @@
 <div class="ng-cloak" ng-cloak ng-controller="Aeonium.controllers.CodingController">
-    <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
+    <span us-spinner="Style.spinnerOptions" spinner-key="page-spinner"></span>
     <div id="coding">
         <div class="box" id="list-view">
-            <span us-spinner="spinnerOptions" spinner-key="list-view-spinner"></span>
+            <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
             <div ng-repeat="message in allMessages"
                  class="btn btn-default"
@@ -11,7 +11,7 @@
             </div>
         </div>
         <div class="box" id="labeling-view">
-            <span us-spinner="spinnerOptions" spinner-key="labeling-view-spinner"></span>
+            <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>
             <h2>Coding</h2>
             <div ng-show="!selectedMessageDetail">
                 Select an item to label.
@@ -78,7 +78,7 @@
             </div>
         </div>
         <div id="code-detail-view">
-            <span us-spinner="spinnerOptions" spinner-key="code-detail-view-spinner"></span>
+            <span us-spinner="Style.spinnerOptions" spinner-key="code-detail-view-spinner"></span>
             <div class="box" ng-show="!selectedCodeDefinition">
                 <h2>Code Detail</h2>
                 <div>Select a message and a code to view details</div>
