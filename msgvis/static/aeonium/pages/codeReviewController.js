@@ -111,7 +111,7 @@
             }
 
             if ($scope.keywordToAdd) {
-                $scope.addFeature($scope.keywordToAdd);
+                Feature.addFeature($scope.keywordToAdd.tokens, $scope.keywordToAdd.messageId);
                 $scope.keywordToAdd = undefined;
             }
         });
@@ -125,7 +125,7 @@
             Message.getCodedMessages($scope.codeDefinition.codeId);
             var distribution = addedFeature.distribution[$scope.codeDefinition.codeId];
 
-            if (distribution && distribution.length > 0) {
+            if (distribution && distribution.count > 0) {
                 $scope.userKeywords.unshift(addedFeature);
             }
 
@@ -199,7 +199,7 @@
                 });
 
                 var existingMessageKeywords = $scope.userKeywords.filter(function (feature) {
-                    return feature.messageId == message.Id;
+                    return feature.messageId == message.id;
                 });
 
                 $scope.showExistingKeyword = existingKeywords.length > 0;
@@ -269,147 +269,6 @@
                 }
 
                 return matched && selected;
-            }
-        };
-
-// Feature selection logic
-        var updateSelection = function (message, startIndex, endIndex, isSelected, shouldClear) {
-            History.add_record("tokens:updateSelection", {
-                item: message,
-                startIndex: startIndex,
-                endIndex: endIndex,
-                isSelected: isSelected,
-                shouldClear: shouldClear
-            });
-            if (shouldClear) {
-                message.selectedTokenIndices.clear();
-            }
-
-            for (var i = startIndex; i <= endIndex; i++) {
-                var existing = message.selectedTokenIndices.get(i);
-                if (existing == i && !isSelected) {
-                    message.selectedTokenIndices.delete(i);
-                }
-                else if (existing != i && isSelected) {
-                    message.selectedTokenIndices.set(i, i);
-                }
-            }
-        };
-
-        var isTokenSelectedAtCharIndex = function (message, charIndex) {
-            if (message && message.selectedTokenIndices) {
-                var tokenIndex = message.charToToken[charIndex];
-                if (tokenIndex != undefined && message.selectedTokenIndices.get(tokenIndex) == tokenIndex) {
-                    return true;
-                }
-            }
-
-            return false;
-        };
-
-        $scope.onCharMouseEnter = function (message, charIndex) {
-
-            if (message) {
-                History.add_record("tokens:onCharMouseEnter:item-exists", {item: message, charIndex: charIndex});
-                var tokenIndex = message.charToToken[charIndex];
-
-                if (tokenIndex != undefined && message.tokens[tokenIndex] != undefined) {
-                    var tokenItem = message.tokens[tokenIndex];
-                    message.hoveredCharStart = tokenItem.startIndex;
-                    message.hoveredCharEnd = tokenItem.endIndex;
-
-                    // If we're in the middle of selection, update selected char indices
-                    if (message.clickStartTokenItem != undefined) {
-
-                        var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
-
-                        if (tokenIndex < message.clickStartTokenItem.index) {
-                            updateSelection(message, tokenIndex, message.clickStartTokenItem.index, true, !ctrlClick);
-                        }
-                        else if (tokenIndex > message.clickStartTokenItem.index) {
-                            updateSelection(message, message.clickStartTokenItem.index, tokenIndex, true, !ctrlClick);
-                        }
-                    }
-                }
-                else {
-                    History.add_record("tokens:onCharMouseEnter:item-not-exists", {
-                        item: message,
-                        charIndex: charIndex
-                    });
-                    message.hoveredCharStart = -1;
-                    message.hoveredCharEnd = -1;
-                }
-            }
-        };
-
-        $scope.onCharMouseLeave = function (message, charIndex) {
-            History.add_record("tokens:onCharMouseLeave", {item: message, charIndex: charIndex});
-            message.hoveredCharStart = -1;
-            message.hoveredCharEnd = -1;
-        };
-
-        $scope.onCharMouseDown = function (message, charIndex, event) {
-            if (message) {
-                var tokenIndex = message.charToToken[charIndex];
-
-                if (tokenIndex != undefined && message.tokens[tokenIndex] != undefined) {
-                    History.add_record("tokens:onCharMouseDown:token-exists", {
-                        item: message, charIndex: charIndex,
-                        tokenIndex: tokenIndex
-                    });
-
-                    var tokenItem = message.tokens[tokenIndex];
-
-                    var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
-
-                    // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
-                    // clear the selection on this token index
-                    if (message.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
-                        message.clickStartTokenItem = undefined;
-                        updateSelection(message, tokenIndex, tokenIndex, false, false);
-                    }
-                    else {
-                        message.clickStartTokenItem = tokenItem;
-                        updateSelection(message, tokenIndex, tokenIndex, true, !ctrlClick);
-                    }
-                }
-                else {
-                    History.add_record("tokens:onCharMouseDown:token-clean", {item: message, charIndex: charIndex});
-                    message.clickStartTokenItem = undefined;
-                    message.selectedTokenIndices.clear();
-                }
-            }
-        };
-
-        $scope.onCharMouseUp = function (message, charIndex) {
-            message.clickStartTokenItem = undefined;
-            message.selectedTokens = undefined;
-
-            if (message.selectedTokenIndices.size > 0) {
-                if (message) {
-                    History.add_record("tokens:onCharMouseUp:item-exists", {item: message, charIndex: charIndex});
-                    // Get sorted list of selected token indices
-                    var indices = [];
-                    message.selectedTokenIndices.forEach(function (val) {
-                        indices.push(val);
-                    });
-                    indices.sort(function (a, b) {
-                        return a - b;
-                    });
-
-                    var tokens = [];
-                    var currentTokenIndex = -1;
-                    for (var i = 0; i < indices.length; i++) {
-                        var tokenIndex = indices[i];
-
-                        if (tokenIndex != currentTokenIndex) {
-                            tokens.push(message.tokens[tokenIndex].text);
-                            currentTokenIndex = tokenIndex;
-                        }
-                    }
-
-                    message.selectedTokens = tokens;
-                }
             }
         };
 

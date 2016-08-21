@@ -81,7 +81,7 @@
                             var feature = messageDetail.featureHighlights[i];
                             if (charIndex >= feature.startCharIndex && charIndex <= feature.endCharIndex) {
                                 if (filtered) {
-                                    return {'background': self.codeColor(feature.codeIndex)};
+                                    return {'background': self.codeColorLight(feature.codeIndex)};
                                 }
                                 else {
                                     return {'background': self.codeColorLighter(feature.codeIndex)};
