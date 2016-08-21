@@ -93,7 +93,7 @@
         $scope.$on('Code::pairwiseComparison::loaded', function ($event, pairwiseComparisons) {
             usSpinnerService.stop('code-detail-spinner');
             $scope.pairwiseComparisons = pairwiseComparisons.filter(function (comparison) {
-                return comparison.userCodeId == $scope.codeDefinition.codeId;
+                return comparison.userCodeId == $scope.codeDefinition.codeId && comparison.count > 0;
             });
         });
 
@@ -258,7 +258,7 @@
 
         $scope.filterMessagesByConfusion = function (message) { // MessageDetail
             if (message) {
-                var selected = !$scope.selectedPair || (message.label == $scope.selectedPair.userCodeId && message.partnerLabel == confusion.partnerCodeId);
+                var selected = !$scope.selectedPair || (message.label == $scope.selectedPair.userCodeId && message.partnerLabel == $scope.selectedPair.partnerCodeId);
 
                 var matched = false;
                 if ($scope.searchModel.keyword) {
