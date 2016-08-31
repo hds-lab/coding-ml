@@ -46,6 +46,7 @@
     <script src="{% static 'aeonium/app.js' %}"></script>
     <script src="{% static 'aeonium/services.js' %}"></script>
     <script src="{% static 'aeonium/controllers.js' %}"></script>
+    <script src="{% static 'aeonium/models/Partner.js' %}"></script>
     <script src="{% static 'aeonium/models/Code.js' %}"></script>
     <script src="{% static 'aeonium/models/Style.js' %}"></script>
     <script src="{% static 'aeonium/models/Utils.js' %}"></script>
@@ -90,7 +91,8 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="/aeonium"><span><img class="logo" ng-src="{% static 'images/aeonium.png' %}"/>
+                    <a class="navbar-brand" href="/aeonium"><span><img class="logo"
+                                                                       ng-src="{% static 'images/aeonium.png' %}"/>
                         </span>Aeonium</a>
                 </div>
 
@@ -99,6 +101,19 @@
                     <ul class="nav navbar-nav">
                         <li><a href="/aeonium/#/coding">Coding</a></li>
                         <li><a href="/aeonium/#/review">Review</a></li>
+                        <li ng-if="partners">
+                            <div class="btn-group">
+                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <span>{$ selectedPartner.username $}</span>
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li ng-repeat="partner in partners">
+                                        <a ng-click="selectPartner(partner)">{$ partner.username $}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">
