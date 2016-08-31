@@ -36,14 +36,16 @@
             };
 
             angular.extend(Feature.prototype, {
+                // partnerUserName: string
                 // returns Feature[]
-                getAllFeatures: function () {
+                getAllFeatures: function (partnerUserName) {
                     var self = this;
                     var sources = ["system", "user", "partner"];
 
                     var request = {
                         params: {
-                            feature_source: sources.join(" ")
+                            feature_source: sources.join(" "),
+                            partner: partnerUserName
                         }
                     };
 

@@ -42,8 +42,9 @@
             };
 
             angular.extend(Code.prototype, {
+                // partnerUserName: string
                 // returns void
-                loadCodeDefinitions: function () {
+                loadCodeDefinitions: function (partnerUserName) {
                     var self = this;
 
                     var sources = ["master", "user", "partner"];
@@ -51,7 +52,8 @@
 
                     var request = {
                         params: {
-                            source: sources.join(" ")
+                            source: sources.join(" "),
+                            partner: partnerUserName
                         }
                     };
 
@@ -129,11 +131,13 @@
                     return self.codeNameToId[codeName];
                 },
 
-                getPairwiseComparison: function () {
+                // partnerUserName: string
+                getPairwiseComparison: function (partnerUserName) {
                     var self = this;
                     var request = {
                         params: {
-                            stage: undefined
+                            stage: undefined,
+                            partner: partnerUserName
                         }
                     };
 

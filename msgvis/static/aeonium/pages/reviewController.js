@@ -3,7 +3,7 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var ReviewController = function ($scope, $timeout, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
+    var ReviewController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
 
         // Helpers
         $scope.Style = Style;
@@ -25,6 +25,17 @@
         ////// Event Handlers //////
         ////////////////////////////
 
+        $scope.$on('Partner::getPartners::loading', function ($event) {
+            usSpinnerService.spin('page-spinner');
+        });
+        $scope.$on('Partner::selectedPartner', function ($event, partner) {
+            usSpinnerService.stop('page-spinner');
+
+            if (partner != null) {
+                Code.loadCodeDefinitions(partner.username);
+                Message.getAllMessages(partner.username);
+            }
+        });
 
         $scope.$on('Message::allMessages::loading', function ($event) {
             usSpinnerService.spin('page-spinner');
@@ -34,7 +45,7 @@
             // Bin the messages per code and normalize
             $scope.totalItemCount = messages.length;
 
-            $scope.codeDefinitions.forEach(function(codeDefinition) {
+            $scope.codeDefinitions.forEach(function (codeDefinition) {
                 $scope.codeDistribution[codeDefinition.codeId] = messages.filter(function (message) {
                     return message.label == codeDefinition.codeId;
                 }).length;
@@ -68,8 +79,8 @@
             $scope.selectedCodeDefinition = codes[0];
             usSpinnerService.stop('page-spinner');
 
-            Feature.getAllFeatures();
-            Code.getPairwiseComparison();
+            Feature.getAllFeatures(Partner.selectedPartner.username);
+            Code.getPairwiseComparison(Partner.selectedPartner.username);
         });
 
         $scope.$on('Feature::removeFeature::removing', function ($event) {
@@ -78,13 +89,12 @@
 
         $scope.$on('Feature::removeFeature::removed', function ($event, removedFeature) {
             usSpinnerService.stop('page-spinner');
-            Message.getAllMessages();
+            Message.getAllMessages(Partner.selectedPartner.username);
         });
 
         // View methods
         $scope.initializeController = function () {
-            Code.loadCodeDefinitions();
-            Message.getAllMessages();
+            Partner.getPartners();
         };
 
         $scope.selectCode = function (codeDefinition) {
@@ -97,6 +107,7 @@
     ReviewController.$inject = [
         '$scope',
         '$timeout',
+        'Aeonium.models.Partner',
         'Aeonium.models.Code',
         'Aeonium.models.Message',
         'Aeonium.models.Feature',
