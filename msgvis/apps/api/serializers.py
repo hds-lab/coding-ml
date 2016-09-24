@@ -83,6 +83,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', )
 
 
+class UserWithIdSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', )
+
+
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     feature_vector = serializers.ListField(child=serializers.DictField())

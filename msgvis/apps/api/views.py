@@ -908,6 +908,37 @@ class PairwiseConfusionMatrixView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class PartnerView(APIView):
+    """
+    Get partners of the current user
+
+    **Request:** ``GET /partners``
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        users = []
+        if user.experiment_connection:
+            experiment = user.experiment_connection.experiment
+            users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)
+        elif user.pair.exists():
+            experiment = user.pair.first().assignment.experiment
+            users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)
+
+        output = serializers.UserWithIdSerializer(users, many=True)
+
+        return Response(output.data, status=status.HTTP_200_OK)
+        # import traceback
+        # traceback.print_exc()
+        # import pdb
+        # pdb.set_trace()
+
+
+
 class ProgressView(APIView):
     """
     Get the progress of the current user
