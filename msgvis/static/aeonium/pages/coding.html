@@ -1,255 +1,279 @@
 <div class="ng-cloak" ng-cloak ng-controller="Aeonium.controllers.CodingController">
-    <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
+    <span us-spinner="Style.spinnerOptions" spinner-key="page-spinner"></span>
     <div id="coding">
-        <div class="box box-top">
-            <div id="top-area">
-                <h2><span class="stage">Coding</span></h2>
-                <div class="" id="labeling">
-                    <span us-spinner="spinnerOptions" spinner-key="label-spinner"></span>
-                    <div class="col-md-9 tweet-item">
-                        <div class="btn btn-image"
-                             ng-show="currentMessage.message.media_url && currentMessage.message.media_url.length > 0"
-                             data-toggle="modal" data-target="#image-modal"
-                             ng-click="selectMedia(currentMessage.message.media_url)">
-                            <img class="img-responsive center-block" ng-src="{$ currentMessage.message.media_url $}">
-                        </div>
-
-                        <div class="tweet-text">
-                                <span ng-repeat="char in currentMessage.characters track by $index"
-                                      ng-style="charStyle(currentMessage, $index)">{$ char $}</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3 tweet-submit">
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_saved}"
-                                 ng-click="currentMessage.is_saved=!currentMessage.is_saved"
-                                 data-toggle="tooltip" title="Save this tweet"><span
-                                    class="glyphicon glyphicon-tag"></span></div>
-                            <span> Save this tweet</span>
-                        </div>
-
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_example}"
-                                 ng-click="currentMessage.is_example=!currentMessage.is_example"
-                                 data-toggle="tooltip" title="Save as an example"><span
-                                    class="glyphicon glyphicon-star"></span></div>
-                            <span> Save as an example tweet</span>
-                        </div>
-
-                        <div class="tweet-submit-item">
-                            <div class='btn btn-toggle' ng-class="{'active': currentMessage.is_ambiguous}"
-                                 ng-click="currentMessage.is_ambiguous=!currentMessage.is_ambiguous"
-                                 data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                            <span> Mark as an ambiguous tweet</span>
-                        </div>
-                        <button class="btn btn-default" ng-disabled="!selectedCode" ng-click="submitLabel()">Submit
-                            Code
-                        </button>
-                    </div>
-                </div>
-                <div class="" id="codes" data-toggle="buttons">
-                    <span us-spinner="spinnerOptions" spinner-key="code-spinner"></span>
-                    <div class="btn btn-default" ng-repeat="code in codes"
-                         ng-click="selectLabel(code)"
-                         ng-class="{'active': code == selectedCode}"
-                         ng-style="buttonStyle(code)">
-                        <div class="code-name">{$ code.code_text $}</div>
-                        <div class="code-definition scroll-y">
-                            <p><strong>definition: </strong>{$ code.text $}</p>
-                            <p><strong>example: </strong>{$ code.examples[0].text $}</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="box" id="list-view">
+            <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
+            <h2>List</h2>
+            <div ng-repeat="message in allMessages"
+                 class="btn btn-default"
+                 ng-click="viewMessageDetail(message)"
+                 ng-show="codeDefinitions">{$ message.id $}
             </div>
-
-            <div id="bottom-area">
-                <span us-spinner="spinnerOptions" spinner-key="code-detail-spinner"></span>
-                <div class="row" id="panel" ng-show="selectedCode" ng-style="definitionStyle(selectedCode)">
-                    <div class="col-md-3 scroll-y">
-                        <div class="box box-light box-right">
-                            <h2>Review <span>{$ selectedCode.code_text $}</span></h2>
-                            <h3>Master Definition</h3>
-                            <p>{$ selectedCode.text $}</p>
-                            <h3>Master Example</h3>
-                            <p>{$ selectedCode.examples[0].text $}</p>
-                            <h3>My Definition</h3>
-                            <p ng-show="hasDefinition(selectedCode, 'user')">{$
-                                Code.definitions_by_code[selectedCode.code_text]["user"].text $}</p>
-                            <p ng-hide="hasDefinition(selectedCode, 'user')" class="help-text">You have not provided a
-                                definition yet.</p>
-                            <h3>My Examples</h3>
-                            <p ng-hide="hasExample(selectedCode, 'user')"
-                               class="help-text">You have not saved any tweets as exemplar of '<span>{$ selectedCode.code_text $}</span>'.
-                            </p>
-                            <div ng-repeat="item in Code.definitions_by_code[selectedCode.code_text]['user'].examples"
-                                 class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
-                                <div class="content">
-                                    <div class="item-message" ng-bind-html="item.embedded_html"></div>
-                                </div>
-                            </div>
-                            <h3>My Partner's Definition</h3>
-                            <p ng-show="hasDefinition(selectedCode, 'partner')">{$
-                                Code.definitions_by_code[selectedCode.code_text]['partner'].text $}</p>
-                            <p ng-hide="hasDefinition(selectedCode, 'partner')" class="help-text">Your partner has not
-                                provided a definition yet.</p>
-                            <h3>My Partner's Examples</h3>
-                            <p ng-hide="hasExample(selectedCode, 'partner')"
-                               class="help-text">Your partner has not saved any tweets as exemplar of '<span>{$ selectedCode.code_text $}</span>'.
-                            </p>
-                            <div ng-repeat="item in Code.definitions_by_code[selectedCode.code_text]['partner'].examples"
-                                 class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }">
-                                <div class="content">
-                                    <div class="item-message" ng-bind-html="item.embedded_html"></div>
-                                </div>
-                            </div>
-                        </div>
+        </div>
+        <div class="box" id="labeling-view">
+            <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>
+            <h2>Coding</h2>
+            <div ng-show="!selectedMessageDetail">
+                Select an item to label.
+            </div>
+            <div ng-show="selectedMessageDetail">
+                <div class="message-item">
+                    <div class="btn btn-image"
+                         ng-show="selectedMessageDetail.mediaUrl && selectedMessageDetail.mediaUrl.length > 0"
+                         data-toggle="modal" data-target="#image-modal"
+                         ng-click="openMedia(selectedMessageDetail.mediaUrl)">
+                        <img class="img-responsive center-block" ng-src="{$ selectedMessageDetail.mediaUrl $}">
                     </div>
-                    <div class="col-md-3 scroll-y">
-                        <div class="box box-light">
-                            <h2>Keyword distribution for <span>{$ selectedCode.code_text $}</span></h2>
-                            <h3>My keywords</h3>
-                            <p ng-hide="hasFeatureOfCode(selectedCode, featureList.user)" class="help-text">You have not
-                                provided any keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'.
-                                You can do so in the review stage.</p>
-                            <div class="features" ng-repeat="feature in featureList.user track by $index"
-                                 ng-show="filterFeatures(selectedCode, feature)" id="user-features"
-                                 ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
-                                    <span class="feature-text"
-                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
-                                          ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
-                                          data-placement="auto top">{$ feature.feature_text $}</span>
-                                <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                    <div ng-repeat="code in code_text_list"
-                                         ng-style="distributionStyle(code, feature.normalized_distribution[code])"
-                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
-                                         ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
-                                         data-placement="auto top"></div>
-                                </div>
-                                <div ng-show="feature.total_count == 0"
-                                     class="feature-distribution feature-empty"></div>
-                                <span class="feature-total">{$ feature.total_count $}</span>
-                            </div>
-                            <h3>My partner's keywords</h3>
-                            <p ng-hide="hasFeatureOfCode(selectedCode, featureList.partner)" class="help-text">Your
-                                partner does not have any keyword for '<span>{$ selectedCode.code_text$}</span>'.</p>
-                            <div class="features" ng-repeat="feature in featureList.partner track by $index "
-                                 ng-show="filterFeatures(selectedCode, feature)" id="partner-features"
-                                 ng-click="searchFeature(feature)" ng-style="myKeywordStyle(feature)">
-                                    <span class="feature-text"
-                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
-                                          ng-attr-data-content="Keywords added from a tweet coded as '{$ code_map[feature.origin_code_id].code_text $}'"
-                                          data-placement="auto top">{$ feature.feature_text $}</span>
-                                <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                    <div ng-repeat="code in code_text_list"
-                                         ng-style="distributionStyle(code, feature.normalized_distribution[code])"
-                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
-                                         ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
-                                         data-placement="auto top"></div>
-                                </div>
-                                <div ng-show="feature.total_count == 0"
-                                     class="feature-distribution feature-empty"></div>
-                                <span class="feature-total">{$ feature.total_count $}</span>
-                            </div>
-                            <h3>System keywords</h3>
-                            <p ng-hide="hasFeatureOfCode(selectedCode, featureList.system)" class="help-text">There are
-                                no system keywords from tweets labeled as '<span>{$ selectedCode.code_text$}</span>'.
-                            </p>
-                            <div class="features" ng-repeat="feature in featureList.system track by $index"
-                                 ng-show="filterFeatures(selectedCode, feature)" id="system-features"
-                                 ng-click="searchFeature(feature)">
-                                <span class="feature-text">{$ feature.feature_text $}</span>
-                                <div ng-show="feature.total_count > 0" class="feature-distribution">
-                                    <div ng-repeat="code in code_text_list"
-                                         ng-style="distributionStyle(code, feature.normalized_distribution[code])"
-                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
-                                         ng-attr-data-content="{$ feature.distribution[code] + ' tweet' + (feature.distribution[code] > 1 ? 's' : '') + ' for ' + code $}"
-                                         data-placement="auto top"></div>
-                                </div>
-                                <div ng-show="feature.total_count == 0"
-                                     class="feature-distribution feature-empty"></div>
-                                <span class="feature-total">{$ feature.total_count $}</span>
-                            </div>
-                        </div>
+
+                    <div class="message-text">
+                    <span ng-repeat="char in selectedMessageDetail.characters track by $index"
+                          ng-style="Style.charStyle(selectedMessageDetail, $index)">{$ char $}</span>
                     </div>
-                    <div class="col-md-6 scroll-y">
-                        <div class="box box-light box-left">
-                            <h2>My Tweets labeled as <span>{$ selectedCode.code_text $}</span></h2>
+                </div>
 
-                            <div id="search">
-                                <div class="search-label">Show:</div>
-                                <div class="dropdown item-filter">
-                                    <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                        <span>{$ selectedFilter $}</span>
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="filterMenu">
-                                        <li><a ng-click="selectFilter('All')">All</a></li>
-                                        <li><a ng-click="selectFilter('Example')">Example</a></li>
-                                        <li><a ng-click="selectFilter('Saved')">Saved</a></li>
-                                        <li><a ng-click="selectFilter('Ambiguous')">Ambiguous</a></li>
-                                    </ul>
-                                </div>
-                                <div class="search-label">Search:</div>
-                                <input ng-if="!search.feature" ng-model="search.text"
-                                       placeholder="Type in search keywords">
-                                <div class="search-feature" ng-if="search.feature"
-                                     ng-style="{ 'border-color': pillColor(search.feature.origin_code_id) }">{$
-                                    search.feature.feature_text $}
-                                    <button class="btn btn-default" ng-click="removeSearchFeature()"
-                                            data-toggle="tooltip" title="Remove this keyword from search">
-                                        <span class="glyphicon glyphicon-remove-circle"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div ng-repeat="item in coded_messages['user'][selectedCode.code_text] | filter:filterTweetsFlag()"
-                                 class="label-item" ng-style="{ 'border-color': codeColor(selectedCode) }"
-                                 ng-mouseover="onItemHover(item)" ng-mouseleave="onItemLeave(item)"
-                                 ng-class="{ hovered: hoveredItem==item }">
+                <div class="message-label-submit">
 
-                                <div class="content">
-                                    <div class="item" ng-show="hoveredItem==item">
-                                        <div ng-show="true">
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_saved}"
-                                                 ng-click="updateItem(item, !item.is_saved, item.is_example, item.is_ambiguous)"
-                                                 data-toggle="tooltip" title="Save this tweet"><span
-                                                    class="glyphicon glyphicon-tag"></span></div>
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_example}"
-                                                 ng-click="updateItem(item, item.is_saved, !item.is_example, item.is_ambiguous)"
-                                                 data-toggle="tooltip" title="Save as an example"><span
-                                                    class="glyphicon glyphicon-star"></span></div>
-                                            <div class='btn btn-toggle' ng-class="{'active': item.is_ambiguous}"
-                                                 ng-click="updateItem(item, item.is_saved, item.is_example, !item.is_ambiguous)"
-                                                 data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                                        </div>
-                                        <div ng-bind-html="item.message.embedded_html"></div>
-                                    </div>
-                                    <div class="item-message" ng-hide="hoveredItem==item"
-                                         ng-bind-html="item.message.embedded_html"></div>
-                                </div>
-                            </div>
+                    <div class="btn btn-default" ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                         ng-click="selectCode(codeDefinition)"
+                         ng-class="{'active': codeDefinition == selectedCodeDefinition}"
+                         ng-style="Style.buttonStyle(codeDefinition.codeId, selectedCodeDefinition.codeId)">
+                        <div class="code-name">{$ codeDefinition.name $}</div>
+                    </div>
 
-                            <p ng-show="coded_messages!=undefined && (coded_messages['user'][selectedCode.code_text] | filter:filterTweetsFlag()).length==0"
-                               class="help-text">No tweets were found.</p>
+                    <div class="message-toggle-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isSaved}"
+                             ng-click="selectedMessageDetail.isSaved=!selectedMessageDetail.isSaved"
+                             data-toggle="tooltip" title="Save this item"><span class="glyphicon glyphicon-tag"></span>
                         </div>
+                        <span> Save this item</span>
+                    </div>
+
+                    <div class="message-toggle-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isExample}"
+                             ng-click="selectedMessageDetail.isExample=!selectedMessageDetail.isExample"
+                             data-toggle="tooltip" title="Save as an example"><span
+                                class="glyphicon glyphicon-star"></span>
+                        </div>
+                        <span> Save as an example item</span>
+                    </div>
+
+                    <div class="message-toggle-item">
+                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isAmbiguous}"
+                             ng-click="selectedMessageDetail.isAmbiguous=!selectedMessageDetail.isAmbiguous"
+                             data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
+                        <span> Mark as an ambiguous item</span>
+                    </div>
+                    <button class="btn btn-default" ng-disabled="!selectedCodeDefinition" ng-click="submitLabel()">
+                        Submit Code
+                    </button>
+
+                    <textarea class="message-comment"
+                              ng-model="selectedMessageComment"
+                              placeholder="Enter any comments you may have for this item."></textarea>
+                    <div ng-show="enableCommentSave()">
+                        <button class="btn btn-primary" ng-mousedown="saveMessageComment()">Save</button>
+                        <button class="btn btn-default" ng-mousedown="resetMessageComment()">Reset</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        <div id="code-detail-view">
+            <span us-spinner="Style.spinnerOptions" spinner-key="code-detail-view-spinner"></span>
+            <div class="box" ng-show="!selectedCodeDefinition">
+                <h2>Code Detail</h2>
+                <div>Select a message and a code to view details</div>
+            </div>
+            <div class="box" ng-show="selectedCodeDefinition"
+                 ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
+                <div class="box-section">
+                    <h2>Definitions for {$ selectedCodeDefinition.name $}</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>Master definition</h3>
+                            <p>{$ selectedCodeDefinition.masterDescription.text $}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>My definition</h3>
+                            <p>{$ selectedCodeDefinition.userDescription.text $}</p>
+                            <p ng-hide="selectedCodeDefinition.userDescription.text && selectedCodeDefinition.userDescription.text.length > 0"
+                               class="help-text">You have not provided a definition yet.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Partner definition</h3>
+                            <p>{$ selectedCodeDefinition.partnerDescription.text $}</p>
+                            <p ng-hide="selectedCodeDefinition.partnerDescription.text && selectedCodeDefinition.partnerDescription.text.length > 0"
+                               class="help-text">Your partner has not provided a definition yet.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-section">
+                    <h2>Keyword distributions for {$ selectedCodeDefinition.name $}</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>System keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(systemKeywords).length > 0" class="help-text">There
+                                are no system keywords for '<span>{$ selectedCodeDefinition.name $}</span>'.</p>
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(systemKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>My keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(userKeywords).length > 0" class="help-text">You have
+                                not
+                                provided any keywords from items coded as
+                                '<span>{$ selectedCodeDefinition.name $}</span>'.
+                                You can do so in review.</p>
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(userKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Partner keywords</h3>
+                            <p ng-hide="getKeywordsForSelectedCode(partnerKeywords).length > 0" class="help-text">Your
+                                partner does not have any keyword for '<span>{$ selectedCodeDefinition.name $}</span>'.
+                            </p>
+                            <div class="features"
+                                 ng-repeat="feature in getKeywordsForSelectedCode(partnerKeywords) track by $index"
+                                 ng-click="addSearchKeyword(feature)" ng-style="Style.keywordStyle(feature)">
+                                    <span class="feature-text"
+                                          popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                          ng-attr-data-content="Keyword added from an item coded as '{$ codeDefinitions[feature.codeId].name $}'"
+                                          data-placement="auto top">{$ feature.text $}</span>
+                                <div ng-show="feature.totalCount > 0" class="feature-distribution">
+                                    <div ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+                                         ng-style="Style.distributionStyle(codeId, feature.distribution[codeId].distribution)"
+                                         popover data-toggle="popover" data-trigger="hover" data-html="true"
+                                         ng-attr-data-content="{$ feature.distribution[codeId].count + ' item' + (feature.distribution[codeId].count > 1 ? 's' : '') + ' for ' + codeDefinition.name $}"
+                                         data-placement="auto top"></div>
+                                </div>
+                                <div ng-show="feature.totalCount == 0"
+                                     class="feature-distribution feature-empty"></div>
+                                <span class="feature-total">{$ feature.totalCount $}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-section">
+                    <h2>My items coded as {$ selectedCodeDefinition.name $}</h2>
+                    <div id="search">
+                        <div class="search-label">Show:</div>
+                        <div class="dropdown item-filter">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="filterMenu"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                <span>{$ availableFilters[selectedFilter] $}</span>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterMenu">
+                                <li ng-repeat="(filterId, filterText) in availableFilters"><a ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
+                            </ul>
+                        </div>
+                        <div class="search-label">Search:</div>
+                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value" placeholder="Type in search keywords">
+                        <div class="search-feature" ng-if="searchModel.keyword"
+                             ng-style="{ 'border-color': Style.pillColor(searchModel.keyword.codeId) }">{$
+                            searchModel.keyword.text $}
+                            <button class="btn btn-default" ng-click="removeSearchKeyword()"
+                                    data-toggle="tooltip" title="Remove this keyword from search">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div ng-repeat="message in getUserMessages() | filter:filterMessages()"
+                         class="label-item" ng-style="{ 'border-color': Style.codeColor(message.label) }">
 
-    <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h2 class="modal-title">Embedded image</h2>
+                        <div class="content">
+                            <div class="item">
+                                <div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isSaved}"
+                                         data-toggle="tooltip" title="Saved item"><span
+                                            class="glyphicon glyphicon-tag"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isExample}"
+                                         data-toggle="tooltip" title="Example item"><span
+                                            class="glyphicon glyphicon-star"></span></div>
+                                    <div class='btn btn-toggle' ng-class="{'active': message.isAmbiguous}"
+                                         data-toggle="tooltip" title="Ambiguous item"><span>?</span></div>
+                                </div>
+                                <div ng-bind-html="message.html"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p ng-show="getFilteredUserMessages().length==0"
+                       class="help-text">No items were found.</p>
+
                 </div>
-                <div class="modal-body">
-                    <img class="img-responsive center-block" ng-src="{$ selectedMedia $}">
-                </div>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
+            </div>
+        </div>
+
+        <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title">Embedded image</h2>
+                    </div>
+                    <div class="modal-body">
+                        <img class="img-responsive center-block" ng-src="{$ selectedMediaUrl $}">
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
+        <modal show-modal="showSaveComment" ng-model="showSaveComment" class="modal fade"
+               tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h2 class="modal-title">Save comments?</h2>
+                    </div>
+                    <div class="modal-body">
+                        Do you want to save your comments for this item?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" ng-click="resetMessageComment()"
+                                data-dismiss="modal">Discard
+                        </button>
+                        <button type="button" class="btn btn-primary" ng-click="saveMessageComment()">Save
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </modal>
+    </div>
 </div>

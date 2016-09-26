@@ -83,6 +83,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', )
 
 
+class UserWithIdSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', )
+
+
 class FeatureVectorSerializer(serializers.Serializer):
     message = MessageSerializer()
     feature_vector = serializers.ListField(child=serializers.DictField())
@@ -213,3 +220,12 @@ class ActionHistorySerializer(serializers.ModelSerializer):
         model = experiment_models.ActionHistory
         fields = ('id', 'owner', 'type', 'contents', 'stage_index', 'status', 'created_at', )
         read_only_fields = ('id', )
+
+
+class TimeListDistributionSerializer(serializers.Serializer):
+    # year = serializers.DateTimeField(format="%Y", required=False)
+    # month = serializers.DateTimeField(format="%m", required=False)
+    # day = serializers.DateTimeField(format="%d", required=False)
+    # hour = serializers.DateTimeField(format="%H", required=False)
+    time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False)
+    count = serializers.IntegerField()

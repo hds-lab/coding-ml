@@ -8,24 +8,14 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
-    help = "Create a new experiment."
+    help = "Create a new non-controlled experiment."
     args = '<dictionary_id> <output_folder>'
     option_list = BaseCommand.option_list + (
-        make_option('-p', '--num_pairs',
-                    default=20,
-                    dest='num_pairs',
-                    help='Num of pairs in each conditions'
+        make_option('-u', '--users',
+                    default=4,
+                    dest='num_users',
+                    help='Num of users under this experiment'
         ),
-       # make_option('-c', '--num_conditions',
-       #             default=2,
-       #             dest='num_conditions',
-       #              help='Num of conditions in this experiment'
-       #  ),
-       #  make_option('-s', '--num_stages',
-       #              default=4,
-       #              dest='num_stages',
-       #              help='Num of stages in each condition'
-       #  ),
         make_option('-n', '--name',
                     default='Experiment',
                     dest='experiment_name',
@@ -46,10 +36,7 @@ class Command(BaseCommand):
         if not output_folder:
             raise CommandError("Output folder path is required.")
 
-
-        num_pairs = options.get('num_pairs')
-        #num_conditions = options.get('num_conditions')
-        #num_stages = options.get('num_stages')
+        num_users = options.get('num_users')
         experiment_name = options.get('experiment_name')
 
         # make sure the folder exists
@@ -62,12 +49,13 @@ class Command(BaseCommand):
                 # create an experiment
                 experiment = experiment_models.Experiment(name=experiment_name,
                                                           saved_path_root=output_folder,
-                                                          dictionary_id=dictionary_id)
+                                                          dictionary_id=dictionary_id,
+                                                          isControlled=False)
                 experiment.save()
 
-                experiment.initialize_experiment(#num_conditions=num_conditions,
+                experiment.initialize_noncontrolled_experiment(#num_conditions=num_conditions,
                                                  #num_stages=num_stages,
-                                                 num_pairs=num_pairs,
+                                                 num_users=num_users,
                                                  output=output)
 
 

@@ -18,7 +18,7 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  //overflow: hidden;
   min-width: 1200px;
   background: #eee;
   color: #333;
@@ -261,7 +261,7 @@ h3 {
   }
 
   .feature-text {
-    width: 58%;
+    width: 50%;
     height: 100%;
     display: inline-block;
     white-space: nowrap;
@@ -412,6 +412,7 @@ h3 {
 /* START Coding interface styles */
 #coding {
   height: 100%;
+  position: relative;
 
   & > div {
     height: 100%;
@@ -420,6 +421,132 @@ h3 {
   div[class^="col-"] {
     padding: 0;
     height: 100%;
+  }
+
+  #list-view {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: white;
+  }
+
+  #labeling-view {
+    position: absolute;
+    left: 100px;
+    top: 0;
+    bottom: 0;
+    width: calc(50% ~ "-" 50px);
+    background: #eee;
+
+    .message-item {
+      .message-text {
+        font-size: 24px;
+        font-weight: 300;
+        margin-right: 20px;
+        overflow: hidden;
+        overflow-y: auto;
+        height: 100%;
+      }
+
+      .btn-image {
+        margin-right: 20px;
+        padding: 0;
+        max-width: 250px;
+        float: left;
+        height: 100%;
+        box-shadow: none;
+        border: 2px solid transparent;
+
+        &:active {
+          box-shadow: none;
+        }
+
+        &:hover {
+          border-color: #777;
+        }
+
+        & > img {
+          max-height: 100%;
+        }
+      }
+
+      // Style for when feature highlights are enabled
+      //-webkit-touch-callout: none;
+      //-webkit-user-select: none;
+      //-khtml-user-select: none;
+      //-moz-user-select: none;
+      //-ms-user-select: none;
+      //user-select: none;
+      //
+      //span {
+      //    cursor: pointer;
+      //}
+    }
+
+    .message-label-submit {
+      font-size: 14px;
+
+      .message-toggle-item {
+        margin: 0;
+        margin-bottom: 10px;
+
+        .btn-toggle {
+          width: 25px;
+          height: 25px;
+          background: transparent;
+          padding: 3px;
+          border-radius: 100%;
+          border: solid #333 1px;
+          color: #333;
+          text-align: center;
+          font-size: 12px;
+          cursor: pointer;
+          margin-right: 5px;
+
+          &:hover {
+            background: @item-background-color-hover;
+          }
+
+          &.active {
+            color: white;
+            background: #333;
+          }
+        }
+      }
+
+      .btn-default {
+        width: 100%;
+      }
+    }
+
+    .message-comment {
+      textarea {
+        resize: none;
+      }
+    }
+  }
+
+  #code-detail-view {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: calc(50% ~ "-" 50px);
+    background: white;
+
+    .box {
+      height: 100%;
+
+      .box-section {
+        margin-bottom: 20px;
+
+        .row {
+          margin: 0;
+        }
+      }
+    }
   }
 
   #top-area {

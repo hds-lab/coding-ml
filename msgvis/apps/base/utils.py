@@ -1,6 +1,12 @@
-from django.core.management.base import BaseCommand, make_option, CommandError
-import os
+from datetime import datetime
 from math import log
+from operator import attrgetter
+import os
+
+from django.core.management.base import BaseCommand, make_option, CommandError
+from django.db import connection
+from django.db.models import Q, Count
+
 
 def _mkdir_recursive( path):
     sub_path = os.path.dirname(path)
@@ -8,6 +14,7 @@ def _mkdir_recursive( path):
         _mkdir_recursive(sub_path)
     if not os.path.exists(path):
         os.mkdir(path)
+
 
 def check_or_create_dir(dir_path):
     if os.path.exists(dir_path):
@@ -46,6 +53,7 @@ class AttributeDict(dict):
 
 _stoplist = None
 
+
 def get_stoplist():
     global _stoplist
     if not _stoplist:
@@ -53,3 +61,52 @@ def get_stoplist():
 
         _stoplist = stopwords.words('english')
     return _stoplist
+
+def get_time_span_in_seconds(start_time, end_time):
+    timediff = end_time - start_time
+    return timediff.total_seconds()
+
+# fields for grouping
+unit_fields = ["year", "month", "day", "hour"]
+unit_list_range = dict((("YEARLY", 1), ("MONTHLY", 2), ("DAILY", 3), ("HOURLY", 4)))
+
+def get_best_time_bucket(timediff_in_seconds):
+    if timediff_in_seconds <= 86400 * 5:
+        return "HOURLY"
+    elif timediff_in_seconds <= 86400 * 30:
+        return "DAILY"
+    elif timediff_in_seconds <= 86400 * 30 * 12 * 3:
+        return "MONTHLY"
+    else:
+        return "YEARLY"
+
+
+def group_messages_by_time(queryset, field_name, start_time, end_time):
+
+    #queryset = queryset.filter(Q(field_name + "__isnull", False))
+    # queryset = queryset.annotate(
+    #     year=ExtractYear(field_name),
+    #     month=ExtractMonth(field_name),
+    #     day=ExtractDay(field_name),
+    #     hour=ExtractHour(field_name)
+    # )
+    timediff = get_time_span_in_seconds(start_time, end_time)
+    unit = get_best_time_bucket(timediff)
+
+    truncate = dict((('year', connection.ops.date_trunc_sql('year', field_name)),
+                ('month',connection.ops.date_trunc_sql('month', field_name)),
+                ('day', connection.ops.date_trunc_sql('day', field_name)),
+                ('hour', connection.ops.date_trunc_sql('hour', field_name))))
+    queryset = queryset.extra(truncate)
+
+    grouping_fields = unit_fields[:unit_list_range[unit]]
+    results = queryset.values(*grouping_fields).annotate(count=Count('id')).order_by(*grouping_fields)
+    default_datetime = datetime(2016, 1, 1)
+    for idx, result in enumerate(results):
+        obj_time_fields = {}
+        for field in grouping_fields:
+            field_obj = result[field]
+            obj_time_fields[field] = attrgetter(field)(field_obj)
+        results[idx]['time'] = default_datetime.replace(**obj_time_fields)
+    return results
+
