@@ -922,12 +922,14 @@ class PartnerView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         users = []
-        if user.experiment_connection:
-            experiment = user.experiment_connection.experiment
-            users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)
-        elif user.pair.exists():
-            experiment = user.pair.first().assignment.experiment
-            users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)
+        try:
+            if user.experiment_connection:
+                experiment = user.experiment_connection.experiment
+                users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)
+        except experiment_models.UserExperimentConnect.DoesNotExist:
+            if user.pair.exists():
+                experiment = user.pair.first().assignment.experiment
+                users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)
 
         output = serializers.UserWithIdSerializer(users, many=True)
 
