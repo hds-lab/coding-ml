@@ -52,7 +52,8 @@
 
 
             angular.extend(Message.prototype, {
-                getAllMessages: function () {
+                // partnerUserName: string
+                getAllMessages: function (partnerUserName) {
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
@@ -60,7 +61,8 @@
 
                     var request = {
                         params: {
-                            stage: undefined
+                            stage: undefined,
+                            partner: partnerUserName
                         }
                     };
 
@@ -86,8 +88,9 @@
 
                 },
 
+                // partnerUserName: string
                 // codeId: number
-                getCodedMessages: function (codeId) {
+                getCodedMessages: function (codeId, partnerUserName) {
                     var self = this;
                     var param = {};
                     var source = "user";
@@ -100,7 +103,8 @@
                     var request = {
                         params: {
                             code: codeId,
-                            source: source
+                            source: source,
+                            partner: partnerUserName
                         }
                     };
 
@@ -115,14 +119,16 @@
 
                 },
 
+                // partnerUserName: string
                 // message: Message
-                getMessageDetail: function (message) {
+                getMessageDetail: function (message, partnerUserName) {
                     var self = this;
 
                     var request = {
                         message_id: message.id,
                         params: {
-                            source: "user"
+                            source: "user",
+                            partner: partnerUserName
                         }
                     };
 

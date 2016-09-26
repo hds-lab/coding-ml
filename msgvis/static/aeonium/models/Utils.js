@@ -9,6 +9,9 @@
         function utilsFactory(Code) {
             var Utils = function () {
                 var self = this;
+
+                self.UNCODED_CODE_ID = 9999;
+                self.UNCODED_CODE_NAME = "Uncoded";
             };
 
             angular.extend(Utils.prototype, {
@@ -69,6 +72,7 @@
                     var messageDetail = {
                         id: messageData.message.id,
                         label: messageData.code,
+                        partnerLabel: messageData.partner_code ? messageData.partner_code.id : -1,
                         source: messageData.source,
                         isAmbiguous: (messageData.is_ambiguous || false),
                         isSaved: (messageData.is_saved || false),
@@ -222,8 +226,11 @@
                     if (string1 == null && string2 == null) {
                         return true;
                     }
-                    else if (string1 == null || string2 == null) {
-                        return false;
+                    else if (string1 == null && string2 != null) {
+                        return string2.trim().length == 0;
+                    }
+                    else if (string2 == null && string1 != null) {
+                        return string1.trim().length == 0;
                     }
                     else {
                         return string1.trim() === string2.trim();
@@ -276,6 +283,147 @@
                     };
 
                     return item;
+                },
+
+                updateSelection: function (message, startIndex, endIndex, isSelected, shouldClear) {
+                    //History.add_record("tokens:updateSelection", {
+                    //    item: message,
+                    //    startIndex: startIndex,
+                    //    endIndex: endIndex,
+                    //    isSelected: isSelected,
+                    //    shouldClear: shouldClear
+                    //});
+                    if (shouldClear) {
+                        message.selectedTokenIndices.clear();
+                    }
+
+                    for (var i = startIndex; i <= endIndex; i++) {
+                        var existing = message.selectedTokenIndices.get(i);
+                        if (existing == i && !isSelected) {
+                            message.selectedTokenIndices.delete(i);
+                        }
+                        else if (existing != i && isSelected) {
+                            message.selectedTokenIndices.set(i, i);
+                        }
+                    }
+                },
+
+                onCharMouseEnter: function (message, charIndex) {
+
+                    var self = this;
+                    if (message) {
+                        //History.add_record("tokens:onCharMouseEnter:item-exists", {
+                        //    item: message,
+                        //    charIndex: charIndex
+                        //});
+                        var tokenIndex = message.charToToken[charIndex];
+
+                        if (tokenIndex != undefined && message.tokens[tokenIndex] != undefined) {
+                            var tokenItem = message.tokens[tokenIndex];
+                            message.hoveredCharStart = tokenItem.startIndex;
+                            message.hoveredCharEnd = tokenItem.endIndex;
+
+                            // If we're in the middle of selection, update selected char indices
+                            if (message.clickStartTokenItem != undefined) {
+
+                                var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                                if (tokenIndex < message.clickStartTokenItem.index) {
+                                    self.updateSelection(message, tokenIndex, message.clickStartTokenItem.index, true, !ctrlClick);
+                                }
+                                else if (tokenIndex > message.clickStartTokenItem.index) {
+                                    self.updateSelection(message, message.clickStartTokenItem.index, tokenIndex, true, !ctrlClick);
+                                }
+                            }
+                        }
+                        else {
+                            //History.add_record("tokens:onCharMouseEnter:item-not-exists", {
+                            //    item: message,
+                            //    charIndex: charIndex
+                            //});
+                            message.hoveredCharStart = -1;
+                            message.hoveredCharEnd = -1;
+                        }
+                    }
+                },
+
+                onCharMouseLeave: function (message, charIndex) {
+                    //History.add_record("tokens:onCharMouseLeave", {item: message, charIndex: charIndex});
+                    message.hoveredCharStart = -1;
+                    message.hoveredCharEnd = -1;
+                },
+
+                onCharMouseDown: function (message, charIndex, event) {
+                    var self = this;
+                    if (message) {
+                        var tokenIndex = message.charToToken[charIndex];
+
+                        if (tokenIndex != undefined && message.tokens[tokenIndex] != undefined) {
+                            //History.add_record("tokens:onCharMouseDown:token-exists", {
+                            //    item: message, charIndex: charIndex,
+                            //    tokenIndex: tokenIndex
+                            //});
+
+                            var tokenItem = message.tokens[tokenIndex];
+
+                            var ctrlClick = event.ctrlKey || (event.metaKey && !event.ctrlKey);
+
+                            // if there was a selection at this tokenIndex and mouse was clicked with command/ctrl button,
+                            // clear the selection on this token index
+                            if (message.selectedTokenIndices.get(tokenIndex) == tokenIndex && ctrlClick) {
+                                message.clickStartTokenItem = undefined;
+                                self.updateSelection(message, tokenIndex, tokenIndex, false, false);
+                            }
+                            else {
+                                message.clickStartTokenItem = tokenItem;
+                                self.updateSelection(message, tokenIndex, tokenIndex, true, !ctrlClick);
+                            }
+                        }
+                        else {
+                            //History.add_record("tokens:onCharMouseDown:token-clean", {
+                            //    item: message,
+                            //    charIndex: charIndex
+                            //});
+                            message.clickStartTokenItem = undefined;
+                            message.selectedTokenIndices.clear();
+                        }
+                    }
+                },
+
+                onCharMouseUp: function (message, charIndex) {
+                    var self = this;
+                    message.clickStartTokenItem = undefined;
+                    message.selectedTokens = undefined;
+
+                    if (message.selectedTokenIndices.size > 0) {
+                        if (message) {
+                            //History.add_record("tokens:onCharMouseUp:item-exists", {
+                            //    item: message,
+                            //    charIndex: charIndex
+                            //});
+                            // Get sorted list of selected token indices
+                            var indices = [];
+                            message.selectedTokenIndices.forEach(function (val) {
+                                indices.push(val);
+                            });
+                            indices.sort(function (a, b) {
+                                return a - b;
+                            });
+
+                            var tokens = [];
+                            var currentTokenIndex = -1;
+                            for (var i = 0; i < indices.length; i++) {
+                                var tokenIndex = indices[i];
+
+                                if (tokenIndex != currentTokenIndex) {
+                                    tokens.push(message.tokens[tokenIndex].text);
+                                    currentTokenIndex = tokenIndex;
+                                }
+                            }
+
+                            message.selectedTokens = tokens;
+                        }
+                    }
                 }
             });
 

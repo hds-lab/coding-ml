@@ -3,10 +3,10 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var CodingController = function ($scope, $timeout, Dictionary, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
-//1. get all messages and list on the left
-//2. click on a message from the left list to show in the middle
-//3. select a label and show details on the right
+    var CodingController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
+        //1. get all messages and list on the left
+        //2. click on a message from the left list to show in the middle
+        //3. select a label and show details on the right
 
         // Helpers
         $scope.Style = Style;
@@ -49,14 +49,18 @@
         // Search
         $scope.searchModel = {value: undefined, keyword: undefined};
 
-        $scope.spinnerOptions = {
-            radius: 20,
-            width: 6,
-            length: 10,
-            color: "#000000"
-        };
-
         // Handle events
+        $scope.$on('Partner::getPartners::loading', function ($event) {
+            usSpinnerService.spin('page-spinner');
+        });
+        $scope.$on('Partner::selectedPartner', function ($event, partner) {
+            usSpinnerService.stop('page-spinner');
+
+            if (partner != null) {
+                Code.loadCodeDefinitions(partner.username);
+            }
+        });
+
         $scope.$on('Message::allMessages::loading', function ($event) {
             usSpinnerService.spin('list-view-spinner');
         });
@@ -145,12 +149,12 @@
             usSpinnerService.stop('code-detail-view-spinner');
             usSpinnerService.stop('page-spinner');
 
-            Message.getAllMessages();
-            Feature.getAllFeatures();
+            Message.getAllMessages(Partner.selectedPartner.username);
+            Feature.getAllFeatures(Partner.selectedPartner.username);
 
             for (var codeId in codeDefinitions){
                 $scope.userCodedMessages[codeId] = [];
-                Message.getCodedMessages(codeId);
+                Message.getCodedMessages(codeId, Partner.selectedPartner.username);
             }
         });
 
@@ -165,7 +169,7 @@
 
         // View methods
         $scope.initializeController = function () {
-            Code.loadCodeDefinitions();
+            Partner.getPartners();
         };
 
         $scope.viewMessageDetail = function (message) {
@@ -181,7 +185,7 @@
                     $scope.selectedMessageDetail = null;
                     $scope.selectedMessageComment = null;
 
-                    Message.getMessageDetail(message);
+                    Message.getMessageDetail(message, Partner.selectedPartner.username);
                 }
             }
         };
@@ -295,7 +299,7 @@
     CodingController.$inject = [
         '$scope',
         '$timeout',
-        'Aeonium.services.Dictionary',
+        'Aeonium.models.Partner',
         'Aeonium.models.Code',
         'Aeonium.models.Message',
         'Aeonium.models.Feature',
