@@ -925,11 +925,14 @@ class PartnerView(APIView):
         try:
             if user.experiment_connection:
                 experiment = user.experiment_connection.experiment
-                users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)
+                users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)\
+                                                        .order_by('username')
         except experiment_models.UserExperimentConnect.DoesNotExist:
             if user.pair.exists():
                 experiment = user.pair.first().assignment.experiment
-                users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)
+                users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)\
+                                                        .order_by('username')
+
 
         output = serializers.UserWithIdSerializer(users, many=True)
 

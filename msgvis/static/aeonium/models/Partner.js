@@ -23,17 +23,17 @@
                 getPartners: function () {
                     var self = this;
 
-                    var apiUrl = djangoUrl.reverse('all_coded_messages');
+                    var apiUrl = djangoUrl.reverse('partners');
 
                     var request = {
                         params: {
-                            stage: undefined
+
                         }
                     };
 
                     $rootScope.$broadcast("Partner::getPartners::loading");
 
-                    window.setTimeout(function () {
+                    /*window.setTimeout(function () {
                         var partners = [];
                         for (var i = 0; i < 5; i++) {
                             partners.push({
@@ -47,22 +47,24 @@
 
                         self.selectPartner(partners[0]);
                     }, 500);
+                    */
 
-                    //return $http.get(apiUrl, request)
-                    //    .success(function (data) {
-                    //        self.partners = data.map(function (d) {
-                    //            return {
-                    //                id: d.id,
-                    //                username: d.username
-                    //            };
-                    //        });
-                    //
-                    //        $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
-                    //
-                    //        if (self.partners && self.partners.length > 0) {
-                    //            self.selectPartner(self.partners[0]);
-                    //        }
-                    //    });
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            //self.partners = data.map(function (d) {
+                            //    return {
+                            //        id: d.id,
+                            //        username: d.username
+                            //    };
+                            //});
+                            self.partners = data;
+
+                            $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
+
+                            if (self.partners && self.partners.length > 0) {
+                                self.selectPartner(self.partners[0]);
+                            }
+                        });
 
                 },
 
