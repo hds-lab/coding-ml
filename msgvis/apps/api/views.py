@@ -21,7 +21,7 @@ from operator import attrgetter, itemgetter, or_
 
 from django.db import IntegrityError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max, Min
 from django.contrib.auth.models import User
 from django.core.urlresolvers import NoReverseMatch
 
@@ -32,7 +32,7 @@ from rest_framework.reverse import reverse
 from rest_framework.compat import get_resolver_match, OrderedDict
 
 from msgvis.apps.api import serializers
-from msgvis.apps.base.utils import AttributeDict, entropy
+from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -88,6 +88,54 @@ class MessageView(APIView):
         except:
             return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
 
+
+class ListDistributionView(APIView):
+    """
+    Get distribution of a dataset
+
+    **Request:** ``GET /api/list_distribution/1``
+    """
+
+    def get(self, request, dataset_id, format=None):
+
+        dataset_id = int(dataset_id)
+        try:
+            dataset = corpus_models.Dataset.objects.get(id=dataset_id)
+
+            order_by = request.query_params.get('order_by', 'time')
+
+            if order_by == 'time':
+                results = group_messages_by_time(dataset.message_set.filter(time__isnull=False), 'time', dataset.start_time, dataset.end_time)
+                output = serializers.TimeListDistributionSerializer(results, many=True)
+                return Response(output.data, status=status.HTTP_200_OK)
+            elif order_by == 'last_updated':
+                if not self.request.user:
+                    pass
+                else:
+                    user = self.request.user
+                    if user.id is not None and User.objects.filter(id=self.request.user.id).count() != 0:
+                        participant = User.objects.get(id=self.request.user.id)
+                        valid_code_assignments = participant.code_assignments.filter(valid=True).all()
+                        aggregate_time_info = valid_code_assignments.aggregate(start_time = Min('last_updated'), end_time = Max('last_updated'))
+                        results = group_messages_by_time(valid_code_assignments, 'last_updated', aggregate_time_info['start_time'], aggregate_time_info['end_time'])
+                        output = serializers.TimeListDistributionSerializer(results, many=True)
+                        return Response(output.data, status=status.HTTP_200_OK)
+            elif order_by == 'disagreement':
+                # TODO: calc distribution
+                pass
+            elif order_by == 'predicted_ambiguity':
+                pass
+
+
+
+
+
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+            return Response("Dataset not exist", status=status.HTTP_400_BAD_REQUEST)
 
 class DictionaryView(APIView):
     """
@@ -165,7 +213,7 @@ class FeatureVectorView(APIView):
     """
     Get svm result of a dictionary
 
-    **Request:** ``GET /api/vector/(?P<message_id>[0-9]+)?feature_source=system+user+partner``
+    **Request:** ``GET /api/vector/(?P<message_id>[0-9]+)?feature_source=system+user+partner&partner=<partner_username>``
     """
 
 
@@ -176,6 +224,13 @@ class FeatureVectorView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
+
         dictionary = user.pair.first().assignment.experiment.dictionary
         message_id = int(message_id)
         feature_sources = request.query_params.get('feature_source', "user").split(" ")
@@ -233,7 +288,8 @@ class UserFeatureView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        dictionary = user.pair.first().assignment.experiment.dictionary
+        dictionary = user.experiment.first().dictionary if user.experiment.exists()\
+            else user.pair.first().assignment.experiment.dictionary
 
         input = serializers.FeatureSerializer(data=request.data)
         if input.is_valid():
@@ -307,7 +363,7 @@ class FeatureCodeDistributionView(APIView):
     """
     Get the distribution of features across codes
 
-    **Request:** ``GET /distribution?feature_source=system+user+partner``
+    **Request:** ``GET /distribution?feature_source=system+user+partner&partner=<partner_username>``
     """
 
     def get(self, request, format=None):
@@ -316,8 +372,15 @@ class FeatureCodeDistributionView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user)
-        dictionary = user.pair.first().assignment.experiment.dictionary
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
+        dictionary = user.experiment.first().dictionary if user.experiment.exists()\
+            else user.pair.first().assignment.experiment.dictionary
         feature_sources = request.query_params.get('feature_source', "system user partner").split(" ")
         feature_num = int(request.query_params.get('feature_num', 30))
 
@@ -417,7 +480,7 @@ class CodeDefinitionView(APIView):
     """
     Get the definition of a code
 
-    **Request:** ``GET /definition?source=master+user+partner``
+    **Request:** ``GET /definition?source=master+user+partner&partner=<partner_username>``
     """
 
     def get(self, request, format=None):
@@ -427,6 +490,12 @@ class CodeDefinitionView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
 
         sources = request.query_params.get('source', "user").split(" ")
 
@@ -549,7 +618,7 @@ class CodeMessageView(APIView):
     """
     Get the messages of a code
 
-    **Request:** ``GET /code_messages/?code_id=1&source=master&stage=current``
+    **Request:** ``GET /code_messages/?code=1&source=master&stage=current&partner=<partner_username>``
     (Whatever value is given to stage will make this query only get current stage.)
     """
 
@@ -560,7 +629,14 @@ class CodeMessageView(APIView):
 
         user = User.objects.get(id=self.request.user.id)
         partner = user.pair.first().get_partner(user) if user.pair.exists() else None
-        dictionary = user.pair.first().assignment.experiment.dictionary
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
+        dictionary = user.experiment.first().dictionary if user.experiment.exists()\
+            else user.pair.first().assignment.experiment.dictionary
 
         try:
             code_id = int(request.query_params.get('code'))
@@ -629,7 +705,6 @@ class AllCodedMessageView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
         dictionary = user.pair.first().assignment.experiment.dictionary
 
         try:
@@ -667,7 +742,7 @@ class DisagreementIndicatorView(APIView):
     """
     Get the disagreement indicator of a message
 
-    **Request:** ``GET /disagreement/message_id``
+    **Request:** ``GET /disagreement/message_id?partner=<partner_username>``
     """
 
     def get(self, request, message_id, format=None):
@@ -676,7 +751,13 @@ class DisagreementIndicatorView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
 
         message_id = int(message_id)
         message = corpus_models.Message.objects.get(id=message_id)
@@ -705,7 +786,13 @@ class DisagreementIndicatorView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
 
         message_id = int(message_id)
         message = corpus_models.Message.objects.get(id=message_id)
@@ -750,7 +837,7 @@ class PairwiseConfusionMatrixView(APIView):
     """
     Get the pairwise confusion matrix
 
-    **Request:** ``GET /pairwise&stage=current``
+    **Request:** ``GET /pairwise&stage=current&partner=<partner_username>``
     (Whatever value is given to stage will make this query only get current stage.)
     """
 
@@ -760,7 +847,13 @@ class PairwiseConfusionMatrixView(APIView):
             return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.get(id=self.request.user.id)
-        partner = user.pair.first().get_partner(user)
+        partner = user.pair.first().get_partner(user) if user.pair.exists() else None
+        partner_username = request.query_params.get('partner')
+        if partner_username and (User.objects.filter(username=partner_username).exists()):
+            partner = User.objects.filter(username=partner_username).first()
+            if partner.experiment.first() != user.experiment.first():
+                return Response("The specified partner does not belong to this experiment",
+                                status=status.HTTP_400_BAD_REQUEST)
 
         stage = None
         if request.query_params.get('stage'):
@@ -813,6 +906,42 @@ class PairwiseConfusionMatrixView(APIView):
             pdb.set_trace()
 
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class PartnerView(APIView):
+    """
+    Get partners of the current user
+
+    **Request:** ``GET /partners``
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+        users = []
+        try:
+            if user.experiment_connection:
+                experiment = user.experiment_connection.experiment
+                users = User.objects.exclude(id=user.id).filter(experiment_connection__experiment=experiment)\
+                                                        .order_by('username')
+        except experiment_models.UserExperimentConnect.DoesNotExist:
+            if user.pair.exists():
+                experiment = user.pair.first().assignment.experiment
+                users = User.objects.exclude(id=user.id).filter(pair__assignment__experiment=experiment)\
+                                                        .order_by('username')
+
+
+        output = serializers.UserWithIdSerializer(users, many=True)
+
+        return Response(output.data, status=status.HTTP_200_OK)
+        # import traceback
+        # traceback.print_exc()
+        # import pdb
+        # pdb.set_trace()
+
 
 
 class ProgressView(APIView):
