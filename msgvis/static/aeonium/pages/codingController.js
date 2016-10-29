@@ -69,6 +69,7 @@
             $scope.allMessages = messages; // Message[]
             usSpinnerService.stop('list-view-spinner');
 
+            $scope.getNextMessageToLabel();
             //class Message {
             //	id: number;
             //	label: number;
@@ -119,6 +120,8 @@
             if ($scope.selectedMessage.id == message.id) {
                 $scope.selectedMessageDetail = null;
                 $scope.selectedMessage = null;
+
+                $scope.getNextMessageToLabel();
             }
         });
 
@@ -152,7 +155,7 @@
             Message.getAllMessages(Partner.selectedPartner.username);
             Feature.getAllFeatures(Partner.selectedPartner.username);
 
-            for (var codeId in codeDefinitions){
+            for (var codeId in codeDefinitions) {
                 $scope.userCodedMessages[codeId] = [];
                 Message.getCodedMessages(codeId, Partner.selectedPartner.username);
             }
@@ -290,6 +293,18 @@
                 }
 
                 return matched && flagged;
+            }
+        };
+
+        $scope.getNextMessageToLabel = function () {
+            if ($scope.allMessages) {
+                var uncodedMessages = $scope.allMessages.filter(function (message) {
+                    return message.label == Utils.UNCODED_CODE_ID;
+                });
+
+                if (uncodedMessages.length > 0) {
+                    $scope.viewMessageDetail(uncodedMessages[0]);
+                }
             }
         };
 
