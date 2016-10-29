@@ -15,6 +15,10 @@
         $scope.allMessages = []; // Message[]
         $scope.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
 
+        // Partner
+        $scope.partners = [];
+        $scope.selectedPartner = undefined;
+
         // Selected message
         $scope.selectedMessage = undefined; // Message
         $scope.selectedMessageDetail = undefined; // MessageDetail
@@ -53,10 +57,17 @@
         $scope.$on('Partner::getPartners::loading', function ($event) {
             usSpinnerService.spin('page-spinner');
         });
+
+        $scope.$on('Partner::getPartners::loaded', function ($event, partners) {
+            usSpinnerService.stop('page-spinner');
+            $scope.partners = partners;
+        });
+
         $scope.$on('Partner::selectedPartner', function ($event, partner) {
             usSpinnerService.stop('page-spinner');
 
             if (partner != null) {
+            $scope.selectedPartner = partner;
                 Code.loadCodeDefinitions(partner.username);
             }
         });
@@ -170,6 +181,10 @@
         // View methods
         $scope.initializeController = function () {
             Partner.getPartners();
+        };
+
+        $scope.selectPartner = function (partner) {
+            Partner.selectPartner(partner);
         };
 
         $scope.viewMessageDetail = function (message) {

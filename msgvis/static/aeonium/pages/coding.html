@@ -86,6 +86,20 @@
             <div class="box" ng-show="selectedCodeDefinition"
                  ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
                 <div class="box-section">
+                    <div class="partner-select">
+                        Selected Partner:
+                        <div class="btn-group">
+                            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                                <span>{$ selectedPartner.username $}</span>
+                                <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li ng-repeat="partner in partners">
+                                    <a ng-click="selectPartner(partner)">{$ partner.username $}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                     <h2>Definitions for {$ selectedCodeDefinition.name $}</h2>
                     <div class="row">
                         <div class="col-md-4">
@@ -195,11 +209,13 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="filterMenu">
-                                <li ng-repeat="(filterId, filterText) in availableFilters"><a ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
+                                <li ng-repeat="(filterId, filterText) in availableFilters"><a
+                                        ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
                             </ul>
                         </div>
                         <div class="search-label">Search:</div>
-                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value" placeholder="Type in search keywords">
+                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value"
+                               placeholder="Type in search keywords">
                         <div class="search-feature" ng-if="searchModel.keyword"
                              ng-style="{ 'border-color': Style.pillColor(searchModel.keyword.codeId) }">{$
                             searchModel.keyword.text $}
