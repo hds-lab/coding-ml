@@ -167,7 +167,12 @@
 
                 pillColor: function (codeId) {
                     var self = this;
-                    return self.codeColor(codeId);
+                    var color = codeId == Utils.UNCODED_CODE_ID ? 'white' : self.codeColor(codeId);
+                    var css = {
+                        'background-color': color
+                    };
+
+                    return css;
                 }
             });
 

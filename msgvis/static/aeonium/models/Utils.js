@@ -424,6 +424,15 @@
                             message.selectedTokens = tokens;
                         }
                     }
+                },
+
+                sortMessageByTime: function (messageA, messageB) {
+                    return messageA.time - messageB.time;
+                },
+
+                // Returns a random number between min (inclusive) and max (exclusive)
+                getRandomNumber: function (minInclusive, maxExclusive) {
+                    return Math.random() * (maxExclusive - minInclusive) + minInclusive;
                 }
             });
 

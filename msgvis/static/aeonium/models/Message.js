@@ -26,6 +26,7 @@
             //  html: string;
             //  mediaUrl: string;
             //	text: string;
+            //  time: Date;
             //}
 
             //class MessageDetail extends MessageData {
@@ -79,9 +80,35 @@
                                     isExample: d.is_example,
                                     html: d.message.embedded_html,
                                     mediaUrl: d.message.media_url,
-                                    text: d.message.text
+                                    text: d.message.text,
+                                    time: Date.parse(d.message.time)
                                 };
                             });
+
+                            // TODO (jinsuh): Need to get timestamp from service. Is the timestamp the time it was labeled or time the message was created?
+                            // TODO (jinsuh): Add a bunch of unlabeled items
+
+                            self.allMessages.sort(Utils.sortMessageByTime);
+                            var minTime = self.allMessages[0].time;
+                            var maxTime = self.allMessages[self.allMessages.length - 1].time;
+
+                            var size = self.allMessages.length * 10;
+                            for (var i = 0; i < size; i++) {
+                                self.allMessages.push({
+                                    id: 123 + i,
+                                    label: Utils.UNCODED_CODE_ID,
+                                    source: null,
+                                    isAmbiguous: false,
+                                    isSaved: false,
+                                    isExample: false,
+                                    html: "testing",
+                                    mediaUrl: null,
+                                    text: "testing",
+                                    time: Utils.getRandomNumber(minTime, maxTime)
+                                });
+                            }
+
+                            self.allMessages.sort(Utils.sortMessageByTime);
 
                             $rootScope.$broadcast("Message::allMessages::loaded", self.allMessages);
                         });

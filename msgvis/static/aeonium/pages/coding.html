@@ -5,9 +5,12 @@
             <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
             <div ng-repeat="message in allMessages"
-                 class="btn btn-default"
+                 class="btn btn-pill"
                  ng-click="viewMessageDetail(message)"
-                 ng-show="codeDefinitions">{$ message.id $}
+                 ng-show="codeDefinitions"
+                 ng-class="{'selected': selectedMessage.id == message.id}"
+                 ng-style="Style.pillColor(message.label)"
+                 ng-attr-title="{$ message.time  | date:'MM/dd/yyyy @ h:mma' $}">
             </div>
         </div>
         <div class="box" id="labeling-view">

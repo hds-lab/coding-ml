@@ -430,6 +430,29 @@ h3 {
     bottom: 0;
     width: 100px;
     background: white;
+    overflow-y: auto;
+
+    .btn-pill {
+      display: block;
+      width: 30px;
+      height: 15px;
+      padding: 0;
+      opacity: 0.3;
+      margin: 3px 0;
+      border: solid 1px #555;
+
+      &:hover {
+        opacity: 0.5;
+      }
+
+      &.selected {
+        opacity: 1;
+      }
+
+      &.uncoded {
+        background-color: white;
+      }
+    }
   }
 
   #labeling-view {
