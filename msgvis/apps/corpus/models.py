@@ -339,8 +339,12 @@ class Message(models.Model):
         return vector
 
     def get_last_comment_index(self):
-        last_comment = Comment.objects.filter(message_id=self.id).order_by('-index').first()
-        return last_comment.index
+        comments = Comment.objects.filter(message_id=self.id).order_by('-index')
+        if comments.count() > 0:
+            last_comment = Comment.objects.filter(message_id=self.id).order_by('-index').first()
+            return last_comment.index
+        else:
+            return -1
 
     @property
     def tokens(self):
