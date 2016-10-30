@@ -259,6 +259,50 @@ class FeatureVectorView(APIView):
 
             return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
 
+class CommentView(APIView):
+    """
+    Get or set comments
+
+    **Request:** ``GET /api/comments``
+    """
+
+
+    # def get(self, request, format=None):
+    #     pass
+
+
+    def post(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        input = serializers.CommentSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+
+            text = data["text"]
+            message = data["message"]
+
+            comment = message.add_feature(text, source=user)
+            item = {
+                "comment_id": comment.id,
+                "comment_index": comment.index,
+                "comment_text": comment.text,
+                "source": "user",
+                "message": "message"
+            }
+
+            output = serializers.CommentSerializer(item)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    # def delete(self, request, feature_id, format=None):
+    #     pass
 
 class UserFeatureView(APIView):
     """
