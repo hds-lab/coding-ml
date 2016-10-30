@@ -3,6 +3,8 @@ from django.db import models
 from django.db.models import Q
 from caching.base import CachingManager, CachingMixin
 
+from django.contrib.auth.models import User
+
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
@@ -303,6 +305,15 @@ class Message(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
+    def add_comment(self, text, source):
+        index = self.get_last_comment_index() + 1
+        comment = Comment(index=index,
+                          message=self,
+                          source=source,
+                          text=text)
+        comment.save()
+        return comment
+
     def get_feature_vector(self, dictionary, source=None):
         vector = []
         if source is None:
@@ -326,6 +337,10 @@ class Message(models.Model):
                                "origin_message_id": message_id,
                                "origin_code_id": code_id })
         return vector
+
+    def get_last_comment_index(self):
+        last_comment = Comment.objects.filter(message_id=self.id).order_by('-index').first()
+        return last_comment.index
 
     @property
     def tokens(self):
@@ -351,3 +366,35 @@ class Message(models.Model):
         tokens = filter(lambda x: x not in stop_words, tokens)
         tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
         return tokens
+
+class Comment(models.Model):
+    """comment attached to a message"""
+    index = models.IntegerField()
+    text = base_models.Utf8CharField(max_length=300)
+
+    source = models.ForeignKey(User, related_name='comments', default=None, null=True)
+    """The user that add this comment"""
+    message = models.ForeignKey(Message, related_name='comments', default=None, null=True)
+    """The message that this comment is associated with"""
+
+    created_at = models.DateTimeField(auto_now_add=True, default=None)
+    """The comment creation time"""
+
+    valid = models.BooleanField(default=True)
+    """ If this comment is valid (False if feature has been deleted, but deletion not currently supported)"""
+
+    def __repr__(self):
+        return self.text
+
+    def __unicode__(self):
+        return self.__repr__()
+
+    def get_message_code(self):
+        code = None
+        if self.message:
+            assignment = self.message.code_assignments.filter(source=self.source,
+                                                              is_user_labeled=True,
+                                                              valid=True).first()
+            if assignment:
+                code = assignment.code
+        return code
