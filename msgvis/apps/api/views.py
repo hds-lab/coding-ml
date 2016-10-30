@@ -286,14 +286,6 @@ class CommentView(APIView):
             message = data["message"]
 
             comment = message.add_comment(text, source=user)
-            # item = {
-            #     "comment_id": comment.id,
-            #     "comment_index": comment.index,
-            #     "comment_text": comment.text,
-            #     "source": "user",
-            #     "message": "message"
-            # }
-
             output = serializers.CommentSerializer(comment)
 
             return Response(output.data, status=status.HTTP_200_OK)
