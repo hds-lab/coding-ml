@@ -28,12 +28,13 @@
         $scope.$on('Partner::getPartners::loading', function ($event) {
             usSpinnerService.spin('page-spinner');
         });
+
         $scope.$on('Partner::selectedPartner', function ($event, partner) {
             usSpinnerService.stop('page-spinner');
 
             if (partner != null) {
                 Code.loadCodeDefinitions(partner.username);
-                Message.getAllMessages(partner.username);
+
             }
         });
 
@@ -81,6 +82,8 @@
 
             Feature.getAllFeatures(Partner.selectedPartner.username);
             Code.getPairwiseComparison(Partner.selectedPartner.username);
+
+            Message.getAllMessages(Partner.selectedPartner.username);
         });
 
         $scope.$on('Feature::removeFeature::removing', function ($event) {
