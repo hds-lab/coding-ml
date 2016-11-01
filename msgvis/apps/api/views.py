@@ -738,6 +738,45 @@ class AllCodedMessageView(APIView):
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
 
+class SomeMessageView(APIView):
+    """
+    Get some the messages for users -- this is a temporary API to be used in the list on the coding interface.
+     It should be removed or replace once the list related APIs are done.
+
+    **Request:** ``GET /some_messages/``
+    """
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=self.request.user.id)
+
+            try:
+                if user.experiment_connection:
+                    experiment = user.experiment_connection.experiment
+
+            except experiment_models.UserExperimentConnect.DoesNotExist:
+                if user.pair.exists():
+                    experiment = user.pair.first().assignment.experiment
+
+            # get 100 messages
+            messages = experiment.dictionary.dataset.get_message_set()[:100]
+
+            output = serializers.MessageSerializer(messages, many=True)
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            import pdb
+            pdb.set_trace()
+
+            return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
+
+
 class DisagreementIndicatorView(APIView):
     """
     Get the disagreement indicator of a message

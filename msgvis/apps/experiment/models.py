@@ -172,7 +172,7 @@ class Experiment(models.Model):
             print >> output, "%s\t%s" %(username, password)
 
         self.users.add(*user_list)
-        user_connections = user_list.map(lambda user: UserExperimentConnect(user=user, experiment=self))
+        user_connections = map(lambda u: UserExperimentConnect(user=u, experiment=self), user_list)
         UserExperimentConnect.objects.bulk_create(user_connections)
 
     def random_assign_messages(self):

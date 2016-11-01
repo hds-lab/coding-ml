@@ -57,7 +57,8 @@
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
-                    var apiUrl = djangoUrl.reverse('all_coded_messages');
+                    // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
+                    var apiUrl = djangoUrl.reverse('some_messages');
 
                     var request = {
                         params: {
@@ -71,15 +72,16 @@
                         .success(function (data) {
                             self.allMessages = data.map(function (d) {
                                 return {
-                                    id: d.message.id,
-                                    label: d.code,
-                                    source: d.source,
-                                    isAmbiguous: d.is_ambiguous,
-                                    isSaved: d.is_saved,
-                                    isExample: d.is_example,
-                                    html: d.message.embedded_html,
-                                    mediaUrl: d.message.media_url,
-                                    text: d.message.text
+                                    //id: d.message.id,
+                                    id: d.id,  // TODO: [NC] this is a temporary way to keep the list
+                                    //label: d.code,
+                                    //source: d.source,
+                                    //isAmbiguous: d.is_ambiguous,
+                                    //isSaved: d.is_saved,
+                                    //isExample: d.is_example,
+                                    //html: d.message.embedded_html,
+                                    //mediaUrl: d.message.media_url,
+                                    //text: d.message.text
                                 };
                             });
 
