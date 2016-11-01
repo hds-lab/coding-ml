@@ -12,6 +12,7 @@
             var Message = function () {
                 var self = this;
                 self.allMessages = []; // Message[]
+                self.someMessages = []; // Message[]
                 self.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
             };
 
@@ -52,11 +53,46 @@
 
 
             angular.extend(Message.prototype, {
+                 // partnerUserName: string
+                getSomeMessages: function () {
+                    var self = this;
+
+                    // TODO: this needs all messages, not just coded ones
+                    // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
+                    var apiUrl = djangoUrl.reverse('some_messages');
+
+                    var request = {
+                        params: {
+
+                        }
+                    };
+                    $rootScope.$broadcast("Message::someMessages::loading");
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.someMessages = data.map(function (d) {
+                                return {
+                                    //id: d.message.id,
+                                    id: d.id,  // TODO: [NC] this is a temporary way to keep the list
+                                    //label: d.code,
+                                    //source: d.source,
+                                    //isAmbiguous: d.is_ambiguous,
+                                    //isSaved: d.is_saved,
+                                    //isExample: d.is_example,
+                                    //html: d.message.embedded_html,
+                                    //mediaUrl: d.message.media_url,
+                                    //text: d.message.text
+                                };
+                            });
+                            $rootScope.$broadcast("Message::someMessages::loaded", self.someMessages);
+                        });
+
+                },
                 // partnerUserName: string
                 getAllMessages: function (partnerUserName) {
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
+                    // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
                     var apiUrl = djangoUrl.reverse('all_coded_messages');
 
                     var request = {
@@ -139,7 +175,11 @@
                         .success(function (data) {
                             // Label information is in Message, and message detail only contains text info
                             var messageDetail = Utils.extractMessageDetail(data);
-                            angular.extend(messageDetail, message);
+                            var messageWithLabel = self.allMessages.filter(function (m) {return m.id == message.id;});
+                            if (messageWithLabel.length > 0) {
+                                angular.extend(messageDetail, messageWithLabel[0]);
+                            }
+                             
                             $rootScope.$broadcast("Message::messageDetail::loaded", messageDetail);
                         });
 
