@@ -3,6 +3,7 @@ from sklearn import svm
 from sklearn.externals import joblib
 from django.db.models import Q
 from operator import or_
+from msgvis.apps.coding.models import Comment
 
 
 def get_formatted_X(dictionary, source, messages, feature_index_map, feature_num, use_tfidf=False, master_messages=[]):
@@ -103,3 +104,23 @@ def get_prediction(lin_model, X):
             (prob - min) / (max - min)
 
     return prediction, prob
+
+
+def get_last_comment_index(message_id):
+    comments = Comment.objects.filter(message_id=message_id).order_by('-index')
+    if comments.count() > 0:
+        last_comment = Comment.objects.filter(message_id=message_id).order_by('-index').first()
+        return last_comment.index
+    else:
+        return -1
+
+
+def add_comment(message_id, text, source):
+    index = get_last_comment_index(message_id) + 1
+    comment = Comment(index=index,
+                      message=message_id,
+                      source=source,
+                      text=text)
+    comment.save()
+    return comment
+

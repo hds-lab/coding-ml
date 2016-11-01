@@ -305,15 +305,6 @@ class Message(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def add_comment(self, text, source):
-        index = self.get_last_comment_index() + 1
-        comment = Comment(index=index,
-                          message=self,
-                          source=source,
-                          text=text)
-        comment.save()
-        return comment
-
     def get_feature_vector(self, dictionary, source=None):
         vector = []
         if source is None:
@@ -338,13 +329,6 @@ class Message(models.Model):
                                "origin_code_id": code_id })
         return vector
 
-    def get_last_comment_index(self):
-        comments = Comment.objects.filter(message_id=self.id).order_by('-index')
-        if comments.count() > 0:
-            last_comment = Comment.objects.filter(message_id=self.id).order_by('-index').first()
-            return last_comment.index
-        else:
-            return -1
 
     @property
     def tokens(self):

@@ -33,6 +33,7 @@ from rest_framework.compat import get_resolver_match, OrderedDict
 
 from msgvis.apps.api import serializers
 from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
+from msgvis.apps.coding.utils import add_comment
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -285,7 +286,7 @@ class CommentView(APIView):
             text = data["text"]
             message = data["message"]
 
-            comment = message.add_comment(text, source=user)
+            comment = add_comment(message, text, source=user)
             output = serializers.CommentSerializer(comment)
 
             return Response(output.data, status=status.HTTP_200_OK)
