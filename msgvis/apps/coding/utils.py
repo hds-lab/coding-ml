@@ -124,3 +124,8 @@ def add_comment(message_id, text, source):
     comment.save()
     return comment
 
+def get_comments_for_message(message_id):
+    comments =  Comment.objects.filter(message_id=message_id)
+
+    return comments
+
