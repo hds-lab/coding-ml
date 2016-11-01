@@ -175,7 +175,11 @@
                         .success(function (data) {
                             // Label information is in Message, and message detail only contains text info
                             var messageDetail = Utils.extractMessageDetail(data);
-                            angular.extend(messageDetail, message);
+                            var messageWithLabel = self.allMessages.filter(function (m) {return m.id == message.id;});
+                            if (messageWithLabel.length > 0) {
+                                angular.extend(messageDetail, messageWithLabel[0]);
+                            }
+                             
                             $rootScope.$broadcast("Message::messageDetail::loaded", messageDetail);
                         });
 
