@@ -122,9 +122,9 @@ class FeatureSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = corpus_models.Comment
+        model = coding_models.Comment
         fields = ('id', 'index', 'text', 'source', 'message', )
-        read_only_fields = ('id', 'index', 'text', 'source', 'message', )
+        read_only_fields = ('id', 'index', )
 
 class PaginatedMessageSerializer(pagination.PaginationSerializer):
     class Meta:
