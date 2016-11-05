@@ -4,6 +4,7 @@
         <div class="box" id="list-view">
             <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
+<<<<<<< HEAD
 
             <mini-list-view
                     height="800"
@@ -12,6 +13,13 @@
                     sort-messages="sortMessages(args)"
                     select-message="viewMessageDetail(args)">
             </mini-list-view>
+=======
+            <div ng-repeat="message in someMessages"
+                 class="btn btn-default"
+                 ng-click="viewMessageDetail(message)"
+                 ng-show="codeDefinitions">{$ message.id $}
+            </div>
+>>>>>>> origin/iss90-getComments
         </div>
         <div class="box" id="labeling-view">
             <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>

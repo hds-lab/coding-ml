@@ -13,6 +13,7 @@
 
         // View states
         $scope.allMessages = []; // Message[]
+        $scope.someMessages = []; // Message[] // TODO: remove this hack
         $scope.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
 
         // Selected message
@@ -62,11 +63,34 @@
         });
 
         $scope.$on('Message::allMessages::loading', function ($event) {
-            usSpinnerService.spin('list-view-spinner');
+            // TODO: uncomment this line
+            //usSpinnerService.spin('list-view-spinner');
         });
 
         $scope.$on('Message::allMessages::loaded', function ($event, messages) {
             $scope.allMessages = messages; // Message[]
+            // TODO: uncomment this line
+            //usSpinnerService.stop('list-view-spinner');
+
+            //class Message {
+            //	id: number;
+            //	label: number;
+            //	source: string;
+            //	isAmbiguous: boolean;
+            //	isSaved: boolean;
+            //	isExample: boolean;
+            //}
+        });
+
+
+        // TODO: remove this hack
+        $scope.$on('Message::someMessages::loading', function ($event) {
+            usSpinnerService.spin('list-view-spinner');
+        });
+
+        // TODO: remove this hack
+        $scope.$on('Message::someMessages::loaded', function ($event, messages) {
+            $scope.someMessages = messages; // Message[]
             usSpinnerService.stop('list-view-spinner');
 
             $scope.getNextMessageToLabel();
@@ -152,6 +176,7 @@
             usSpinnerService.stop('code-detail-view-spinner');
             usSpinnerService.stop('page-spinner');
 
+            Message.getSomeMessages();
             Message.getAllMessages(Partner.selectedPartner.username);
             Feature.getAllFeatures(Partner.selectedPartner.username);
 
