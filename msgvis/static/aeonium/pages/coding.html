@@ -20,68 +20,15 @@
                 Select an item to label.
             </div>
             <div ng-show="selectedMessageDetail">
-                <div class="message-item">
-                    <div class="btn btn-image"
-                         ng-show="selectedMessageDetail.mediaUrl && selectedMessageDetail.mediaUrl.length > 0"
-                         data-toggle="modal" data-target="#image-modal"
-                         ng-click="openMedia(selectedMessageDetail.mediaUrl)">
-                        <img class="img-responsive center-block" ng-src="{$ selectedMessageDetail.mediaUrl $}">
-                    </div>
-
-                    <div class="message-text">
-                    <span ng-repeat="char in selectedMessageDetail.characters track by $index"
-                          ng-style="Style.charStyle(selectedMessageDetail, $index)">{$ char $}</span>
-                    </div>
-                </div>
-
-                <div class="message-label-submit">
-
-                    <div class="btn btn-default" ng-repeat="(codeId, codeDefinition) in codeDefinitions"
-                         ng-click="selectCode(codeDefinition)"
-                         ng-class="{'active': codeDefinition == selectedCodeDefinition}"
-                         ng-style="Style.buttonStyle(codeDefinition.codeId, selectedCodeDefinition.codeId)">
-                        <div class="code-name">{$ codeDefinition.name $}</div>
-                    </div>
-
-                    <div class="message-toggle-item">
-                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isSaved}"
-                             ng-click="selectedMessageDetail.isSaved=!selectedMessageDetail.isSaved"
-                             data-toggle="tooltip" title="Save this item"><span class="glyphicon glyphicon-tag"></span>
-                        </div>
-                        <span> Save this item</span>
-                    </div>
-
-                    <div class="message-toggle-item">
-                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isExample}"
-                             ng-click="selectedMessageDetail.isExample=!selectedMessageDetail.isExample"
-                             data-toggle="tooltip" title="Save as an example"><span
-                                class="glyphicon glyphicon-star"></span>
-                        </div>
-                        <span> Save as an example item</span>
-                    </div>
-
-                    <div class="message-toggle-item">
-                        <div class='btn btn-toggle' ng-class="{'active': selectedMessageDetail.isAmbiguous}"
-                             ng-click="selectedMessageDetail.isAmbiguous=!selectedMessageDetail.isAmbiguous"
-                             data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
-                        <span> Mark as an ambiguous item</span>
-                    </div>
-                    <button class="btn btn-default" ng-disabled="!selectedCodeDefinition" ng-click="submitLabel()">
-                        Submit Code
-                    </button>
-
-                    <textarea class="message-comment"
-                              ng-model="selectedMessageComment"
-                              placeholder="Enter any comments you may have for this item."></textarea>
-                    <div ng-show="enableCommentSave()">
-                        <button class="btn btn-primary" ng-mousedown="saveMessageComment()">Save</button>
-                        <button class="btn btn-default" ng-mousedown="resetMessageComment()">Reset</button>
-                    </div>
-
-                    <div ng-repeat="comment in selectedMessageComments">
-                        <p>{$ comment.text $}</p>
-                    </div>
-                </div>
+                <labeler
+                        code-definitions="codeDefinitions"
+                        selected-code-definition="selectedCodeDefinition"
+                        message-detail="selectedMessageDetail"
+                        on-code-selected="selectCode(codeDefinition)"
+                        on-submit="submitLabel()"
+                        on-open-media="openMedia(mediaUrl)"></labeler>
+                <comments
+                        message="selectedMessage"></comments>
             </div>
         </div>
         <div id="code-detail-view">

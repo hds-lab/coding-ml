@@ -221,7 +221,7 @@
                     $rootScope.$broadcast("Message::saveComment::saving");
                     return $http.post(apiUrl, request)
                         .success(function (data) {
-                            $rootScope.$broadcast("Message::saveComment::saved", message);
+                            $rootScope.$broadcast("Message::saveComment::saved", message, data);
                         });
                 },
 
