@@ -14,7 +14,7 @@
         var svg, duration = 500;
         var binCount = 10;
         var boxSize = 10;
-        var boxSpacing = 2;
+        var boxSpacing = 4;
         var selectedMessage = null;
         var sortOrder = 0; // 0 means descending, 1 means ascending
 
@@ -24,9 +24,6 @@
             _selection.each(function (_data) {
 
                 if (!_data) {
-                    return;
-                }
-                else if (messages == _data) {
                     return;
                 }
 
@@ -48,6 +45,7 @@
 
                 var boxItems = messages.map(function (message) {
                     var item = {
+                        id: message.id,
                         score: message.ambiguityScore,
                         label: message.label,
                         compareLabel: message.partnerLabel,
@@ -71,7 +69,7 @@
                 });
 
                 var binHeight = chartH / binCount;
-                var itemCountPerBinRow = (binHeight - boxSpacing) / (boxSpacing + boxSize);
+                var itemCountPerBinRow = Math.floor((binHeight - boxSpacing * 2) / (boxSpacing + boxSize));
 
                 var itemX = function (item) {
                     var colId = Math.floor(item.binIndex / itemCountPerBinRow);
@@ -106,6 +104,17 @@
                 var boxes = svg.select('.chart-group')
                     .attr({transform: 'translate(0,-10)'})
                     .selectAll('.box')
+                    .attr('opacity', function (item) {
+                        if (selectedMessage && selectedMessage.id == item.id) {
+                            return 1;
+                        }
+                        else {
+                            return 0.5;
+                        }
+                    })
+                    .attr('fill', function (item) {
+                        return color(item.label);
+                    })
                     .data(boxItems);
 
                 boxes.enter().append('rect')
@@ -119,9 +128,21 @@
                     .attr('width', boxSize)
                     .attr('y', itemY)
                     .attr('height', boxSize)
-                    .attr('data-value', JSON.stringify)
+                    //.attr('data-value', JSON.stringify)
                     .attr('fill', function (item) {
                         return color(item.label);
+                    })
+                    .attr('stroke-width', 2)
+                    .attr('stroke', function (item) {
+                        return color(item.compareLabel);
+                    })
+                    .attr('opacity', function (item) {
+                        if (selectedMessage && selectedMessage.id == item.id) {
+                            return 1;
+                        }
+                        else {
+                            return 0.5;
+                        }
                     });
 
                 boxes.exit().remove();
@@ -189,6 +210,7 @@
 
                 scope.$watch('selectedMessage', function (newVal, oldVal) {
                     chartElement.call(chart.selectedMessage(scope.selectedMessage));
+                    chartElement.datum(scope.messages).call(chart);
                 });
 
                 scope.$watch('height', function (d, i) {
