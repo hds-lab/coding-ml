@@ -77,6 +77,10 @@
                         <button class="btn btn-primary" ng-mousedown="saveMessageComment()">Save</button>
                         <button class="btn btn-default" ng-mousedown="resetMessageComment()">Reset</button>
                     </div>
+
+                    <div ng-repeat="comment in selectedMessageComments">
+                        <p>{$ comment.text $}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,11 +202,13 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="filterMenu">
-                                <li ng-repeat="(filterId, filterText) in availableFilters"><a ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
+                                <li ng-repeat="(filterId, filterText) in availableFilters"><a
+                                        ng-click="selectFilter(filterId)">{$ filterText $}</a></li>
                             </ul>
                         </div>
                         <div class="search-label">Search:</div>
-                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value" placeholder="Type in search keywords">
+                        <input ng-if="!searchModel.keyword" ng-model="searchModel.value"
+                               placeholder="Type in search keywords">
                         <div class="search-feature" ng-if="searchModel.keyword"
                              ng-style="{ 'border-color': Style.pillColor(searchModel.keyword.codeId) }">{$
                             searchModel.keyword.text $}

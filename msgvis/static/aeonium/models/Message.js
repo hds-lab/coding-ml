@@ -6,8 +6,8 @@
     //A service for message
     module.factory('Aeonium.models.Message', [
         '$http', 'djangoUrl', '$rootScope',
-        'Aeonium.models.Code', 'Aeonium.models.Utils',
-        function messageFactory($http, djangoUrl, $rootScope, Code, Utils) {
+        'Aeonium.models.Code', 'Aeonium.models.Utils', 'Aeonium.models.Partner',
+        function messageFactory($http, djangoUrl, $rootScope, Code, Utils, Partner) {
 
             var Message = function () {
                 var self = this;
@@ -209,12 +209,12 @@
                         });
                 },
 
-                saveComment: function (message) {
+                saveComment: function (message, commentText) {
                     var self = this;
                     var apiUrl = djangoUrl.reverse('comments');
 
                     var request = {
-                        text: message.comment,
+                        text: commentText,
                         message: message.id
                     };
 
@@ -222,6 +222,48 @@
                     return $http.post(apiUrl, request)
                         .success(function (data) {
                             $rootScope.$broadcast("Message::saveComment::saved", message);
+                        });
+                },
+
+                //class Comment {
+                // text: string;
+                // source: string; // user that made the comment
+                // time: Date; // time that comment is made
+                // label: number; // label for this item by the “source”
+                // }
+
+                getComments: function (message) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('comments');
+
+                    var request = {
+                        params: {
+                            message_id: message.id
+                        }
+                    };
+
+                    $rootScope.$broadcast("Message::getComments::loading");
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+
+                            // Extract comment details
+                            var comments = data.map(function (c) {
+                                var users = Partner.partners.filter(function (p) {
+                                    return p.id == c.source;
+                                });
+
+                                var username = "unknown";
+                                if (users && users.length > 0){
+                                    username = users[0].username;
+                                }
+                                return {
+                                    text: c.text,
+                                    source: username
+                                    // TODO (jinsuh): Need to get time and label
+                                }
+                            });
+
+                            $rootScope.$broadcast("Message::getComments::loaded", message.id, comments);
                         });
                 }
             });
