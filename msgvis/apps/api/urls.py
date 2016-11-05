@@ -13,6 +13,7 @@ api_root_urls = {
     'vector': url(r'^vector/(?P<message_id>[0-9]+)$', csrf_exempt(views.FeatureVectorView.as_view()), name='vector'),
     'feature_list': url(r'^feature/$', csrf_exempt(views.UserFeatureView.as_view()), name='feature_list'),
     'feature': url(r'^feature/(?P<feature_id>[0-9]+)/$', csrf_exempt(views.UserFeatureView.as_view()), name='feature'),
+    'comments': url(r'^comments/$', csrf_exempt(views.CommentView.as_view()), name='comments'),
     'distribution': url(r'^distribution/$', csrf_exempt(views.FeatureCodeDistributionView.as_view()), name='distribution'),
     'assignment': url(r'^assignment/(?P<message_id>[0-9]+)$', csrf_exempt(views.CodeAssignmentView.as_view()), name='assignment'),
     'definitions': url(r'^definition/$', csrf_exempt(views.CodeDefinitionView.as_view()), name='definitions'),

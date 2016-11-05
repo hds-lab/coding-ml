@@ -3,6 +3,8 @@ from django.db import models
 from django.db.models import Q
 from caching.base import CachingManager, CachingMixin
 
+from django.contrib.auth.models import User
+
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
@@ -326,6 +328,7 @@ class Message(models.Model):
                                "origin_message_id": message_id,
                                "origin_code_id": code_id })
         return vector
+
 
     @property
     def tokens(self):
