@@ -1,0 +1,8 @@
+<textarea class="message-comment"
+          ng-model="comment"
+          ng-enter="saveComment()"
+          placeholder="Type any comments you may have for this item and press enter"></textarea>
+
+<div ng-repeat="comment in commentHistory">
+    <p>{$ comment.text $}</p>
+</div>

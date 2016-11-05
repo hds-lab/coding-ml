@@ -33,6 +33,7 @@ from rest_framework.compat import get_resolver_match, OrderedDict
 
 from msgvis.apps.api import serializers
 from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
+from msgvis.apps.coding.utils import add_comment, get_comments_for_message
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -259,6 +260,56 @@ class FeatureVectorView(APIView):
 
             return Response("Dictionary not exist", status=status.HTTP_400_BAD_REQUEST)
 
+class CommentView(APIView):
+    """
+    Get or set comments
+
+    **Request:** ``GET /api/comments?message_id=<message_id>``
+    """
+
+
+    def get(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        if request.query_params.get('message_id'):
+            message_id = int(request.query_params.get('message_id'))
+            try:
+                comments = get_comments_for_message(message_id)
+                output = serializers.CommentSerializer(comments, many=True)
+
+                return Response(output.data, status=status.HTTP_200_OK)
+            except:
+                return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response("Please specify message id", status=status.HTTP_400_BAD_REQUEST)
+
+
+    def post(self, request, format=None):
+
+        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        input = serializers.CommentSerializer(data=request.data)
+        if input.is_valid():
+            data = input.validated_data
+
+            text = data["text"]
+            message = data["message"]
+
+            comment = add_comment(message, text, source=user)
+            output = serializers.CommentSerializer(comment)
+
+            return Response(output.data, status=status.HTTP_200_OK)
+
+        return Response(input.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    # def delete(self, request, feature_id, format=None):
+    #     pass
 
 class UserFeatureView(APIView):
     """

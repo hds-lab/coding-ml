@@ -21,6 +21,8 @@
         $scope.selectedMediaUrl = undefined; // string
         $scope.codeDefinitions = undefined; // Map<number, CodeDefinition>
         $scope.selectedCodeDefinition = undefined; // CodeDefinition
+        $scope.selectedMessageComments = []; // Comment[]
+        $scope.selectedCodeKeywords = undefined;
 
         // Comment
         $scope.selectedMessageComment = undefined; // string
@@ -97,14 +99,20 @@
             usSpinnerService.stop('labeling-view-spinner');
             if ($scope.selectedMessage.id == messageDetail.id) {
                 $scope.selectedMessageDetail = messageDetail;
-                $scope.selectedMessageComment = messageDetail.comment;
+                $scope.selectedMessageComment = "";
 
                 // If the message is already labeled, select the code
                 if (messageDetail.label >= 0 && $scope.codeDefinitions[messageDetail.label]) {
                     $scope.selectedCodeDefinition = $scope.codeDefinitions[messageDetail.label];
+                    $scope.selectedCodeKeywords = {
+                        systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                        myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                        partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+                    };
                 }
                 else {
                     $scope.selectedCodeDefinition = undefined;
+                    $scope.selectedCodeKeywords = undefined;
                 }
             }
         });
@@ -120,8 +128,15 @@
             if ($scope.selectedMessage.id == message.id) {
                 $scope.selectedMessageDetail = null;
                 $scope.selectedMessage = null;
+                $scope.selectedMessageComments = [];
 
                 $scope.getNextMessageToLabel();
+            }
+        });
+
+        $scope.$on('Message::getComments::loaded', function ($event, messageId, comments) {
+            if ($scope.selectedMessage && $scope.selectedMessage.id == messageId) {
+                $scope.selectedMessageComments = comments;
             }
         });
 
@@ -187,6 +202,7 @@
                 $scope.selectedMessageComment = null;
 
                 Message.getMessageDetail(message, Partner.selectedPartner.username);
+                Message.getComments(message);
             }
         };
 
@@ -198,6 +214,11 @@
         $scope.selectCode = function (codeDefinition) {
             History.add_record("selectLabel", {code: codeDefinition});
             $scope.selectedCodeDefinition = codeDefinition;
+            $scope.selectedCodeKeywords = {
+                systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+            };
         };
 
         $scope.submitLabel = function () {
@@ -210,8 +231,7 @@
         };
 
         $scope.saveMessageComment = function () {
-            $scope.selectedMessage.comment = $scope.selectedMessageComment;
-            Message.saveComment($scope.selectedMessage);
+            Message.saveComment($scope.selectedMessage, $scope.selectedMessageComment);
 
         };
 
