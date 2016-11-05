@@ -22,6 +22,7 @@
         $scope.codeDefinitions = undefined; // Map<number, CodeDefinition>
         $scope.selectedCodeDefinition = undefined; // CodeDefinition
         $scope.selectedMessageComments = []; // Comment[]
+        $scope.selectedCodeKeywords = undefined;
 
         // Comment
         $scope.selectedMessageComment = undefined; // string
@@ -103,9 +104,15 @@
                 // If the message is already labeled, select the code
                 if (messageDetail.label >= 0 && $scope.codeDefinitions[messageDetail.label]) {
                     $scope.selectedCodeDefinition = $scope.codeDefinitions[messageDetail.label];
+                    $scope.selectedCodeKeywords = {
+                        systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                        myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                        partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+                    };
                 }
                 else {
                     $scope.selectedCodeDefinition = undefined;
+                    $scope.selectedCodeKeywords = undefined;
                 }
             }
         });
@@ -128,7 +135,7 @@
         });
 
         $scope.$on('Message::getComments::loaded', function ($event, messageId, comments) {
-            if ($scope.selectedMessage && $scope.selectedMessage.id == messageId){
+            if ($scope.selectedMessage && $scope.selectedMessage.id == messageId) {
                 $scope.selectedMessageComments = comments;
             }
         });
@@ -207,6 +214,11 @@
         $scope.selectCode = function (codeDefinition) {
             History.add_record("selectLabel", {code: codeDefinition});
             $scope.selectedCodeDefinition = codeDefinition;
+            $scope.selectedCodeKeywords = {
+                systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+            };
         };
 
         $scope.submitLabel = function () {
