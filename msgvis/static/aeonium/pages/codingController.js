@@ -176,20 +176,17 @@
         };
 
         $scope.viewMessageDetail = function (message) {
-            if (!$scope.selectedMessage || $scope.selectedMessage.id != message.id) {
+            // Check to see if there's unsaved comment
+            if ($scope.enableCommentSave()) {
+                $scope.showSaveComment = true;
+                $scope.nextMessageOnSaveComment = message;
+            }
+            else {
+                $scope.selectedMessage = message;
+                $scope.selectedMessageDetail = null;
+                $scope.selectedMessageComment = null;
 
-                // Check to see if there's unsaved comment
-                if ($scope.enableCommentSave()) {
-                    $scope.showSaveComment = true;
-                    $scope.nextMessageOnSaveComment = message;
-                }
-                else {
-                    $scope.selectedMessage = message;
-                    $scope.selectedMessageDetail = null;
-                    $scope.selectedMessageComment = null;
-
-                    Message.getMessageDetail(message, Partner.selectedPartner.username);
-                }
+                Message.getMessageDetail(message, Partner.selectedPartner.username);
             }
         };
 

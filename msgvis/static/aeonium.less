@@ -14,6 +14,7 @@
 @coding-top-labeling-height: 140px;
 @review-top-height: 145px;
 @review-bottom-bar-height: 0px;
+@list-view-width: 200px;
 
 html, body {
   width: 100%;
@@ -428,7 +429,7 @@ h3 {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 100px;
+    width: @list-view-width;
     background: white;
     overflow-y: auto;
 
@@ -457,7 +458,7 @@ h3 {
 
   #labeling-view {
     position: absolute;
-    left: 100px;
+    left: @list-view-width;
     top: 0;
     bottom: 0;
     width: calc(50% ~ "-" 50px);

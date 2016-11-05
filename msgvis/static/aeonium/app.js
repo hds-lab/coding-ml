@@ -10,6 +10,7 @@
     var app = angular
         .module('Aeonium', [
             'Aeonium.controllers',
+            'Aeonium.charts',
             'ngCookies',
             'ngDragDrop',
             'ngAnimate',

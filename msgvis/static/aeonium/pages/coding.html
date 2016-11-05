@@ -4,14 +4,14 @@
         <div class="box" id="list-view">
             <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
-            <div ng-repeat="message in allMessages"
-                 class="btn btn-pill"
-                 ng-click="viewMessageDetail(message)"
-                 ng-show="codeDefinitions"
-                 ng-class="{'selected': selectedMessage.id == message.id}"
-                 ng-style="Style.pillColor(message.label)"
-                 ng-attr-title="{$ message.time  | date:'MM/dd/yyyy @ h:mma' $}">
-            </div>
+
+            <mini-list-view
+                    height="800"
+                    messages="allMessages"
+                    selected-message="selectedMessage"
+                    sort-messages="sortMessages(args)"
+                    select-message="viewMessageDetail(args)">
+            </mini-list-view>
         </div>
         <div class="box" id="labeling-view">
             <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>

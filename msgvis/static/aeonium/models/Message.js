@@ -81,7 +81,11 @@
                                     html: d.message.embedded_html,
                                     mediaUrl: d.message.media_url,
                                     text: d.message.text,
-                                    time: Date.parse(d.message.time)
+                                    time: Date.parse(d.message.time),
+
+                                    // TODO (jinsuh): Get the real ambiguity score and partner label
+                                    ambiguityScore: Math.random(),
+                                    partnerLabel: Math.floor(Math.random() * 3)
                                 };
                             });
 
@@ -92,7 +96,7 @@
                             var minTime = self.allMessages[0].time;
                             var maxTime = self.allMessages[self.allMessages.length - 1].time;
 
-                            var size = self.allMessages.length * 10;
+                            var size = self.allMessages.length;
                             for (var i = 0; i < size; i++) {
                                 self.allMessages.push({
                                     id: 123 + i,
@@ -104,7 +108,11 @@
                                     html: "testing",
                                     mediaUrl: null,
                                     text: "testing",
-                                    time: Utils.getRandomNumber(minTime, maxTime)
+                                    time: Utils.getRandomNumber(minTime, maxTime),
+
+                                    // TODO (jinsuh): Get the real ambiguity score and partner label
+                                    ambiguityScore: Math.random(),
+                                    partnerLabel: Math.floor(Math.random() * 3)
                                 });
                             }
 
