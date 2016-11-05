@@ -28,8 +28,13 @@
         $scope.Dictionary = Dictionary;
         $scope.partners = [];
         $scope.selectedPartner = undefined;
+        $scope.currentUser = undefined;
 
         // Event handlers
+        $scope.$on('Partner::getCurrentUser::loaded', function ($event, user) {
+            $scope.currentUser = user;
+        });
+
         $scope.$on('Partner::getPartners::loaded', function ($event, partners) {
             $scope.partners = partners;
         });
@@ -41,6 +46,7 @@
         // View methods
         $scope.initializeController = function () {
             Partner.getPartners();
+            Partner.getCurrentUser();
         };
 
         $scope.selectPartner = function (partner) {
