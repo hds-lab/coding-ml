@@ -210,11 +210,19 @@
                 },
 
                 saveComment: function (message) {
-                    // TODO
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('comments');
+
+                    var request = {
+                        text: message.comment,
+                        message: message.id
+                    };
+
                     $rootScope.$broadcast("Message::saveComment::saving");
-                    setTimeout(function () {
-                        $rootScope.$broadcast("Message::saveComment::saved", message);
-                    }, 500);
+                    return $http.post(apiUrl, request)
+                        .success(function (data) {
+                            $rootScope.$broadcast("Message::saveComment::saved", message);
+                        });
                 }
             });
 
