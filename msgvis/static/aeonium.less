@@ -455,12 +455,24 @@ h3 {
     }
   }
 
-  #labeling-view {
+  #main-area {
     position: absolute;
     left: @list-view-width;
     top: 0;
+    right: 0;
     bottom: 0;
-    width: calc(50% ~ "-" 50px);
+  }
+
+  #expanded-list-view {
+    background: #eee;
+    position: absolute;
+    left: @list-view-width;
+    top: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  #labeling-view {
     background: #eee;
 
     .message-item {
@@ -552,11 +564,9 @@ h3 {
   }
 
   #code-detail-view {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: calc(50% ~ "-" 50px);
+    position: relative;
+    width: 50%;
+    height: 100%;
     background: white;
 
     .box {
