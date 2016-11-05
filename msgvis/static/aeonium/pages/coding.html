@@ -93,25 +93,11 @@
             <div class="box" ng-show="selectedCodeDefinition"
                  ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
                 <div class="box-section">
-                    <h2>Definitions for {$ selectedCodeDefinition.name $}</h2>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h3>Master definition</h3>
-                            <p>{$ selectedCodeDefinition.masterDescription.text $}</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h3>My definition</h3>
-                            <p>{$ selectedCodeDefinition.userDescription.text $}</p>
-                            <p ng-hide="selectedCodeDefinition.userDescription.text && selectedCodeDefinition.userDescription.text.length > 0"
-                               class="help-text">You have not provided a definition yet.</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h3>Partner definition</h3>
-                            <p>{$ selectedCodeDefinition.partnerDescription.text $}</p>
-                            <p ng-hide="selectedCodeDefinition.partnerDescription.text && selectedCodeDefinition.partnerDescription.text.length > 0"
-                               class="help-text">Your partner has not provided a definition yet.</p>
-                        </div>
-                    </div>
+                    <definitions
+                            master-definition="selectedCodeDefinition.masterDescription.text"
+                            my-definition="selectedCodeDefinition.userDescription.text"
+                            partner-definition="selectedCodeDefinition.partnerDescription.text"
+                            code-name="selectedCodeDefinition.name"></definitions>
                 </div>
                 <div class="box-section">
                     <keywords

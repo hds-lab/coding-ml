@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var module = angular.module('Aeonium.components', []);
+    var module = angular.module('Aeonium.components');
 
     var KeywordsController = function ($scope, Style) {
         $scope.Style = Style;
