@@ -20,7 +20,7 @@ django-docs
 
 # utils
 path.py
-django-extensions==1.6.2
+django-extensions
 dj-database-url
 django-widget-tweaks
 -e git+https://github.com/michaelbrooks/django-twitter-stream.git#egg=django-twitter-stream

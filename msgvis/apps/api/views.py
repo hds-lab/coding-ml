@@ -33,7 +33,7 @@ from rest_framework.compat import get_resolver_match, OrderedDict
 
 from msgvis.apps.api import serializers
 from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
-from msgvis.apps.coding.utils import add_comment, get_comments_for_message
+from msgvis.apps.coding.utils import add_comment
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
@@ -264,26 +264,12 @@ class CommentView(APIView):
     """
     Get or set comments
 
-    **Request:** ``GET /api/comments?message_id=<message_id>``
+    **Request:** ``GET /api/comments``
     """
 
 
-    def get(self, request, format=None):
-
-        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
-            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
-
-        if request.query_params.get('message_id'):
-            message_id = int(request.query_params.get('message_id'))
-            try:
-                comments = get_comments_for_message(message_id)
-                output = serializers.CommentSerializer(comments, many=True)
-
-                return Response(output.data, status=status.HTTP_200_OK)
-            except:
-                return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
-
-        return Response("Please specify message id", status=status.HTTP_400_BAD_REQUEST)
+    # def get(self, request, format=None):
+    #     pass
 
 
     def post(self, request, format=None):
@@ -788,45 +774,6 @@ class AllCodedMessageView(APIView):
             pdb.set_trace()
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
-
-class SomeMessageView(APIView):
-    """
-    Get some the messages for users -- this is a temporary API to be used in the list on the coding interface.
-     It should be removed or replace once the list related APIs are done.
-
-    **Request:** ``GET /some_messages/``
-    """
-
-    def get(self, request, format=None):
-
-        if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
-            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = User.objects.get(id=self.request.user.id)
-
-            try:
-                if user.experiment_connection:
-                    experiment = user.experiment_connection.experiment
-
-            except experiment_models.UserExperimentConnect.DoesNotExist:
-                if user.pair.exists():
-                    experiment = user.pair.first().assignment.experiment
-
-            # get 100 messages
-            messages = experiment.dictionary.dataset.get_message_set()[:100]
-
-            output = serializers.MessageSerializer(messages, many=True)
-            return Response(output.data, status=status.HTTP_200_OK)
-
-        except:
-            import traceback
-            traceback.print_exc()
-            import pdb
-            pdb.set_trace()
-
-            return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
-
 
 class DisagreementIndicatorView(APIView):
     """

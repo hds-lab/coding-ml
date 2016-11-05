@@ -59,12 +59,11 @@
                             //});
                             self.partners = data;
 
+                            $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
+
                             if (self.partners && self.partners.length > 0) {
                                 self.selectPartner(self.partners[0]);
                             }
-                            $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
-
-
                         });
 
                 },
