@@ -5,3 +5,4 @@ from msgvis.apps.coding import models
 admin.site.register(models.CodeAssignment)
 admin.site.register(models.CodeDefinition)
 admin.site.register(models.DisagreementIndicator)
+admin.site.register(models.Comment)
