@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="{% static 'bower/c3/c3.css' %}">
     <link rel="stylesheet" href="{% static 'aeonium.less' %}" type="text/less">
 
+
+
 {% endblock %}
 
 {% block js %}
@@ -55,6 +57,7 @@
 {% endblock %}
 
 {% block navigation_bar %}
+
 {% endblock %}
 
 {% block bootstrapping %}
@@ -68,6 +71,7 @@
                 .constant('Aeonium.bootstrap.dictionary', {{ object.dictionary.pk }});
 
     </script>
+    <script src="{% static 'aeonium/pages/activeTab.js' %}"></script>
 
 {% endblock %}
 
@@ -92,10 +96,10 @@
                 </div>
 
                 <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <div class="collapse navbar-collapse" >
                     <ul class="nav navbar-nav">
-                        <li><a href="/aeonium/#/coding">Coding</a></li>
-                        <li><a href="/aeonium/#/review">Review</a></li>
+                        <li><a  href="/aeonium/#/coding" id="codingB">Coding</a></li>
+                        <li><a  href="/aeonium/#/review" id="reviewB">Review</a></li>
                         <li ng-if="partners">
                             <div class="btn-group">
                                 <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
