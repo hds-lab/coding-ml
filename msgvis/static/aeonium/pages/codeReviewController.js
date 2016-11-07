@@ -5,7 +5,7 @@
 
     var CodeReviewController = function ($scope, $timeout, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
 
-        // codeId and codeDefinition will be passed into this controller by its parent
+        // codeDefinition will be passed into this controller by its parent
 
         // Helpers
         $scope.Style = Style;

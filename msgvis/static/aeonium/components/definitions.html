@@ -1,0 +1,19 @@
+<h2>Definitions for {$ codeName $}</h2>
+<div class="row">
+    <div class="col-md-4">
+        <h3>Master definition</h3>
+        <p>{$ masterDefinition $}</p>
+    </div>
+    <div class="col-md-4">
+        <h3>My definition</h3>
+        <p>{$ myDefinition $}</p>
+        <p ng-hide="myDefinition && myDefinition.length > 0"
+           class="help-text">You have not provided a definition yet.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>Partner definition</h3>
+        <p>{$ partnerDefinition $}</p>
+        <p ng-hide="partnerDefinition && partnerDefinition.length > 0"
+           class="help-text">Your partner has not provided a definition yet.</p>
+    </div>
+</div>

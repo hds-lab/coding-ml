@@ -10,16 +10,37 @@
 
             var Partner = function () {
                 var self = this;
-                self.selectedPartner = undefined; // Partner
-                self.partners = []; // Partner[]
+                self.currentUser = undefined; // User
+                self.selectedPartner = undefined; // User
+                self.partners = []; // User[]
             };
 
-            //class Partner {
+            //class User {
             //	id: number;
             //	username: string;
             //}
 
             angular.extend(Partner.prototype, {
+                getCurrentUser: function () {
+                  var self = this;
+
+                    var apiUrl = djangoUrl.reverse('user');
+
+                    var request = {
+                        params: {
+                        }
+                    };
+
+                    $rootScope.$broadcast("Partner::getCurrentUser::loading");
+
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+                            self.currentUser = data;
+
+                            $rootScope.$broadcast("Partner::getCurrentUser::loaded", self.currentUser);
+                        });
+                },
+
                 getPartners: function () {
                     var self = this;
 
@@ -33,22 +54,6 @@
 
                     $rootScope.$broadcast("Partner::getPartners::loading");
 
-                    /*window.setTimeout(function () {
-                        var partners = [];
-                        for (var i = 0; i < 5; i++) {
-                            partners.push({
-                                id: i,
-                                username: "foobar_" + i
-                            });
-                        }
-
-                        self.partners = partners;
-                        $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
-
-                        self.selectPartner(partners[0]);
-                    }, 500);
-                    */
-
                     return $http.get(apiUrl, request)
                         .success(function (data) {
                             //self.partners = data.map(function (d) {
@@ -59,17 +64,16 @@
                             //});
                             self.partners = data;
 
+                            $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
+
                             if (self.partners && self.partners.length > 0) {
                                 self.selectPartner(self.partners[0]);
                             }
-                            $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
-
-
                         });
 
                 },
 
-                // partner: Partner
+                // partner: User
                 selectPartner: function (partner) {
                     var self = this;
                     if (self.partners && self.selectPartner != partner) {

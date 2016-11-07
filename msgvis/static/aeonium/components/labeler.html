@@ -1,0 +1,32 @@
+<div class="message-item">
+    <div class="btn btn-image"
+         ng-show="messageDetail.mediaUrl && messageDetail.mediaUrl.length > 0"
+         data-toggle="modal" data-target="#image-modal"
+         ng-click="openMedia(messageDetail.mediaUrl)">
+        <img class="img-responsive center-block" ng-src="{$ messageDetail.mediaUrl $}">
+    </div>
+
+    <div class="message-text">
+        <span ng-repeat="char in messageDetail.characters track by $index"
+              ng-style="Style.charStyle(messageDetail, $index)">{$ char $}</span>
+    </div>
+</div>
+
+<div class="message-label-submit">
+    <div class="btn btn-default" ng-repeat="(codeId, codeDefinition) in codeDefinitions"
+         ng-click="selectCode(codeDefinition)"
+         ng-class="{'active': codeDefinition == selectedCodeDefinition}"
+         ng-style="Style.buttonStyle(codeDefinition.codeId, selectedCodeDefinition.codeId)">
+        <div class="code-name">{$ codeDefinition.name $}</div>
+    </div>
+
+    <div class="message-toggle-item">
+        <div class='btn btn-toggle' ng-class="{'active': messageDetail.isAmbiguous}"
+             ng-click="messageDetail.isAmbiguous=!messageDetail.isAmbiguous"
+             data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
+        <span> Mark as an ambiguous item</span>
+    </div>
+    <button class="btn btn-default" ng-disabled="!selectedCodeDefinition" ng-click="submitLabel()">
+        Submit Code
+    </button>
+</div>

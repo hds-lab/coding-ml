@@ -13,7 +13,6 @@
 
         // View states
         $scope.allMessages = []; // Message[]
-        $scope.someMessages = []; // Message[] // TODO: remove this hack
         $scope.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
 
         // Selected message
@@ -22,6 +21,11 @@
         $scope.selectedMediaUrl = undefined; // string
         $scope.codeDefinitions = undefined; // Map<number, CodeDefinition>
         $scope.selectedCodeDefinition = undefined; // CodeDefinition
+        $scope.selectedMessageComments = []; // Comment[]
+        $scope.selectedCodeKeywords = undefined;
+
+        // List view
+        $scope.showExpandedListView = false;
 
         // Comment
         $scope.selectedMessageComment = undefined; // string
@@ -63,36 +67,14 @@
         });
 
         $scope.$on('Message::allMessages::loading', function ($event) {
-            // TODO: uncomment this line
-            //usSpinnerService.spin('list-view-spinner');
+            usSpinnerService.spin('list-view-spinner');
         });
 
         $scope.$on('Message::allMessages::loaded', function ($event, messages) {
             $scope.allMessages = messages; // Message[]
-            // TODO: uncomment this line
-            //usSpinnerService.stop('list-view-spinner');
-
-            //class Message {
-            //	id: number;
-            //	label: number;
-            //	source: string;
-            //	isAmbiguous: boolean;
-            //	isSaved: boolean;
-            //	isExample: boolean;
-            //}
-        });
-
-
-        // TODO: remove this hack
-        $scope.$on('Message::someMessages::loading', function ($event) {
-            usSpinnerService.spin('list-view-spinner');
-        });
-
-        // TODO: remove this hack
-        $scope.$on('Message::someMessages::loaded', function ($event, messages) {
-            $scope.someMessages = messages; // Message[]
             usSpinnerService.stop('list-view-spinner');
 
+            $scope.getNextMessageToLabel();
             //class Message {
             //	id: number;
             //	label: number;
@@ -120,14 +102,20 @@
             usSpinnerService.stop('labeling-view-spinner');
             if ($scope.selectedMessage.id == messageDetail.id) {
                 $scope.selectedMessageDetail = messageDetail;
-                $scope.selectedMessageComment = messageDetail.comment;
+                $scope.selectedMessageComment = "";
 
                 // If the message is already labeled, select the code
                 if (messageDetail.label >= 0 && $scope.codeDefinitions[messageDetail.label]) {
                     $scope.selectedCodeDefinition = $scope.codeDefinitions[messageDetail.label];
+                    $scope.selectedCodeKeywords = {
+                        systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                        myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                        partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+                    };
                 }
                 else {
                     $scope.selectedCodeDefinition = undefined;
+                    $scope.selectedCodeKeywords = undefined;
                 }
             }
         });
@@ -143,6 +131,15 @@
             if ($scope.selectedMessage.id == message.id) {
                 $scope.selectedMessageDetail = null;
                 $scope.selectedMessage = null;
+                $scope.selectedMessageComments = [];
+
+                $scope.getNextMessageToLabel();
+            }
+        });
+
+        $scope.$on('Message::getComments::loaded', function ($event, messageId, comments) {
+            if ($scope.selectedMessage && $scope.selectedMessage.id == messageId) {
+                $scope.selectedMessageComments = comments;
             }
         });
 
@@ -173,11 +170,10 @@
             usSpinnerService.stop('code-detail-view-spinner');
             usSpinnerService.stop('page-spinner');
 
-            Message.getSomeMessages();
             Message.getAllMessages(Partner.selectedPartner.username);
             Feature.getAllFeatures(Partner.selectedPartner.username);
 
-            for (var codeId in codeDefinitions){
+            for (var codeId in codeDefinitions) {
                 $scope.userCodedMessages[codeId] = [];
                 Message.getCodedMessages(codeId, Partner.selectedPartner.username);
             }
@@ -198,20 +194,18 @@
         };
 
         $scope.viewMessageDetail = function (message) {
-            if (!$scope.selectedMessage || $scope.selectedMessage.id != message.id) {
+            // Check to see if there's unsaved comment
+            if ($scope.enableCommentSave()) {
+                $scope.showSaveComment = true;
+                $scope.nextMessageOnSaveComment = message;
+            }
+            else {
+                $scope.selectedMessage = message;
+                $scope.selectedMessageDetail = null;
+                $scope.selectedMessageComment = null;
 
-                // Check to see if there's unsaved comment
-                if ($scope.enableCommentSave()) {
-                    $scope.showSaveComment = true;
-                    $scope.nextMessageOnSaveComment = message;
-                }
-                else {
-                    $scope.selectedMessage = message;
-                    $scope.selectedMessageDetail = null;
-                    $scope.selectedMessageComment = null;
-
-                    Message.getMessageDetail(message, Partner.selectedPartner.username);
-                }
+                Message.getMessageDetail(message, Partner.selectedPartner.username);
+                Message.getComments(message);
             }
         };
 
@@ -223,6 +217,11 @@
         $scope.selectCode = function (codeDefinition) {
             History.add_record("selectLabel", {code: codeDefinition});
             $scope.selectedCodeDefinition = codeDefinition;
+            $scope.selectedCodeKeywords = {
+                systemKeywords: $scope.getKeywordsForSelectedCode($scope.systemKeywords),
+                myKeywords: $scope.getKeywordsForSelectedCode($scope.userKeywords),
+                partnerKeywords: $scope.getKeywordsForSelectedCode($scope.partnerKeywords)
+            };
         };
 
         $scope.submitLabel = function () {
@@ -235,8 +234,7 @@
         };
 
         $scope.saveMessageComment = function () {
-            $scope.selectedMessage.comment = $scope.selectedMessageComment;
-            Message.saveComment($scope.selectedMessage);
+            Message.saveComment($scope.selectedMessage, $scope.selectedMessageComment);
 
         };
 
@@ -315,6 +313,18 @@
                 }
 
                 return matched && flagged;
+            }
+        };
+
+        $scope.getNextMessageToLabel = function () {
+            if ($scope.allMessages) {
+                var uncodedMessages = $scope.allMessages.filter(function (message) {
+                    return message.label == Utils.UNCODED_CODE_ID;
+                });
+
+                if (uncodedMessages.length > 0) {
+                    $scope.viewMessageDetail(uncodedMessages[0]);
+                }
             }
         };
 

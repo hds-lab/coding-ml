@@ -6,13 +6,12 @@
     //A service for message
     module.factory('Aeonium.models.Message', [
         '$http', 'djangoUrl', '$rootScope',
-        'Aeonium.models.Code', 'Aeonium.models.Utils',
-        function messageFactory($http, djangoUrl, $rootScope, Code, Utils) {
+        'Aeonium.models.Code', 'Aeonium.models.Utils', 'Aeonium.models.Partner',
+        function messageFactory($http, djangoUrl, $rootScope, Code, Utils, Partner) {
 
             var Message = function () {
                 var self = this;
                 self.allMessages = []; // Message[]
-                self.someMessages = []; // Message[]
                 self.userCodedMessages = {}; // Map<number, MessageDetail[]> keyed by codeId
             };
 
@@ -27,6 +26,7 @@
             //  html: string;
             //  mediaUrl: string;
             //	text: string;
+            //  time: Date;
             //}
 
             //class MessageDetail extends MessageData {
@@ -53,46 +53,11 @@
 
 
             angular.extend(Message.prototype, {
-                 // partnerUserName: string
-                getSomeMessages: function () {
-                    var self = this;
-
-                    // TODO: this needs all messages, not just coded ones
-                    // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
-                    var apiUrl = djangoUrl.reverse('some_messages');
-
-                    var request = {
-                        params: {
-
-                        }
-                    };
-                    $rootScope.$broadcast("Message::someMessages::loading");
-                    return $http.get(apiUrl, request)
-                        .success(function (data) {
-                            self.someMessages = data.map(function (d) {
-                                return {
-                                    //id: d.message.id,
-                                    id: d.id,  // TODO: [NC] this is a temporary way to keep the list
-                                    //label: d.code,
-                                    //source: d.source,
-                                    //isAmbiguous: d.is_ambiguous,
-                                    //isSaved: d.is_saved,
-                                    //isExample: d.is_example,
-                                    //html: d.message.embedded_html,
-                                    //mediaUrl: d.message.media_url,
-                                    //text: d.message.text
-                                };
-                            });
-                            $rootScope.$broadcast("Message::someMessages::loaded", self.someMessages);
-                        });
-
-                },
                 // partnerUserName: string
                 getAllMessages: function (partnerUserName) {
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
-                    // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
                     var apiUrl = djangoUrl.reverse('all_coded_messages');
 
                     var request = {
@@ -115,9 +80,43 @@
                                     isExample: d.is_example,
                                     html: d.message.embedded_html,
                                     mediaUrl: d.message.media_url,
-                                    text: d.message.text
+                                    text: d.message.text,
+                                    time: Date.parse(d.message.time),
+
+                                    // TODO (jinsuh): Get the real ambiguity score and partner label
+                                    ambiguityScore: Math.random(),
+                                    partnerLabel: Math.floor(Math.random() * 3)
                                 };
                             });
+
+                            // TODO (jinsuh): Need to get timestamp from service. Is the timestamp the time it was labeled or time the message was created?
+                            // TODO (jinsuh): Add a bunch of unlabeled items
+
+                            self.allMessages.sort(Utils.sortMessageByTime);
+                            var minTime = self.allMessages[0].time;
+                            var maxTime = self.allMessages[self.allMessages.length - 1].time;
+
+                            var size = self.allMessages.length;
+                            for (var i = 0; i < size; i++) {
+                                self.allMessages.push({
+                                    id: 123 + i,
+                                    label: Utils.UNCODED_CODE_ID,
+                                    source: null,
+                                    isAmbiguous: false,
+                                    isSaved: false,
+                                    isExample: false,
+                                    html: "testing",
+                                    mediaUrl: null,
+                                    text: "testing",
+                                    time: Utils.getRandomNumber(minTime, maxTime),
+
+                                    // TODO (jinsuh): Get the real ambiguity score and partner label
+                                    ambiguityScore: Math.random(),
+                                    partnerLabel: Math.floor(Math.random() * 3)
+                                });
+                            }
+
+                            self.allMessages.sort(Utils.sortMessageByTime);
 
                             $rootScope.$broadcast("Message::allMessages::loaded", self.allMessages);
                         });
@@ -175,11 +174,7 @@
                         .success(function (data) {
                             // Label information is in Message, and message detail only contains text info
                             var messageDetail = Utils.extractMessageDetail(data);
-                            var messageWithLabel = self.allMessages.filter(function (m) {return m.id == message.id;});
-                            if (messageWithLabel.length > 0) {
-                                angular.extend(messageDetail, messageWithLabel[0]);
-                            }
-                             
+                            angular.extend(messageDetail, message);
                             $rootScope.$broadcast("Message::messageDetail::loaded", messageDetail);
                         });
 
@@ -214,12 +209,62 @@
                         });
                 },
 
-                saveComment: function (message) {
-                    // TODO
+                saveComment: function (message, commentText) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('comments');
+
+                    var request = {
+                        text: commentText,
+                        message: message.id
+                    };
+
                     $rootScope.$broadcast("Message::saveComment::saving");
-                    setTimeout(function () {
-                        $rootScope.$broadcast("Message::saveComment::saved", message);
-                    }, 500);
+                    return $http.post(apiUrl, request)
+                        .success(function (data) {
+                            $rootScope.$broadcast("Message::saveComment::saved", message, data);
+                        });
+                },
+
+                //class Comment {
+                // text: string;
+                // source: string; // user that made the comment
+                // time: Date; // time that comment is made
+                // label: number; // label for this item by the “source”
+                // }
+
+                getComments: function (message) {
+                    var self = this;
+                    var apiUrl = djangoUrl.reverse('comments');
+
+                    var request = {
+                        params: {
+                            message_id: message.id
+                        }
+                    };
+
+                    $rootScope.$broadcast("Message::getComments::loading");
+                    return $http.get(apiUrl, request)
+                        .success(function (data) {
+
+                            // Extract comment details
+                            var comments = data.map(function (c) {
+                                var users = Partner.partners.filter(function (p) {
+                                    return p.id == c.source;
+                                });
+
+                                var username = "unknown";
+                                if (users && users.length > 0){
+                                    username = users[0].username;
+                                }
+                                return {
+                                    text: c.text,
+                                    source: username
+                                    // TODO (jinsuh): Need to get time and label
+                                }
+                            });
+
+                            $rootScope.$broadcast("Message::getComments::loaded", message.id, comments);
+                        });
                 }
             });
 
