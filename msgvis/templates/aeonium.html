@@ -107,19 +107,7 @@
                     <ul class="nav navbar-nav">
                         <li><a href="/aeonium/#/coding">Coding</a></li>
                         <li><a href="/aeonium/#/review">Review</a></li>
-                        <li ng-if="partners">
-                            <div class="btn-group">
-                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <span>{$ selectedPartner.username $}</span>
-                                    <span class="caret"></span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li ng-repeat="partner in partners">
-                                        <a ng-click="selectPartner(partner)">{$ partner.username $}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
+
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">
@@ -133,6 +121,19 @@
 
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
         <div ng-view id="content"></div>
+         <footer>
+            <div ng-controller="Aeonium.controllers.DictionaryController">
+                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                    <span>{$ selectedPartner.username $}</span>
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li ng-repeat="partner in partners">
+                        <a ng-click="selectPartner(partner)">{$ partner.username $}</a>
+                    </li>
+                </ul>
+            </div>
+        </footer>
     </div>
 {% endblock %}
 {% block footer %}
