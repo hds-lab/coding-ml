@@ -1,0 +1,9 @@
+<h2>All Messages</h2>
+<div ng-repeat="message in allMessages"
+     class="label-item"
+     ng-style="{ 'border-color': Style.codeColor(message.label) }">
+
+    <div class="content">
+        <p>{$ message.text $}</p>
+    </div>
+</div>

@@ -24,6 +24,9 @@
         $scope.selectedMessageComments = []; // Comment[]
         $scope.selectedCodeKeywords = undefined;
 
+        // List view
+        $scope.showExpandedListView = false;
+
         // Comment
         $scope.selectedMessageComment = undefined; // string
         $scope.showSaveComment = false; // boolean

@@ -5,6 +5,10 @@
             <span us-spinner="Style.spinnerOptions" spinner-key="list-view-spinner"></span>
             <h2>List</h2>
 
+            <button type="button"
+                    class="btn btn-default"
+                    ng-click="showExpandedListView=!showExpandedListView">Toggle Expanded List View
+            </button>
             <mini-list-view
                     height="800"
                     messages="allMessages"
@@ -13,48 +17,57 @@
                     select-message="viewMessageDetail(args)">
             </mini-list-view>
         </div>
-        <div class="box" id="labeling-view">
-            <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>
-            <h2>Coding</h2>
-            <div ng-show="!selectedMessageDetail">
-                Select an item to label.
+        <div id="main-area">
+            <div class="box col-md-6" id="labeling-view">
+                <span us-spinner="Style.spinnerOptions" spinner-key="labeling-view-spinner"></span>
+                <h2>Coding</h2>
+                <div ng-show="!selectedMessageDetail">
+                    Select an item to label.
+                </div>
+                <div ng-show="selectedMessageDetail">
+                    <labeler
+                            code-definitions="codeDefinitions"
+                            selected-code-definition="selectedCodeDefinition"
+                            message-detail="selectedMessageDetail"
+                            on-code-selected="selectCode(codeDefinition)"
+                            on-submit="submitLabel()"
+                            on-open-media="openMedia(mediaUrl)"></labeler>
+                    <comments
+                            message="selectedMessage"></comments>
+                </div>
             </div>
-            <div ng-show="selectedMessageDetail">
-                <labeler
-                        code-definitions="codeDefinitions"
-                        selected-code-definition="selectedCodeDefinition"
-                        message-detail="selectedMessageDetail"
-                        on-code-selected="selectCode(codeDefinition)"
-                        on-submit="submitLabel()"
-                        on-open-media="openMedia(mediaUrl)"></labeler>
-                <comments
-                        message="selectedMessage"></comments>
+            <div class="col-md-6" id="code-detail-view">
+                <span us-spinner="Style.spinnerOptions" spinner-key="code-detail-view-spinner"></span>
+                <div class="box" ng-show="!selectedCodeDefinition">
+                    <h2>Code Detail</h2>
+                    <div>Select a message and a code to view details</div>
+                </div>
+                <div class="box" ng-show="selectedCodeDefinition"
+                     ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
+                    <div class="box-section">
+                        <definitions
+                                master-definition="selectedCodeDefinition.masterDescription.text"
+                                my-definition="selectedCodeDefinition.userDescription.text"
+                                partner-definition="selectedCodeDefinition.partnerDescription.text"
+                                code-name="selectedCodeDefinition.name"></definitions>
+                    </div>
+                    <div class="box-section">
+                        <keywords
+                                system-keywords="selectedCodeKeywords.systemKeywords"
+                                my-keywords="selectedCodeKeywords.myKeywords"
+                                partner-keywords="selectedCodeKeywords.partnerKeywords"
+                                code-definitions="codeDefinitions"
+                                code-name="selectedCodeDefinition.name"></keywords>
+                    </div>
+                </div>
             </div>
         </div>
-        <div id="code-detail-view">
-            <span us-spinner="Style.spinnerOptions" spinner-key="code-detail-view-spinner"></span>
-            <div class="box" ng-show="!selectedCodeDefinition">
-                <h2>Code Detail</h2>
-                <div>Select a message and a code to view details</div>
-            </div>
-            <div class="box" ng-show="selectedCodeDefinition"
-                 ng-style="Style.definitionStyle(selectedCodeDefinition.codeId)">
-                <div class="box-section">
-                    <definitions
-                            master-definition="selectedCodeDefinition.masterDescription.text"
-                            my-definition="selectedCodeDefinition.userDescription.text"
-                            partner-definition="selectedCodeDefinition.partnerDescription.text"
-                            code-name="selectedCodeDefinition.name"></definitions>
-                </div>
-                <div class="box-section">
-                    <keywords
-                            system-keywords="selectedCodeKeywords.systemKeywords"
-                            my-keywords="selectedCodeKeywords.myKeywords"
-                            partner-keywords="selectedCodeKeywords.partnerKeywords"
-                            code-definitions="codeDefinitions"
-                            code-name="selectedCodeDefinition.name"></keywords>
-                </div>
-            </div>
+
+        <div id="expanded-list-view"
+             class="box scroll-y"
+             ng-show="showExpandedListView">
+            <expanded-list-view
+                    all-messages="allMessages"></expanded-list-view>
         </div>
 
         <div class="modal fade" id="image-modal" tabindex="-1" role="dialog">
