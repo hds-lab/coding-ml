@@ -5,11 +5,14 @@
     'use strict';
 
     angular.module('Aeonium.bootstrap', []);
+    angular.module('Aeonium.components', []);
 
     // Declare app level module which depends on other modules
     var app = angular
         .module('Aeonium', [
             'Aeonium.controllers',
+            'Aeonium.charts',
+            'Aeonium.components',
             'ngCookies',
             'ngDragDrop',
             'ngAnimate',

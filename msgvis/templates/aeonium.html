@@ -26,7 +26,12 @@
     <script src="{% static 'bower/angular-sanitize/angular-sanitize.js' %}"></script>
     <script src="{% static 'bower/angucomplete-alt/angucomplete-alt.js' %}"></script>
     <script src="{% static 'bower/angular-smart-table/dist/smart-table.js' %}"></script>
-    
+
+    <script src="{% static 'bower/jquery-ui/ui/core.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/widget.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/mouse.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/draggable.js' %}"></script>
+    <script src="{% static 'bower/jquery-ui/ui/droppable.js' %}"></script>
     <script src="{% static 'bower/angular-dragdrop/src/angular-dragdrop.js' %}"></script>
 
     <script src="{% static 'djangular/js/django-angular.js' %}"></script>
@@ -47,6 +52,11 @@
     <script src="{% static 'aeonium/models/Utils.js' %}"></script>
     <script src="{% static 'aeonium/models/Feature.js' %}"></script>
     <script src="{% static 'aeonium/models/Message.js' %}"></script>
+    <script src="{% static 'aeonium/charts/miniListView.js' %}"></script>
+    <script src="{% static 'aeonium/components/keywords.js' %}"></script>
+    <script src="{% static 'aeonium/components/definitions.js' %}"></script>
+    <script src="{% static 'aeonium/components/labeler.js' %}"></script>
+    <script src="{% static 'aeonium/components/comments.js' %}"></script>
     <script src="{% static 'aeonium/pages/codingController.js' %}"></script>
     <script src="{% static 'aeonium/pages/reviewController.js' %}"></script>
     <script src="{% static 'aeonium/pages/codeReviewController.js' %}"></script>
@@ -113,7 +123,7 @@
 
                     <ul class="nav navbar-nav navbar-right">
                         <li>
-                            <span class="dataset">{$ Dictionary.dataset.description $} ({$ Dictionary.dataset.message_count $} messages)</span>
+                            <span class="dataset">{$ currentUser.username $}</span>
                         </li>
                     </ul>
                 </div><!-- /.navbar-collapse -->
