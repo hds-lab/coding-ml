@@ -947,6 +947,27 @@ class PairwiseConfusionMatrixView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class UserView(APIView):
+    """
+    Get current user
+
+    **Request:** ``GET /api/user``
+    """
+
+    def get(self, request, format=None):
+        if self.request.user is None or self.request.user.id is None or (
+        not User.objects.filter(id=self.request.user.id).exists()):
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=self.request.user.id)
+
+        features = user.features.filter(valid=True).all()
+
+        output = serializers.UserWithIdSerializer(user)
+
+        return Response(output.data, status=status.HTTP_200_OK)
+
+
 class PartnerView(APIView):
     """
     Get partners of the current user

@@ -26,6 +26,7 @@ api_root_urls = {
     'exp_progress': url(r'^exp_progress/(?P<exp_id>[0-9]+)/$', csrf_exempt(views.ExperimentProgressView.as_view()), name='exp_progress'),
     'action-history': url(r'^history/$', views.ActionHistoryView.as_view(), name='action-history'),
     'partners': url(r'^partners/$', views.PartnerView.as_view(), name='partners'),
+    'user': url(r'^user/$', views.UserView.as_view(), name='user'),
 
 }
 
