@@ -3,9 +3,10 @@
 
     var module = angular.module('Aeonium.components');
 
-    var LabelerController = function ($scope, Style) {
+    var LabelerController = function ($scope, Style, Utils) {
 
         $scope.Style = Style;
+        $scope.Utils = Utils;
 
         $scope.selectCode = function (codeDefinition) {
             $scope.onCodeSelected({codeDefinition: codeDefinition});
@@ -22,7 +23,8 @@
 
     LabelerController.$inject = [
         '$scope',
-        'Aeonium.models.Style'
+        'Aeonium.models.Style',
+        'Aeonium.models.Utils'
     ];
 
     module.directive('labeler', function labeler() {
