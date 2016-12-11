@@ -84,9 +84,10 @@
 
 {% block content %}
     <base href='/aeonium'></base>
-    <div ng-app="Aeonium" id="application" class="container-fluid">
+    <div ng-app="Aeonium" id="application" class="container-fluid"
+         ng-controller="Aeonium.controllers.AppController">
 
-        <nav class="navbar navbar-default row" ng-cloak="" ng-controller="Aeonium.controllers.DictionaryController">
+        <nav class="navbar navbar-default row" ng-cloak="">
             <div class="container-fluid">
                 <!-- Brand and toggle get grouped for better mobile display -->
                 <div class="navbar-header">
@@ -104,24 +105,6 @@
 
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <ul class="nav navbar-nav">
-                        <li><a href="/aeonium/#/coding">Coding</a></li>
-                        <li><a href="/aeonium/#/review">Review</a></li>
-                        <li ng-if="partners">
-                            <div class="btn-group">
-                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <span>{$ selectedPartner.username $}</span>
-                                    <span class="caret"></span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li ng-repeat="partner in partners">
-                                        <a ng-click="selectPartner(partner)">{$ partner.username $}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                    </ul>
-
                     <ul class="nav navbar-nav navbar-right">
                         <li>
                             <span class="dataset">{$ currentUser.username $}</span>
@@ -132,7 +115,23 @@
         </nav>
 
         <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
-        <div ng-view id="content"></div>
+        <div id="content">
+            <div class="sidebar">
+                <div class="sidebar-item" ng-repeat="interface in availableInterfaces">
+                    <button class="btn btn-default" ng-click="selectInterface(interface.id)">{$ interface.name $}
+                    </button>
+                </div>
+            </div>
+            <div>
+                <coding-interface ng-if="selectedInterfaceId==CODING_INTERFACE_ID"></coding-interface>
+                <review-interface ng-if="selectedInterfaceId==REVIEW_INTERFACE_ID"></review-interface>
+            </div>
+        </div>
+        <footer class="footer">
+            <div class="container-fluid">
+                <p>Footer</p>
+            </div>
+        </footer>
     </div>
 {% endblock %}
 {% block footer %}

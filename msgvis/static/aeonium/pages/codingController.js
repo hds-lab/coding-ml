@@ -344,6 +344,13 @@
         'usSpinnerService'
     ];
 
-    module.controller('Aeonium.controllers.CodingController', CodingController);
+    module.directive('codingInterface', function codingInterface() {
+        return {
+            scope: {
+            },
+            controller: CodingController,
+            templateUrl: 'static/aeonium/pages/coding.html'
+        }
+    });
 
 })();

@@ -22,49 +22,6 @@
         });
     }]);
 
-    var DictionaryController = function ($scope, Dictionary, Partner) {
-
-        // Helpers
-        $scope.Dictionary = Dictionary;
-        $scope.partners = [];
-        $scope.selectedPartner = undefined;
-        $scope.currentUser = undefined;
-
-        // Event handlers
-        $scope.$on('Partner::getCurrentUser::loaded', function ($event, user) {
-            $scope.currentUser = user;
-        });
-
-        $scope.$on('Partner::getPartners::loaded', function ($event, partners) {
-            $scope.partners = partners;
-        });
-
-        $scope.$on('Partner::selectedPartner', function ($event, partner) {
-            $scope.selectedPartner = partner;
-        });
-
-        // View methods
-        $scope.initializeController = function () {
-            Partner.getPartners();
-            Partner.getCurrentUser();
-        };
-
-        $scope.selectPartner = function (partner) {
-            Partner.selectPartner(partner);
-        };
-
-        $scope.initializeController();
-
-    };
-
-    DictionaryController.$inject = [
-        '$scope',
-        'Aeonium.services.Dictionary',
-        'Aeonium.models.Partner'
-    ];
-
-    module.controller('Aeonium.controllers.DictionaryController', DictionaryController);
-
 
     module.directive('popover', function () {
         return function (scope, elem) {
