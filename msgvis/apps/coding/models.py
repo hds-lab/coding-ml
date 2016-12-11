@@ -161,12 +161,13 @@ class Comment(models.Model):
     def __unicode__(self):
         return self.__repr__()
 
-    def get_message_code(self):
-        code = None
+    @property
+    def label_id(self):
+        label = None
         if self.message:
             assignment = self.message.code_assignments.filter(source=self.source,
                                                               is_user_labeled=True,
                                                               valid=True).first()
             if assignment:
-                code = assignment.code
-        return code
+                label = assignment.code
+        return label.id
