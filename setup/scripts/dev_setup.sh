@@ -24,7 +24,7 @@ source $SCRIPTS_DIR/functions.sh
 PROJECT_ROOT=$(cd $(script_dir) && cd ../.. && pwd)
 VENV_NAME=$(basename $PROJECT_ROOT)
 DATABASE_CHARSET=utf8mb4
-DATABASE_COLLACTION=utf8mb4_unicode_ci
+DATABASE_COLLATION=utf8mb4_unicode_ci
 
 if ! ([ $# -eq 0 ] || [ $# -eq 5 ]); then
 
