@@ -72,7 +72,9 @@
         });
 
         $scope.$on('Partner::selectedPartner', function ($event, partner) {
-            $scope.selectedPartner = partner;
+            if ($scope.selectedPartner && partner && $scope.selectedPartner.id != partner.id) {
+                $scope.selectedPartner = partner;
+            }
         });
 
         // View methods

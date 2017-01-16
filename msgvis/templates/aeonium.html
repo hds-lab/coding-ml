@@ -55,7 +55,7 @@
     <script src="{% static 'aeonium/components/labeler.js' %}"></script>
     <script src="{% static 'aeonium/components/comments.js' %}"></script>
     <script src="{% static 'aeonium/components/expandedListView.js' %}"></script>
-    <script src="{% static 'aeonium/pages/codingController.js' %}"></script>
+    <script src="{% static 'aeonium/pages/coding/codingController.js' %}"></script>
     <script src="{% static 'aeonium/pages/reviewController.js' %}"></script>
     <script src="{% static 'aeonium/pages/featureController.js' %}"></script>
     <script src="{% static 'aeonium/pages/disagreementController.js' %}"></script>
@@ -88,7 +88,8 @@
          layout="column"
          style="height:100%;"
          ng-cloak
-         ng-controller="Aeonium.controllers.AppController">
+         ng-controller="Aeonium.controllers.AppController"
+         layout-fill>
 
         <nav class="navbar navbar-default" ng-cloak="">
             <div class="container-fluid">
@@ -135,13 +136,21 @@
                 </md-list>
 
             </md-sidenav>
-            <md-content flex layout-padding>
+            <md-content flex>
                 <coding-interface ng-if="selectedInterfaceId==CODING_INTERFACE_ID"></coding-interface>
                 <review-interface ng-if="selectedInterfaceId==REVIEW_INTERFACE_ID"></review-interface>
                 <feature-interface ng-if="selectedInterfaceId==FEATURE_INTERFACE_ID"></feature-interface>
                 <disagreement-interface ng-if="selectedInterfaceId==DISAGREEMENT_INTERFACE_ID"></disagreement-interface>
             </md-content>
         </section>
+        <footer style="height:40px" layout="row" layout-align="end center">
+            <span>Selected Partner: </span>
+            <md-select ng-model="selectedPartner" class="md-no-underline" ng-model-options="{trackBy: '$value.id'}">
+                <md-option ng-repeat="partner in partners" ng-value="partner" ng-click="selectPartner(partner)">
+                    {$ partner.username $}
+                </md-option>
+            </md-select>
+        </footer>
     </div>
 {% endblock %}
 {% block footer %}

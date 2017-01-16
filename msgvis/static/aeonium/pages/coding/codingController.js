@@ -3,7 +3,7 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var CodingController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
+    var CodingController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService, $mdBottomSheet) {
         //1. get all messages and list on the left
         //2. click on a message from the left list to show in the middle
         //3. select a label and show details on the right
@@ -328,6 +328,14 @@
             }
         };
 
+        $scope.showDefinitions = function () {
+            $mdBottomSheet.show({
+                templateUrl: 'static/aeonium/pages/coding/codingDefinitions.html',
+                controller: CodingController,
+                clickOutsideToClose: true
+            });
+        };
+
         $scope.initializeController();
     };
 
@@ -341,15 +349,15 @@
         'Aeonium.services.ActionHistory',
         'Aeonium.models.Utils',
         'Aeonium.models.Style',
-        'usSpinnerService'
+        'usSpinnerService',
+        '$mdBottomSheet'
     ];
 
     module.directive('codingInterface', function codingInterface() {
         return {
-            scope: {
-            },
+            scope: {},
             controller: CodingController,
-            templateUrl: 'static/aeonium/pages/coding.html'
+            templateUrl: 'static/aeonium/pages/coding/coding.html'
         }
     });
 

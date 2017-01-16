@@ -44,6 +44,10 @@
                 getPartners: function () {
                     var self = this;
 
+                    if (self.partners.length > 0){
+                        return;
+                    }
+
                     var apiUrl = djangoUrl.reverse('partners');
 
                     var request = {
@@ -55,14 +59,14 @@
                     $rootScope.$broadcast("Partner::getPartners::loading");
 
                     return $http.get(apiUrl, request)
-                        .then(function (data) {
+                        .then(function (response) {
                             //self.partners = data.map(function (d) {
                             //    return {
                             //        id: d.id,
                             //        username: d.username
                             //    };
                             //});
-                            self.partners = data;
+                            self.partners = response.data;
 
                             $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
 
