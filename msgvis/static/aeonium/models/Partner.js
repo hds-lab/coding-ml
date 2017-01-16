@@ -34,7 +34,7 @@
                     $rootScope.$broadcast("Partner::getCurrentUser::loading");
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.currentUser = data;
 
                             $rootScope.$broadcast("Partner::getCurrentUser::loaded", self.currentUser);
@@ -55,7 +55,7 @@
                     $rootScope.$broadcast("Partner::getPartners::loading");
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             //self.partners = data.map(function (d) {
                             //    return {
                             //        id: d.id,

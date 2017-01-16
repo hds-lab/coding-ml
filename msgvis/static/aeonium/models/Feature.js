@@ -54,7 +54,7 @@
                     $rootScope.$broadcast('Feature::allFeatures::loading');
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             // Returned data structure will be an array of {source, definitions array} for each source
 
                             var userFeatures = [];
@@ -97,7 +97,7 @@
                     var itemApiUrl = djangoUrl.reverse('feature', {feature_id: feature.id});
                     $rootScope.$broadcast('Feature::removeFeature::removing');
                     return $http.delete(itemApiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             // Remove feature from list;
                             self.userFeatures.splice(index, 1);
                             $rootScope.$broadcast('Feature::removeFeature::removed', feature);
@@ -117,7 +117,7 @@
                     var listApiUrl = djangoUrl.reverse('feature_list');
                     $rootScope.$broadcast('Feature::addFeature::adding');
                     return $http.post(listApiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             var feature = Utils.extractFeature(data);
                             self.userFeatures.unshift(feature);
                             $rootScope.$broadcast('Feature::addFeature::added', feature);

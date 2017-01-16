@@ -69,7 +69,7 @@
 
                     $rootScope.$broadcast("Message::allMessages::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.allMessages = data.map(function (d) {
                                 return {
                                     id: d.message.id,
@@ -145,7 +145,7 @@
 
                     $rootScope.$broadcast("Message::userCodedMessages::loading", codeId);
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.userCodedMessages[codeId] = data.assignments.map(function (d) {
                                 return Utils.extractMessageDetail(d);
                             });
@@ -171,7 +171,7 @@
 
                     $rootScope.$broadcast("Message::messageDetail::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             // Label information is in Message, and message detail only contains text info
                             var messageDetail = Utils.extractMessageDetail(data);
                             angular.extend(messageDetail, message);
@@ -194,7 +194,7 @@
 
                     $rootScope.$broadcast("Message::submitLabel::submitting");
                     return $http.post(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.allMessages.filter(function (m) {
                                     return m.id == message.id;
                                 })
@@ -220,7 +220,7 @@
 
                     $rootScope.$broadcast("Message::saveComment::saving");
                     return $http.post(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             $rootScope.$broadcast("Message::saveComment::saved", message, data);
                         });
                 },
@@ -244,7 +244,7 @@
 
                     $rootScope.$broadcast("Message::getComments::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
 
                             // Extract comment details
                             var comments = data.map(function (c) {

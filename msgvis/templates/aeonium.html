@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'theme.less' %}" type="text/less">
     <link rel="stylesheet" href="{% static 'style.less' %}" type="text/less">
     <link rel="stylesheet" href="{% static 'bower/c3/c3.css' %}">
+    <link rel="stylesheet" href="{% static 'bower/angular-material/angular-material.css' %}">
     <link rel="stylesheet" href="{% static 'aeonium.less' %}" type="text/less">
 
 {% endblock %}
@@ -27,13 +28,6 @@
     <script src="{% static 'bower/angucomplete-alt/angucomplete-alt.js' %}"></script>
     <script src="{% static 'bower/angular-smart-table/dist/smart-table.js' %}"></script>
 
-    <script src="{% static 'bower/jquery-ui/ui/core.js' %}"></script>
-    <script src="{% static 'bower/jquery-ui/ui/widget.js' %}"></script>
-    <script src="{% static 'bower/jquery-ui/ui/mouse.js' %}"></script>
-    <script src="{% static 'bower/jquery-ui/ui/draggable.js' %}"></script>
-    <script src="{% static 'bower/jquery-ui/ui/droppable.js' %}"></script>
-    <script src="{% static 'bower/angular-dragdrop/src/angular-dragdrop.js' %}"></script>
-
     <script src="{% static 'djangular/js/django-angular.js' %}"></script>
 
     <script src="{% static 'bower/spin.js/spin.js' %}"></script>
@@ -42,6 +36,9 @@
     <script src="{% static 'bower/moment/moment.js' %}"></script>
     <script src="{% static 'bower/d3/d3.js' %}"></script>
     <script src="{% static 'bower/c3/c3.js' %}"></script>
+
+    <script src="{% static 'bower/angular-aria/angular-aria.js' %}"></script>
+    <script src="{% static 'bower/angular-material/angular-material.js' %}"></script>
 
     <script src="{% static 'aeonium/app.js' %}"></script>
     <script src="{% static 'aeonium/services.js' %}"></script>
@@ -60,6 +57,8 @@
     <script src="{% static 'aeonium/components/expandedListView.js' %}"></script>
     <script src="{% static 'aeonium/pages/codingController.js' %}"></script>
     <script src="{% static 'aeonium/pages/reviewController.js' %}"></script>
+    <script src="{% static 'aeonium/pages/featureController.js' %}"></script>
+    <script src="{% static 'aeonium/pages/disagreementController.js' %}"></script>
     <script src="{% static 'aeonium/pages/codeReviewController.js' %}"></script>
 
 
@@ -83,11 +82,15 @@
 {% endblock %}
 
 {% block content %}
-    <base href='/aeonium'></base>
-    <div ng-app="Aeonium" id="application" class="container-fluid"
+    <base href='/aeonium'/>
+    <div ng-app="Aeonium"
+         id="application"
+         layout="column"
+         style="height:100%;"
+         ng-cloak
          ng-controller="Aeonium.controllers.AppController">
 
-        <nav class="navbar navbar-default row" ng-cloak="">
+        <nav class="navbar navbar-default" ng-cloak="">
             <div class="container-fluid">
                 <!-- Brand and toggle get grouped for better mobile display -->
                 <div class="navbar-header">
@@ -113,25 +116,32 @@
                 </div><!-- /.navbar-collapse -->
             </div><!-- /.container-fluid -->
         </nav>
+        <section layout="row" flex>
+            <md-sidenav
+                    class="md-sidenav-left"
+                    md-component-id="left"
+                    md-is-open="true"
+                    md-is-locked-open="true"
+                    md-whiteframe="4">
+                <md-list flex ng-cloak>
+                    <md-toolbar class="md-theme-indigo">
+                        <h1 class="md-toolbar-tools">Interfaces</h1>
+                    </md-toolbar>
+                    <md-list-item
+                            ng-repeat="interface in availableInterfaces"
+                            ng-click="selectInterface(interface.id)">
+                        <p>{$ interface.name $}</p>
+                    </md-list-item>
+                </md-list>
 
-        <span us-spinner="spinnerOptions" spinner-key="page-spinner"></span>
-        <div id="content">
-            <div class="sidebar">
-                <div class="sidebar-item" ng-repeat="interface in availableInterfaces">
-                    <button class="btn btn-default" ng-click="selectInterface(interface.id)">{$ interface.name $}
-                    </button>
-                </div>
-            </div>
-            <div>
+            </md-sidenav>
+            <md-content flex layout-padding>
                 <coding-interface ng-if="selectedInterfaceId==CODING_INTERFACE_ID"></coding-interface>
                 <review-interface ng-if="selectedInterfaceId==REVIEW_INTERFACE_ID"></review-interface>
-            </div>
-        </div>
-        <footer class="footer">
-            <div class="container-fluid">
-                <p>Footer</p>
-            </div>
-        </footer>
+                <feature-interface ng-if="selectedInterfaceId==FEATURE_INTERFACE_ID"></feature-interface>
+                <disagreement-interface ng-if="selectedInterfaceId==DISAGREEMENT_INTERFACE_ID"></disagreement-interface>
+            </md-content>
+        </section>
     </div>
 {% endblock %}
 {% block footer %}

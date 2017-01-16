@@ -14,9 +14,9 @@
             'Aeonium.charts',
             'Aeonium.components',
             'ngCookies',
-            'ngDragDrop',
             'ngAnimate',
-            'ngRoute'
+            'ngRoute',
+            'ngMaterial'
         ]);
 
     //Fix CSRF
@@ -28,7 +28,7 @@
     }]);
 
     // App controller
-    var AppController = function ($scope, Dictionary, Partner) {
+    var AppController = function ($scope, $mdSidenav, Dictionary, Partner) {
 
         // Helpers
         $scope.Dictionary = Dictionary;
@@ -85,7 +85,7 @@
             Partner.selectPartner(partner);
         };
 
-        $scope.selectInterface = function(interfaceId) {
+        $scope.selectInterface = function (interfaceId) {
             $scope.selectedInterfaceId = interfaceId;
         };
 
@@ -95,6 +95,7 @@
 
     AppController.$inject = [
         '$scope',
+        '$mdSidenav',
         'Aeonium.services.Dictionary',
         'Aeonium.models.Partner'
     ];

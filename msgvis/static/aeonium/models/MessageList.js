@@ -43,7 +43,7 @@
                     }
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
 
                             self.listCache[order_by][page] = data;
                             $rootScope.$broadcast("list::getList", data);

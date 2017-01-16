@@ -66,7 +66,7 @@
 
                     $rootScope.$broadcast('Code::codeDefinitions::loading');
                     return $http.get(apiUrl, request)
-                        .success(function (def_sets) {
+                        .then(function (def_sets) {
                             def_sets.forEach(function (def_set) {
                                 def_set.definitions.forEach(function (def) {
                                     if (!self.codeDefinitions[def.code_id]) {
@@ -118,7 +118,7 @@
 
                     $rootScope.$broadcast('Code::codeDefinitions::updating', codeId);
                     return $http.put(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             console.log("Update definition for ", code);
                             $rootScope.$broadcast('Code::codeDefinitions::updated', codeId, self.codeDefinitions[codeId]);
                         });
@@ -146,7 +146,7 @@
                     $rootScope.$broadcast('Code::pairwiseComparison::loading');
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.pairwiseComparisons = data.map(function (pair) {
                                 //class PairwiseComparison {
                                 //    userCodeId: number;

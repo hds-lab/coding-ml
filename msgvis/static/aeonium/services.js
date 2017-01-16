@@ -29,7 +29,7 @@
                 }
             };
             $http.get(apiUrl, request)
-                .success(function (data) {
+                .then(function (data) {
                     angular.extend(Dictionary.prototype, data);
                 });
 
@@ -75,7 +75,7 @@
                     };
 
                     return $http.post(listApiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.latest_data = data;
                             self.distributions["user"][data.feature_text] = data;
                         });
@@ -90,7 +90,7 @@
 
                     var itemApiUrl = djangoUrl.reverse('feature', {feature_id: feature.feature_id});
                     return $http.delete(itemApiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             // Remove feature from list
                             delete self.distributions["user"][feature.feature_text];
                         });
@@ -105,7 +105,7 @@
 
                     var apiUrl= djangoUrl.reverse('distribution');
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
 
                             self.distributions[source] = data;
                             // TODO: understand this and make sure the feature is added to the list
@@ -157,7 +157,7 @@
                     var apiUrl = djangoUrl.reverse('vector', request);
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.current_message = self.format_tweet_item(data);
                         });
 
@@ -267,7 +267,7 @@
 
 
                     return $http.post(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.last_message = data;
                         });
 
@@ -286,7 +286,7 @@
 
 
                     return $http.put(apiUrl, request)
-                        .success(function (new_item) {
+                        .then(function (new_item) {
                             //self.last_message = data;
                             new_item = self.format_tweet_item(new_item);
                             // TODO: the data should be another assignment and need to use that for updating the interface
@@ -330,7 +330,7 @@
 
 
                     return $http.put(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             console.log("Update flags", data);
                         });
 
@@ -345,7 +345,7 @@
 
 
                     return $http.put(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             console.log("Update disagreement indicator", data);
                         });
                 },
@@ -367,7 +367,7 @@
                     };
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.coded_messages[source][code.code_text] = data.assignments.map(function(d){ return self.format_tweet_item(d);});
                             $rootScope.$broadcast("messages::load_coded_messages", self.coded_messages);
                         });
@@ -387,7 +387,7 @@
                     };
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.all_coded_messages = data.map(function(d){ return self.format_tweet_item(d);});
 
                             // compute code distribution
@@ -518,7 +518,7 @@
                     };
 
                     return $http.get(apiUrl, request)
-                        .success(function (def_sets) {
+                        .then(function (def_sets) {
                             def_sets.forEach(function(def_set){
                                 self.definitions_by_source[def_set.source] = def_set.definitions;
                                 def_set.definitions.forEach(function(def){
@@ -548,7 +548,7 @@
 
 
                     return $http.put(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             console.log("Update definition for ", code);
                         });
 
@@ -564,7 +564,7 @@
 
                     var apiUrl= djangoUrl.reverse('pairwise');
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.pairwise_distribution = data;
                             self.pairwise_distribution.forEach(function(pair){
                                 var key = pair.user_code + "_" + pair.partner_code;
@@ -615,7 +615,7 @@
 
                     //return $http.get(apiUrl, request)
                     return $http.get(apiUrl)
-                        .success(function (data) {
+                        .then(function (data) {
                             console.log(data);
                             self.user = data.user;
                             self.current_stage_index = data.current_stage_index;
@@ -630,7 +630,7 @@
 
 
                     return $http.post(apiUrl)
-                        .success(function (data) {
+                        .then(function (data) {
                             self.current_stage_index = data.current_stage_index;
                             self.current_message_id = data.current_message_id;
                             self.current_status = data.current_status;
@@ -720,13 +720,14 @@
 
                     self.queue = [];
 
-                    return $http.post(apiUrl, request)
-                        .success(function (data) {
-                            console.log('save ' + data.length + ' record(s)');
-                        }).error(function (data) {
-                            // push the records back to queue
-                            self.queue.concat(request);
-                        });
+                    //return $http.post(apiUrl, request)
+                    //    .then(function (data) {
+                    //        console.log('save ' + data.length + ' record(s)');
+                    //    })
+                    //    .catch(function (data) {
+                    //        // push the records back to queue
+                    //        self.queue.concat(request);
+                    //    });
                 }
             });
 
