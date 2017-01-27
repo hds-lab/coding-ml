@@ -122,7 +122,7 @@
             scope: {
             },
             controller: ReviewController,
-            templateUrl: 'static/aeonium/pages/review.html'
+            templateUrl: 'static/aeonium/pages/review/review.html'
         }
     });
 })();
