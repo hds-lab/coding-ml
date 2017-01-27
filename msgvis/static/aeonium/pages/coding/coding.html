@@ -1,7 +1,17 @@
 <div layout="column" layout-fill>
     <div flex layout="row">
         <div flex="60">
-            Labeling area
+            <div ng-show="selectedMessageDetail">
+                    <labeler
+                            code-definitions="codeDefinitions"
+                            selected-code-definition="selectedCodeDefinition"
+                            message-detail="selectedMessageDetail"
+                            on-code-selected="selectCode(codeDefinition)"
+                            on-submit="submitLabel()"
+                            on-open-media="openMedia(mediaUrl)"></labeler>
+                    <comments
+                            message="selectedMessage"></comments>
+                </div>
         </div>
         <div flex="40" style="background:green">Comment area</div>
     </div>

@@ -720,14 +720,14 @@
 
                     self.queue = [];
 
-                    return $http.post(apiUrl, request)
-                        .then(function (data) {
-                            console.log('save ' + data.length + ' record(s)');
-                        })
-                        .catch(function (data) {
-                            // push the records back to queue
-                            self.queue.concat(request);
-                        });
+                    //return $http.post(apiUrl, request)
+                    //    .then(function (data) {
+                    //        console.log('save ' + data.length + ' record(s)');
+                    //    })
+                    //    .catch(function (data) {
+                    //        // push the records back to queue
+                    //        self.queue.concat(request);
+                    //    });
                 }
             });
 

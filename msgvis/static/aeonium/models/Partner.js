@@ -34,8 +34,8 @@
                     $rootScope.$broadcast("Partner::getCurrentUser::loading");
 
                     return $http.get(apiUrl, request)
-                        .then(function (data) {
-                            self.currentUser = data;
+                        .then(function (response) {
+                            self.currentUser = response.data;
 
                             $rootScope.$broadcast("Partner::getCurrentUser::loaded", self.currentUser);
                         });

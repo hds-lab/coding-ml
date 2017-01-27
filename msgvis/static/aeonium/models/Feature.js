@@ -54,14 +54,14 @@
                     $rootScope.$broadcast('Feature::allFeatures::loading');
 
                     return $http.get(apiUrl, request)
-                        .then(function (data) {
+                        .then(function (response) {
                             // Returned data structure will be an array of {source, definitions array} for each source
 
                             var userFeatures = [];
                             var systemFeatures = [];
                             var partnerFeatures = [];
 
-                            data.forEach(function (featureData) {
+                            response.data.forEach(function (featureData) {
                                 var feature = Utils.extractFeature(featureData);
 
                                 if (feature.source == "user") {
@@ -97,7 +97,7 @@
                     var itemApiUrl = djangoUrl.reverse('feature', {feature_id: feature.id});
                     $rootScope.$broadcast('Feature::removeFeature::removing');
                     return $http.delete(itemApiUrl, request)
-                        .then(function (data) {
+                        .then(function (response) {
                             // Remove feature from list;
                             self.userFeatures.splice(index, 1);
                             $rootScope.$broadcast('Feature::removeFeature::removed', feature);
@@ -117,8 +117,8 @@
                     var listApiUrl = djangoUrl.reverse('feature_list');
                     $rootScope.$broadcast('Feature::addFeature::adding');
                     return $http.post(listApiUrl, request)
-                        .then(function (data) {
-                            var feature = Utils.extractFeature(data);
+                        .then(function (response) {
+                            var feature = Utils.extractFeature(response.data);
                             self.userFeatures.unshift(feature);
                             $rootScope.$broadcast('Feature::addFeature::added', feature);
                         });

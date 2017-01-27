@@ -191,6 +191,12 @@
         // View methods
         $scope.initializeController = function () {
             Partner.getPartners();
+            if (Partner.selectedPartner) {
+                Code.loadCodeDefinitions(Partner.selectedPartner.username);
+                Message.getAllMessages(Partner.selectedPartner.username);
+            }
+
+            $scope.getNextMessageToLabel();
         };
 
         $scope.viewMessageDetail = function (message) {
