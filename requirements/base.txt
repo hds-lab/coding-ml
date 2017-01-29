@@ -19,7 +19,7 @@ django-debug-toolbar
 django-docs
 
 # utils
-path.py
+path.py==7.7.1
 django-extensions
 dj-database-url
 django-widget-tweaks
