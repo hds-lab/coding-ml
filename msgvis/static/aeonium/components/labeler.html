@@ -8,7 +8,11 @@
 
     <div class="message-text">
         <span ng-repeat="char in messageDetail.characters track by $index"
-              ng-style="Style.charStyle(messageDetail, $index)">{$ char $}</span>
+              ng-mouseenter="Utils.onCharMouseEnter(messageDetail, $index)"
+              ng-mouseleave="Utils.onCharMouseLeave(messageDetail, $index)"
+              ng-mousedown="Utils.onCharMouseDown(messageDetail, $index, $event)"
+              ng-mouseup="Utils.onCharMouseUp(messageDetail, $index, $event)"
+              ng-style="Style.charStyle(messageDetail, $index, selectedCodeDefinition.codeId)">{$ char $}</span>
     </div>
 </div>
 
@@ -21,7 +25,7 @@
     </div>
 
     <div class="message-toggle-item">
-        <div class='btn btn-toggle' ng-class="{'active': messageDetail.isAmbiguous}"
+        <div class='btn btn-toggle' ng-class="{'active': messageDepredictail.isAmbiguous}"
              ng-click="messageDetail.isAmbiguous=!messageDetail.isAmbiguous"
              data-toggle="tooltip" title="Mark as ambiguous"><span>?</span></div>
         <span> Mark as an ambiguous item</span>

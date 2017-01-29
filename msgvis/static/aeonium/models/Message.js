@@ -69,8 +69,8 @@
 
                     $rootScope.$broadcast("Message::allMessages::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
-                            self.allMessages = data.map(function (d) {
+                        .then(function (response) {
+                            self.allMessages = response.data.map(function (d) {
                                 return {
                                     id: d.message.id,
                                     label: d.code,
@@ -145,8 +145,8 @@
 
                     $rootScope.$broadcast("Message::userCodedMessages::loading", codeId);
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
-                            self.userCodedMessages[codeId] = data.assignments.map(function (d) {
+                        .then(function (response) {
+                            self.userCodedMessages[codeId] = response.data.assignments.map(function (d) {
                                 return Utils.extractMessageDetail(d);
                             });
                             $rootScope.$broadcast("Message::userCodedMessages::loaded", codeId, self.userCodedMessages[codeId]);
@@ -171,9 +171,9 @@
 
                     $rootScope.$broadcast("Message::messageDetail::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (response) {
                             // Label information is in Message, and message detail only contains text info
-                            var messageDetail = Utils.extractMessageDetail(data);
+                            var messageDetail = Utils.extractMessageDetail(response.data);
                             angular.extend(messageDetail, message);
                             $rootScope.$broadcast("Message::messageDetail::loaded", messageDetail);
                         });
@@ -194,7 +194,7 @@
 
                     $rootScope.$broadcast("Message::submitLabel::submitting");
                     return $http.post(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (response) {
                             self.allMessages.filter(function (m) {
                                     return m.id == message.id;
                                 })
@@ -220,8 +220,8 @@
 
                     $rootScope.$broadcast("Message::saveComment::saving");
                     return $http.post(apiUrl, request)
-                        .success(function (data) {
-                            $rootScope.$broadcast("Message::saveComment::saved", message, data);
+                        .then(function (response) {
+                            $rootScope.$broadcast("Message::saveComment::saved", message, response.data);
                         });
                 },
 
@@ -244,10 +244,10 @@
 
                     $rootScope.$broadcast("Message::getComments::loading");
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (response) {
 
                             // Extract comment details
-                            var comments = data.map(function (c) {
+                            var comments = response.data.map(function (c) {
                                 var users = Partner.partners.filter(function (p) {
                                     return p.id == c.source;
                                 });

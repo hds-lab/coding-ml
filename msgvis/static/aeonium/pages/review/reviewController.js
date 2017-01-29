@@ -117,6 +117,12 @@
         'usSpinnerService'
     ];
 
-    module.controller('Aeonium.controllers.ReviewController', ReviewController);
-
+    module.directive('reviewInterface', function reviewInterface() {
+        return {
+            scope: {
+            },
+            controller: ReviewController,
+            templateUrl: 'static/aeonium/pages/review/review.html'
+        }
+    });
 })();

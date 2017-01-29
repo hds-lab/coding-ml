@@ -56,9 +56,10 @@
                 // messageDetail: MessageDetail
                 // charIndex: character index
                 // returns style object
-                charStyle: function (messageDetail, charIndex) {
+                charStyle: function (messageDetail, charIndex, codeId) {
 
                     var self = this;
+                    var codeId = codeId || messageDetail.label;
 
                     var tokenIndex = messageDetail.charToToken[charIndex];
                     var filtered = messageDetail.fullToFiltered.get(tokenIndex);
@@ -70,10 +71,10 @@
                         (Utils.isTokenSelectedAtCharIndex(messageDetail, charIndex - 1) &&
                         Utils.isTokenSelectedAtCharIndex(messageDetail, charIndex + 1))) {
                         if (filtered) {
-                            return {'background': self.codeColorLight(messageDetail.label)};
+                            return {'background': self.codeColorLight(codeId)};
                         }
                         else {
-                            return {'background': self.codeColorLighter(messageDetail.label)};
+                            return {'background': self.codeColorLighter(codeId)};
                         }
                     }
                     else if (messageDetail.selectedTokens == undefined || messageDetail.selectedTokens.length == 0) {

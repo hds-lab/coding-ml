@@ -3,7 +3,7 @@
 
     var module = angular.module('Aeonium.controllers');
 
-    var CodingController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
+    var FeatureController = function ($scope, $timeout, Partner, Code, Message, Feature, History, Utils, Style, usSpinnerService) {
         //1. get all messages and list on the left
         //2. click on a message from the left list to show in the middle
         //3. select a label and show details on the right
@@ -331,7 +331,7 @@
         $scope.initializeController();
     };
 
-    CodingController.$inject = [
+    FeatureController.$inject = [
         '$scope',
         '$timeout',
         'Aeonium.models.Partner',
@@ -344,6 +344,13 @@
         'usSpinnerService'
     ];
 
-    module.controller('Aeonium.controllers.CodingController', CodingController);
+    module.directive('featureInterface', function featureInterface() {
+        return {
+            scope: {
+            },
+            controller: FeatureController,
+            templateUrl: 'static/aeonium/pages/feature.html'
+        }
+    });
 
 })();

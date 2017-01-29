@@ -14,28 +14,10 @@
             'Aeonium.charts',
             'Aeonium.components',
             'ngCookies',
-            'ngDragDrop',
             'ngAnimate',
-            'ngRoute'
+            'ngRoute',
+            'ngMaterial'
         ]);
-
-    // Routing
-    app.config(function($routeProvider) {
-        $routeProvider
-            .when('/', {
-                        templateUrl : 'static/aeonium/pages/home.html',
-                        controller  : 'HomeController'
-                        })
-            .when('/coding', {
-                        templateUrl : 'static/aeonium/pages/coding.html',
-                        controller  : 'CodingController'
-                        })
-            .when('/review', {
-                        templateUrl : 'static/aeonium/pages/review.html',
-                        controller  : 'ReviewController'
-                        })
-            .otherwise({redirectTo: '/'});
-    });
 
     //Fix CSRF
     //http://django-angular.readthedocs.org/en/latest/csrf-protection.html
@@ -45,18 +27,83 @@
         $http.defaults.headers.put['X-CSRFToken'] = $cookies.csrftoken;
     }]);
 
-    // Testing
-    app.controller('HomeController', function($scope) {
-        $scope.message = 'Hello from HomeController';
-    });
+    // App controller
+    var AppController = function ($scope, $mdSidenav, Dictionary, Partner) {
 
-    app.controller('CodingController', function($scope) {
-        $scope.message = 'Hello from CodingController';
-    });
+        // Helpers
+        $scope.Dictionary = Dictionary;
+        $scope.partners = [];
+        $scope.selectedPartner = undefined;
+        $scope.currentUser = undefined;
 
-    app.controller('ReviewController', function($scope) {
-        $scope.message = 'Hello from ReviewController';
-    });
+        $scope.CODING_INTERFACE_ID = 1;
+        $scope.REVIEW_INTERFACE_ID = 2;
+        $scope.FEATURE_INTERFACE_ID = 3;
+        $scope.DISAGREEMENT_INTERFACE_ID = 4;
 
+        $scope.availableInterfaces = [
+            {
+                name: "Coding",
+                id: $scope.CODING_INTERFACE_ID
+            },
+            {
+                name: "Review",
+                id: $scope.REVIEW_INTERFACE_ID
+            },
+            {
+                name: "Features",
+                id: $scope.FEATURE_INTERFACE_ID
+            },
+            {
+                name: "Disagreements",
+                id: $scope.DISAGREEMENT_INTERFACE_ID
+            }
+        ];
 
+        $scope.selectedInterfaceId = $scope.LABELING_INTERFACE_ID;
+
+        // Event handlers
+        $scope.$on('Partner::getCurrentUser::loaded', function ($event, user) {
+            $scope.currentUser = user;
+        });
+
+        $scope.$on('Partner::getPartners::loaded', function ($event, partners) {
+            $scope.partners = partners;
+        });
+
+        $scope.$on('Partner::selectedPartner', function ($event, partner) {
+            if ($scope.selectedPartner && partner && $scope.selectedPartner.id != partner.id) {
+                $scope.selectedPartner = partner;
+            }
+        });
+
+        // View methods
+        $scope.initializeController = function () {
+            Partner.getPartners();
+            Partner.getCurrentUser();
+        };
+
+        $scope.selectPartner = function (partner) {
+            Partner.selectPartner(partner);
+        };
+
+        $scope.selectInterface = function (interfaceId) {
+            $scope.selectedInterfaceId = interfaceId;
+        };
+
+        $scope.initializeController();
+
+    };
+
+    AppController.$inject = [
+        '$scope',
+        '$mdSidenav',
+        'Aeonium.services.Dictionary',
+        'Aeonium.models.Partner'
+    ];
+
+    app.controller('Aeonium.controllers.AppController', AppController);
+    app.config(['$qProvider', function ($qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+    }]);
 })();

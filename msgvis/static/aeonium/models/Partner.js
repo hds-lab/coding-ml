@@ -34,8 +34,8 @@
                     $rootScope.$broadcast("Partner::getCurrentUser::loading");
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
-                            self.currentUser = data;
+                        .then(function (response) {
+                            self.currentUser = response.data;
 
                             $rootScope.$broadcast("Partner::getCurrentUser::loaded", self.currentUser);
                         });
@@ -43,6 +43,10 @@
 
                 getPartners: function () {
                     var self = this;
+
+                    if (self.partners.length > 0){
+                        return;
+                    }
 
                     var apiUrl = djangoUrl.reverse('partners');
 
@@ -55,14 +59,14 @@
                     $rootScope.$broadcast("Partner::getPartners::loading");
 
                     return $http.get(apiUrl, request)
-                        .success(function (data) {
+                        .then(function (response) {
                             //self.partners = data.map(function (d) {
                             //    return {
                             //        id: d.id,
                             //        username: d.username
                             //    };
                             //});
-                            self.partners = data;
+                            self.partners = response.data;
 
                             $rootScope.$broadcast("Partner::getPartners::loaded", self.partners);
 
