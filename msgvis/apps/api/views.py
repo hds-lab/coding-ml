@@ -988,9 +988,12 @@ class PartnerView(APIView):
     """
 
     def get(self, request, format=None):
+        headers = {'Access-Control-Allow-Origin' : 'http://localhost:3000',
+                   'Access-Control-Allow-Headers' : 'Origin, X-Requested-With, Content-Type, Accept',
+                   'Access-Control-Allow-Credentials' : 'true'}
 
         if self.request.user is None or self.request.user.id is None or (not User.objects.filter(id=self.request.user.id).exists()):
-            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Please login first", status=status.HTTP_400_BAD_REQUEST, headers=headers)
 
         user = User.objects.get(id=self.request.user.id)
         users = []
@@ -1008,7 +1011,7 @@ class PartnerView(APIView):
 
         output = serializers.UserWithIdSerializer(users, many=True)
 
-        return Response(output.data, status=status.HTTP_200_OK)
+        return Response(output.data, status=status.HTTP_200_OK, headers=headers)
         # import traceback
         # traceback.print_exc()
         # import pdb
