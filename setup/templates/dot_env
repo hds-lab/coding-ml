@@ -14,6 +14,7 @@ PORT={{ PORT }}
 # e.g. mysql://USER:PASSWORD@HOST:PORT/NAME
 
 DATABASE_URL=mysql://{{ DATABASE_USER }}:{{ DATABASE_PASS }}@{{ DATABASE_HOST }}:{{ DATABASE_PORT }}/{{ DATABASE_NAME}}
+FF_DATABASE_URL=mysql://{{ FF_DATABASE_USER }}:{{ FF_DATABASE_PASS }}@{{ FF_DATABASE_HOST }}:{{ FF_DATABASE_PORT }}/{{ FF_DATABASE_NAME}}
 
 # If this is set, will use memcached
 # should be like host:portnum, e.g. localhost:11211

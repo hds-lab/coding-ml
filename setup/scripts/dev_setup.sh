@@ -70,7 +70,7 @@ echo "Using mysql at $MYSQL_EXE"
 if exists 'python2.7'; then
     PYTHON_EXE=$(which python2.7)
 elif exists 'python' && [[ $(python --version 2>&1) == *"2.7"* ]]; then
-    PYTHON_EXE=$(which python)
+    PYTHON_EXE='$(which python)'
 else
     loggy "ERROR: Python 2.7 not available.\nPlease install Python 2.7 on your machine." "error"
     exit 1
@@ -119,6 +119,14 @@ else
     DATABASE_NAME=$(prompt "Database name:" "textvisdrg")
     DATABASE_USER=$(prompt "User:" "textvisdrg")
     DATABASE_PASS=$(prompt "Password:" $DATABASE_USER)
+
+    echo ""
+
+    FF_DATABASE_HOST=$(prompt "FF Database Hostname:" "hdslab.hcde.uw.edu")
+    FF_DATABASE_PORT=$(prompt "FF Database Port:" "3306")
+    FF_DATABASE_NAME=$(prompt "FF Database Name:" "fanfictiondrg201701")
+    FF_DATABASE_USER=$(prompt "FF Database User:" "textvisdrg")
+    FF_DATABASE_PASS=$(prompt "FF Database Password:" "textvisdrg_prototype")
 fi
 
 function test_database {
@@ -127,6 +135,13 @@ function test_database {
     # Try and connect to the database using these credentials
     mysql -h $DATABASE_HOST -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASS $DATABASE_NAME 2> /dev/null << EOF
 show tables;
+
+EOF
+
+    # Try and connect to the fanfiction database using fanfiction db credentials
+    mysql -h $FF_DATABASE_HOST -P $FF_DATABASE_PORT -u $FF_DATABASE_USER -p$FF_DATABASE_PASS $FF_DATABASE_NAME 2> /dev/null << EOF
+show tables;
+
 EOF
 
     if [ $? -gt 0 ]; then
@@ -214,6 +229,7 @@ SERVER_HOST=0.0.0.0
 PORT=8000
 SETTINGS_MODULE=msgvis.settings.dev
 export DATABASE_HOST DATABASE_PORT DATABASE_NAME DATABASE_USER DATABASE_PASS
+export FF_DATABASE_HOST FF_DATABASE_PORT FF_DATABASE_NAME FF_DATABASE_USER FF_DATABASE_PASS
 export SECRET_KEY GOOGLE_ANALYTICS_ID
 export SERVER_HOST PORT SETTINGS_MODULE
 fab interpolate_env

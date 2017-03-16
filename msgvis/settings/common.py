@@ -63,13 +63,22 @@ DEBUG_DB = bool(get_env_setting('DEBUG_DB', False))
 ########## DATABASE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite'))
+    'default': dj_database_url.config(default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite')),
+    'fanfiction': dj_database_url.config(env='FF_DATABASE_URL', default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite'))
 }
 
 # enable utf8mb4 on mysql
 if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
     # enable utf8mb4 on mysql
     DATABASES['default']['OPTIONS'] = {
+        'charset': 'utf8mb4',
+        'init_command': 'SET storage_engine=INNODB',
+    }
+
+# enable utf8mb4 on mysql
+if DATABASES['fanfiction']['ENGINE'] == 'django.db.backends.mysql':
+    # enable utf8mb4 on mysql
+    DATABASES['fanfiction']['OPTIONS'] = {
         'charset': 'utf8mb4',
         'init_command': 'SET storage_engine=INNODB',
     }
@@ -114,6 +123,8 @@ USE_TZ = True
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-LOGIN_REDIRECT_URL
 LOGIN_REDIRECT_URL = "/"
+
+ALLOWED_HOSTS = ['localhost']
 ########## END GENERAL CONFIGURATION
 
 
