@@ -70,7 +70,7 @@ echo "Using mysql at $MYSQL_EXE"
 if exists 'python2.7'; then
     PYTHON_EXE=$(which python2.7)
 elif exists 'python' && [[ $(python --version 2>&1) == *"2.7"* ]]; then
-    PYTHON_EXE='$(which python)'
+    PYTHON_EXE=$(which python)
 else
     loggy "ERROR: Python 2.7 not available.\nPlease install Python 2.7 on your machine." "error"
     exit 1
