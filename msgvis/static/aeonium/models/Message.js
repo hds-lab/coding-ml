@@ -54,25 +54,25 @@
 
             angular.extend(Message.prototype, {
                  // partnerUserName: string
-                getSomeMessages: function () {
+                getSomeStories: function () {
                     var self = this;
 
                     // TODO: this needs all messages, not just coded ones
                     // TODO: [NC]: I made an API to return up to 100 messages so that new developers can see the interface
-                    var apiUrl = djangoUrl.reverse('some_messages');
+                    var apiUrl = djangoUrl.reverse('some_stories');
 
                     var request = {
                         params: {
 
                         }
                     };
-                    $rootScope.$broadcast("Message::someMessages::loading");
+                    $rootScope.$broadcast("Message::someStories::loading");
                     return $http.get(apiUrl, request)
                         .success(function (data) {
-                            self.someMessages = data.map(function (d) {
+                            self.someStories = data.map(function (d) {
                                 return {
                                     //id: d.message.id,
-                                    id: d.id,  // TODO: [NC] this is a temporary way to keep the list
+                                    story_id: d.story_id,  // TODO: [NC] this is a temporary way to keep the list
                                     //label: d.code,
                                     //source: d.source,
                                     //isAmbiguous: d.is_ambiguous,
@@ -83,7 +83,7 @@
                                     //text: d.message.text
                                 };
                             });
-                            $rootScope.$broadcast("Message::someMessages::loaded", self.someMessages);
+                            $rootScope.$broadcast("Message::someStorie::loaded", self.someStories);
                         });
 
                 },

@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.base import models as base_models
+from msgvis.apps.stories import models as stories_models
 
 
 
@@ -12,7 +13,7 @@ class CodeAssignment(models.Model):
     A model for recording code assignment
     """
     source = models.ForeignKey(User, related_name="code_assignments")
-    message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
+    story = models.ForeignKey(stories_models.Story_Content, related_name="code_assignments")
     code = models.ForeignKey(enhance_models.Code, related_name="code_assignments")
 
     is_saved = models.BooleanField(default=False)
@@ -33,17 +34,17 @@ class CodeAssignment(models.Model):
     """The code updated time"""
 
     valid = models.BooleanField(default=True)
-    """ Whether this code is valid (False indicate the code to the message has been removed) """
+    """ Whether this code is valid (False indicate the code to the story has been removed) """
 
     def partner_assignment(self):
         # TODO: add condition to get more than one
         partner = self.source.pair.first().get_partner(self.source)
         return partner.code_assignments.filter(valid=True, is_user_labeled=True,
-                                               message=self.message).first()
+                                               story=self.story).first()
 
     def partner_assignments(self):
         return CodeAssignment.objects.filter(valid=True, is_user_labeled=True,
-                                             message=self.message,
+                                             story=self.story,
                                              source__experiment_connection__experiment=self.source.experiment_connection.experiment)
     def partner_code_distribution(self):
         same = 0
@@ -73,7 +74,7 @@ class CodeAssignment(models.Model):
         partner_assignment = self.partner_assignment()
         indicator =  self.user_disagreement_indicators.filter(partner_assignment=partner_assignment, valid=True).first()
         if indicator is None and self.code != partner_assignment.code:
-            indicator = DisagreementIndicator(message=self.message, user_assignment=self,
+            indicator = DisagreementIndicator(story=self.story, user_assignment=self,
                                               partner_assignment=partner_assignment)
             indicator.save()
         return indicator
@@ -92,11 +93,11 @@ class CodeDefinition(models.Model):
 
     @property
     def examples(self):
-        return map(lambda x: x.message, CodeAssignment.objects.filter(valid=True, is_example=True, source=self.source, code=self.code)[:10])
+        return map(lambda x: x.story, CodeAssignment.objects.filter(valid=True, is_example=True, source=self.source, code=self.code)[:10])
 
 
     valid = models.BooleanField(default=True)
-    """ Whether this code definition is valid (False indicate the code to the message has been removed) """
+    """ Whether this code definition is valid (False indicate the code to the story has been removed) """
     created_at = models.DateTimeField(auto_now_add=True, default=None)
     """The code definition created time"""
 
@@ -114,7 +115,7 @@ class DisagreementIndicator(models.Model):
     """
     A model for indicating the type of disagreement
     """
-    message = models.ForeignKey(corpus_models.Message, related_name="disagreement_indicators")
+    story = models.ForeignKey(stories_models.Story_Content, related_name="disagreement_indicators")
     user_assignment = models.ForeignKey(CodeAssignment, related_name="user_disagreement_indicators")
     partner_assignment = models.ForeignKey(CodeAssignment, related_name="partner_disagreement_indicators")
     TYPE_CHOICES = (
@@ -131,7 +132,7 @@ class DisagreementIndicator(models.Model):
     """The disagreement indicator created time"""
 
     def __repr__(self):
-        return "Message: %s\nCode: %s vs %s | Type: %s" % (self.message.text,
+        return "Story: %s\nCode: %s vs %s | Type: %s" % (self.story.content,
                                                            self.user_assignment.code.text,
                                                            self.partner_assignment.code.text,
                                                            self.type)

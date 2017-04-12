@@ -68,9 +68,9 @@ fi
 echo "Using mysql at $MYSQL_EXE"
 
 if exists 'python2.7'; then
-    PYTHON_EXE=$(which python2.7)
+    PYTHON_EXE='/c/Python27/python.exe'
 elif exists 'python' && [[ $(python --version 2>&1) == *"2.7"* ]]; then
-    PYTHON_EXE=$(which python)
+    PYTHON_EXE='/c/Python27/python.exe'
 else
     loggy "ERROR: Python 2.7 not available.\nPlease install Python 2.7 on your machine." "error"
     exit 1
@@ -204,7 +204,7 @@ elif exists 'virtualenv'; then
     virtualenv --system-site-packages --python="${PYTHON_EXE}" "${PROJECT_ROOT}/.virtualenv"
     failif "ERROR: Could not create virtualenv"
     
-    source "${PROJECT_ROOT}/.virtualenv/bin/activate"
+    source "${PROJECT_ROOT}/.virtualenv/Scripts/activate"
     failif "ERROR: Unable to load virtualenv"
 else
 

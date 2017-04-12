@@ -47,7 +47,7 @@ SITE_ID = 1
 
 ########## DEBUG CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = bool(get_env_setting('DEBUG', False))
+DEBUG = bool(get_env_setting('DEBUG', True))
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-debug
 TEMPLATE_DEBUG = DEBUG
@@ -82,6 +82,8 @@ if DATABASES['fanfiction']['ENGINE'] == 'django.db.backends.mysql':
         'charset': 'utf8mb4',
         'init_command': 'SET storage_engine=INNODB',
     }
+
+DATABASE_ROUTERS = ['msgvis.apps.stories.routers.StoriesRouter']
 
 ########## END DATABASE CONFIGURATION
 
@@ -258,6 +260,7 @@ LOCAL_APPS = (
     'msgvis.apps.enhance',
     'msgvis.apps.experiment',
     'msgvis.apps.coding',
+    'msgvis.apps.stories',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

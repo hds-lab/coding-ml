@@ -12,6 +12,7 @@ from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
+from msgvis.apps.stories import models as stories_models
 
 def create_an_user():
     current_user_count = User.objects.exclude(is_superuser=True).count()
@@ -118,7 +119,7 @@ class Experiment(models.Model):
         print >>output, "For each condition, users will go through %d stages." % num_stages
 
         #  random assign messages to each set. Only a portion of the messages in each stage will be used in the end
-        message_sets = self.random_assign_messages()
+        story_sets = self.random_assign_stories()
 
         print >>output, "Each condition has %d pairs." % num_pairs
         print >>output, "Pair list"
@@ -149,13 +150,13 @@ class Experiment(models.Model):
                 assignment.save()
 
                 # shuffle message sets for random selection
-                shuffle(message_sets)
+                shuffle(story_sets)
                 message_set_ids = []
                 for stage_idx, stage_type in enumerate(condition.type):
                     sa = StageAssignment(assignment=assignment, order=stage_idx, type=stage_type,
-                                         message_set=message_sets[stage_idx])
+                                         message_set=story_sets[stage_idx])
                     sa.save()
-                    message_set_ids.append(message_sets[stage_idx].id)
+                    message_set_ids.append(story_sets[stage_idx].id)
 
                 print >>output, "Pair #%d" % pair_list[idx * num_pairs + i].id
                 print >>output, message_set_ids
@@ -175,27 +176,27 @@ class Experiment(models.Model):
         user_connections = map(lambda u: UserExperimentConnect(user=u, experiment=self), user_list)
         UserExperimentConnect.objects.bulk_create(user_connections)
 
-    def random_assign_messages(self):
-        messages = self.dictionary.dataset.get_non_master_message_set()
-        message_count = messages.count()
-        messages = list(messages.all())
-        shuffle(messages)
-        num_per_stage = int(round(message_count / self.num_message_sets))
+    def random_assign_stories(self):
+        stories = self.dictionary.dataset.get_non_master_story_set()
+        story_count = stories.count()
+        stories = list(stories.all())
+        shuffle(stories)
+        num_per_stage = int(round(story_count / self.num_story_sets))
 
-        message_sets = []
+        story_sets = []
 
         start = 0
         end = num_per_stage
-        #for message_set in self.message_sets.all():
-        for idx in range(self.num_message_sets):
-            message_set = MessageSet.objects.create(experiment=self)
-            message_set.messages.add(*messages[start:end])
+        #for story_set in self.story_sets.all():
+        for idx in range(self.num_story_sets):
+            story_set = StorySet.objects.create(experiment=self)
+            story_set.stories.add(*stories[start:end])
             start += num_per_stage
             end += num_per_stage
 
-            message_sets.append(message_set)
+            story_sets.append(story_set)
 
-        return message_sets
+        return story_sets
 
 class UserExperimentConnect(models.Model):
     user = models.OneToOneField(User, related_name="experiment_connection")
@@ -232,25 +233,25 @@ class Condition(models.Model):
         return self.__repr__()
 
 
-class MessageSet(models.Model):
+class StorySet(models.Model):
     """
-    A model for dividing messages into sets in an experiment
+    A model for dividing stories into sets in an experiment
     """
-    experiment = models.ForeignKey(Experiment, related_name='message_sets')
+    experiment = models.ForeignKey(Experiment, related_name='story_sets')
     """Which :class:`Experiment` this condition belongs to"""
 
     created_at = models.DateTimeField(auto_now_add=True)
     """The condition created time"""
 
-    messages = models.ManyToManyField(corpus_models.Message, related_name="message_sets")
+    stories = models.ManyToManyField(stories_models.Story_Content, related_name="story_sets")
 
 
     @property
-    def message_count(self):
-        return self.messages.count()
+    def story_count(self):
+        return self.stories.count()
 
     def __repr__(self):
-        return "Experiment %s / %d Messages" % (self.experiment.name, self.message_count)
+        return "Experiment %s / %d Messages" % (self.experiment.name, self.story_count)
 
     def __unicode__(self):
         return self.__repr__()
@@ -293,7 +294,7 @@ class StageAssignment(models.Model):
 
     experiment = models.ForeignKey(Experiment, related_name="stage_assignments", default=None, null=True)
     assignment = models.ForeignKey(Assignment, related_name="stage_assignments", default=None, null=True)
-    message_set = models.ForeignKey(MessageSet, related_name="stage_assignments", default=None, null=True)
+    story_set = models.ForeignKey(StorySet, related_name="stage_assignments", default=None, null=True)
     order = models.IntegerField()
 
     TYPE_CHOICES = (
@@ -302,8 +303,8 @@ class StageAssignment(models.Model):
     )
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='R')
 
-    selected_messages = models.ManyToManyField(corpus_models.Message, related_name="source_stages",
-                                               through="MessageSelection")
+    selected_stories = models.ManyToManyField(stories_models.Story_Content, related_name="source_stages",
+                                               through="StorySelection")
     new_features = models.ManyToManyField(enhance_models.Feature, related_name="source_stages")
 
     def get_svm_model(self, source):
@@ -454,12 +455,12 @@ class StageAssignment(models.Model):
             pdb.set_trace()
 
 
-class MessageSelection(models.Model):
+class StorySelection(models.Model):
     """
-    A model for saving message order in a stage
+    A model for saving story order in a stage
     """
     stage_assignment = models.ForeignKey(StageAssignment, related_name="selection", default=None)
-    message = models.ForeignKey(corpus_models.Message, related_name="selection", default=None)
+    story = models.ForeignKey(stories_models.Story_Content, related_name="selection", default=None)
     order = models.IntegerField()
 
     @property

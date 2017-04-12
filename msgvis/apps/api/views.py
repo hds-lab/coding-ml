@@ -37,6 +37,7 @@ from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.experiment import models as experiment_models
+from msgvis.apps.stories import models as stories_models
 
 
 logger = logging.getLogger(__name__)
@@ -71,22 +72,21 @@ class DatasetView(APIView):
         return Response("Please specify dataset id", status=status.HTTP_400_BAD_REQUEST)
 
 
-class MessageView(APIView):
+class StoryView(APIView):
     """
-    Get details of a message
+    Get details of a story
 
-    **Request:** ``GET /api/message/1``
+    **Request:** ``GET /api/story/1``
     """
 
-    def get(self, request, message_id, format=None):
-
-        message_id = int(message_id)
+    def get(self, request, story_id, format=None):
+        story_id = int(story_id)
         try:
-            message = corpus_models.Message.objects.get(id=message_id)
-            output = serializers.MessageSerializer(message)
+            story = stories_models.Story_Content.objects.get(story_id=story_id)
+            output = serializers.StorySerializer(story)
             return Response(output.data, status=status.HTTP_200_OK)
         except:
-            return Response("Message not exist", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Story does not exist", status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListDistributionView(APIView):
@@ -614,11 +614,11 @@ class CodeAssignmentView(APIView):
         return self.post(request, message_id, format)
 
 
-class CodeMessageView(APIView):
+class CodeStoryView(APIView):
     """
-    Get the messages of a code
+    Get the stories of a code
 
-    **Request:** ``GET /code_messages/?code=1&source=master&stage=current&partner=<partner_username>``
+    **Request:** ``GET /code_stories/?code=1&source=master&stage=current&partner=<partner_username>``
     (Whatever value is given to stage will make this query only get current stage.)
     """
 
@@ -667,20 +667,20 @@ class CodeMessageView(APIView):
                                                                           code=code,
                                                                           valid=True).all()
 
-            assignments = assignments.order_by('-source_stage_index', 'message_id')
+            assignments = assignments.order_by('-source_stage_index', 'story_id')
 
             for assignment in assignments:
-                message = corpus_models.Message.objects.get(id=assignment.message_id)
-                assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
+                story = stories_models.Story_Content.objects.get(id=assignment.story_id)
+                #assignment.feature_vector = story.get_feature_vector(dictionary=dictionary, source=user)
 
-            code_messages = {
+            code_stories = {
                 "code_id": code.id,
                 "code_text": code.text,
                 "source": source_user,
                 "assignments": assignments
             }
 
-            output = serializers.CodeMessageSerializer(code_messages)
+            output = serializers.CodeStorySerializer(code_stories)
 
             return Response(output.data, status=status.HTTP_200_OK)
         except:
@@ -691,11 +691,11 @@ class CodeMessageView(APIView):
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
 
-class AllCodedMessageView(APIView):
+class AllCodedStoryView(APIView):
     """
-    Get the messages of a code
+    Get the stories of a code
 
-    **Request:** ``GET /all_coded_messages/?stage=current``
+    **Request:** ``GET /all_coded_stories/?stage=current``
     (Whatever value is given to stage will make this query only get current stage.)
     """
 
@@ -722,11 +722,11 @@ class AllCodedMessageView(APIView):
                                                                           is_user_labeled=True,
                                                                           valid=True).all()
 
-            assignments = assignments.order_by('-source_stage_index', 'message_id')
+            assignments = assignments.order_by('-source_stage_index', 'story_id')
 
             for assignment in assignments:
-                message = corpus_models.Message.objects.get(id=assignment.message_id)
-                assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
+                story = corpus_models.Story_Content.objects.get(id=assignment.story_id)
+                #assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
             output = serializers.CodeAssignmentSerializer(assignments, many=True)
 
             return Response(output.data, status=status.HTTP_200_OK)
@@ -738,12 +738,12 @@ class AllCodedMessageView(APIView):
 
             return Response("Errors", status=status.HTTP_400_BAD_REQUEST)
 
-class SomeMessageView(APIView):
+class SomeStoryView(APIView):
     """
-    Get some the messages for users -- this is a temporary API to be used in the list on the coding interface.
+    Get some the stories for users -- this is a temporary API to be used in the list on the coding interface.
      It should be removed or replace once the list related APIs are done.
 
-    **Request:** ``GET /some_messages/``
+    **Request:** ``GET /some_stories/``
     """
 
     def get(self, request, format=None):
@@ -763,9 +763,9 @@ class SomeMessageView(APIView):
                     experiment = user.pair.first().assignment.experiment
 
             # get 100 messages
-            messages = experiment.dictionary.dataset.get_message_set()[:100]
+            stories = experiment.dictionary.dataset.get_story_set()[:100]
 
-            output = serializers.MessageSerializer(messages, many=True)
+            output = serializers.StorySerializer(stories, many=True)
             return Response(output.data, status=status.HTTP_200_OK)
 
         except:
@@ -972,7 +972,7 @@ class PartnerView(APIView):
     """
     Get partners of the current user
 
-    **Request:** ``GET /partners``
+    **Request:** ``GET api/partners``
     """
 
     def get(self, request, format=None):
@@ -1011,7 +1011,7 @@ class ProgressView(APIView):
     """
     Get the progress of the current user
 
-    **Request:** ``GET /progress``
+    **Request:** ``GET api/progress``
     """
 
     def get(self, request, format=None):
@@ -1034,7 +1034,6 @@ class ProgressView(APIView):
                 target_stage_index = int(request.query_params.get('stage_index', progress.current_stage_index))
                 target_status = str(request.query_params.get('target_status', progress.current_status))
                 progress.set_stage(target_stage_index, target_status)
-
 
             output = serializers.ProgressSerializer(progress)
 

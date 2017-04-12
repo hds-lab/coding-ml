@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import operator
 from django.db import models
 from django.db.models import Q
@@ -55,24 +57,24 @@ class Dataset(models.Model):
     has_prefetched_images = models.BooleanField(default=False)
 
     @property
-    def message_count(self):
-        return self.get_message_set().count()
+    def story_count(self):
+        return self.get_story_set().count()
 
     def __unicode__(self):
         return self.name
 
-    def get_message_set(self):
-        return self.message_set.filter(time__isnull=False).all()
+    def get_story_set(self):
+        return self.story_set.all()
 
-    def get_non_master_message_set(self):
-        messages = self.message_set.filter(time__isnull=False)
-        messages = messages.exclude(code_assignments__source__username="master")
+    def get_non_master_story_set(self):
+        stories = self.story_set.filter(time__isnull=False)
+        stories = stories.exclude(code_assignments__source__username="master")
 
-        return messages
+        return stories
 
-    def get_master_message_set(self):
-        messages = self.message_set.filter(time__isnull=False)
-        return messages.filter(code_assignments__source__username="master")
+    def get_master_story_set(self):
+        stories = self.story_set.filter(time__isnull=False)
+        return stories.filter(code_assignments__source__username="master")
 
     def get_dictionary(self):
         dictionary = self.dictionary.all()
@@ -215,139 +217,139 @@ class Person(models.Model):
         return url
 
 
-class Message(models.Model):
-    """
-    The Message is the central data entity for the dataset.
-    """
-    class Meta:
-        index_together = (
-            ('dataset', 'original_id'),  # used by importer
-            ('dataset', 'time'),
-        )
+# class Message(models.Model):
+#     """
+#     The Message is the central data entity for the dataset.
+#     """
+#     class Meta:
+#         index_together = (
+#             ('dataset', 'original_id'),  # used by importer
+#             ('dataset', 'time'),
+#         )
 
-    dataset = models.ForeignKey(Dataset)
-    """Which :class:`Dataset` the message belongs to"""
+#     dataset = models.ForeignKey(Dataset)
+#     """Which :class:`Dataset` the message belongs to"""
 
-    original_id = models.BigIntegerField(null=True, blank=True, default=None)
-    """An external id for the message, e.g. a tweet id from Twitter"""
+#     original_id = models.BigIntegerField(null=True, blank=True, default=None)
+#     """An external id for the message, e.g. a tweet id from Twitter"""
 
-    type = models.ForeignKey(MessageType, null=True, blank=True, default=None)
-    """The :class:`MessageType` Message type: retweet, reply, origin..."""
+#     type = models.ForeignKey(MessageType, null=True, blank=True, default=None)
+#     """The :class:`MessageType` Message type: retweet, reply, origin..."""
 
-    sender = models.ForeignKey(Person, null=True, blank=True, default=None)
-    """The :class:`Person` who sent the message"""
+#     sender = models.ForeignKey(Person, null=True, blank=True, default=None)
+#     """The :class:`Person` who sent the message"""
 
-    time = models.DateTimeField(null=True, blank=True, default=None)
-    """The :py:class:`datetime.datetime` (in UTC) when the message was sent"""
+#     time = models.DateTimeField(null=True, blank=True, default=None)
+#     """The :py:class:`datetime.datetime` (in UTC) when the message was sent"""
 
-    language = models.ForeignKey(Language, null=True, blank=True, default=None)
-    """The :class:`Language` of the message."""
+#     language = models.ForeignKey(Language, null=True, blank=True, default=None)
+#     """The :class:`Language` of the message."""
 
-    timezone = models.ForeignKey(Timezone, null=True, blank=True, default=None)
-    """The :class:`Timezone` of the message."""
+#     timezone = models.ForeignKey(Timezone, null=True, blank=True, default=None)
+#     """The :class:`Timezone` of the message."""
 
-    replied_to_count = models.PositiveIntegerField(blank=True, default=0)
-    """The number of replies this message received."""
+#     replied_to_count = models.PositiveIntegerField(blank=True, default=0)
+#     """The number of replies this message received."""
 
-    shared_count = models.PositiveIntegerField(blank=True, default=0)
-    """The number of times this message was shared or retweeted."""
+#     shared_count = models.PositiveIntegerField(blank=True, default=0)
+#     """The number of times this message was shared or retweeted."""
 
-    contains_hashtag = models.BooleanField(blank=True, default=False)
-    """True if the message has a :class:`Hashtag`."""
+#     contains_hashtag = models.BooleanField(blank=True, default=False)
+#     """True if the message has a :class:`Hashtag`."""
 
-    contains_url = models.BooleanField(blank=True, default=False)
-    """True if the message has a :class:`Url`."""
+#     contains_url = models.BooleanField(blank=True, default=False)
+#     """True if the message has a :class:`Url`."""
 
-    contains_media = models.BooleanField(blank=True, default=False)
-    """True if the message has any :class:`Media`."""
+#     contains_media = models.BooleanField(blank=True, default=False)
+#     """True if the message has any :class:`Media`."""
 
-    contains_mention = models.BooleanField(blank=True, default=False)
-    """True if the message mentions any :class:`Person`."""
+#     contains_mention = models.BooleanField(blank=True, default=False)
+#     """True if the message mentions any :class:`Person`."""
 
-    urls = models.ManyToManyField(Url, null=True, blank=True, default=None)
-    """The set of :class:`Url` in the message."""
+#     urls = models.ManyToManyField(Url, null=True, blank=True, default=None)
+#     """The set of :class:`Url` in the message."""
 
-    hashtags = models.ManyToManyField(Hashtag, null=True, blank=True, default=None)
-    """The set of :class:`Hashtag` in the message."""
+#     hashtags = models.ManyToManyField(Hashtag, null=True, blank=True, default=None)
+#     """The set of :class:`Hashtag` in the message."""
 
-    media = models.ManyToManyField(Media, null=True, blank=True, default=None)
-    """The set of :class:`Media` in the message."""
+#     media = models.ManyToManyField(Media, null=True, blank=True, default=None)
+#     """The set of :class:`Media` in the message."""
 
-    mentions = models.ManyToManyField(Person, related_name="mentioned_in", null=True, blank=True, default=None)
-    """The set of :class:`Person` mentioned in the message."""
+#     mentions = models.ManyToManyField(Person, related_name="mentioned_in", null=True, blank=True, default=None)
+#     """The set of :class:`Person` mentioned in the message."""
 
-    text = base_models.Utf8TextField(null=True, blank=True, default="")
-    """The actual text of the message."""
+#     text = base_models.Utf8TextField(null=True, blank=True, default="")
+#     """The actual text of the message."""
 
-    @property
-    def embedded_html(self):
-        #return utils.get_embedded_html(self.original_id)
-        return utils.render_html_tag(self.text)
+#     @property
+#     def embedded_html(self):
+#         #return utils.get_embedded_html(self.original_id)
+#         return utils.render_html_tag(self.text)
 
-    @property
-    def media_url(self):
-        url = ""
-        if self.contains_media:
-            url = self.media.all()[0].media_url
-            if self.dataset.has_prefetched_images:
-                pattern = re.compile('/([_\.\-\w\d]+\.[\w]+)$')
-                results = pattern.search(url)
-                if results:
-                    url = results.groups()[0]
-        return url
+#     @property
+#     def media_url(self):
+#         url = ""
+#         if self.contains_media:
+#             url = self.media.all()[0].media_url
+#             if self.dataset.has_prefetched_images:
+#                 pattern = re.compile('/([_\.\-\w\d]+\.[\w]+)$')
+#                 results = pattern.search(url)
+#                 if results:
+#                     url = results.groups()[0]
+#         return url
 
 
-    def __repr__(self):
-        return str(self.time) + " || " + self.text
+#     def __repr__(self):
+#         return str(self.time) + " || " + self.text
 
-    def __unicode__(self):
-        return self.__repr__()
+#     def __unicode__(self):
+#         return self.__repr__()
 
-    def get_feature_vector(self, dictionary, source=None):
-        vector = []
-        if source is None:
-            for feature_score in self.feature_scores.filter(feature__source__isnull=True).all():
-                vector.append({"text": feature_score.feature.text,
-                               "feature_index": feature_score.feature_index,
-                               "count": feature_score.count,
-                               "source": "system"})
-        else:
-            for feature_score in self.feature_scores.filter(feature__source=source, feature__valid=True).all():
-                if feature_score.feature.origin:
-                    message_id = feature_score.feature.origin.id
-                    code = feature_score.feature.get_origin_message_code()
-                    if code:
-                        code_id = code.id
+#     def get_feature_vector(self, dictionary, source=None):
+#         vector = []
+#         if source is None:
+#             for feature_score in self.feature_scores.filter(feature__source__isnull=True).all():
+#                 vector.append({"text": feature_score.feature.text,
+#                                "feature_index": feature_score.feature_index,
+#                                "count": feature_score.count,
+#                                "source": "system"})
+#         else:
+#             for feature_score in self.feature_scores.filter(feature__source=source, feature__valid=True).all():
+#                 if feature_score.feature.origin:
+#                     message_id = feature_score.feature.origin.id
+#                     code = feature_score.feature.get_origin_message_code()
+#                     if code:
+#                         code_id = code.id
 
-                vector.append({"text": feature_score.feature.text,
-                               "feature_index": feature_score.feature_index,
-                               "count": feature_score.count,
-                               "source": "user",
-                               "origin_message_id": message_id,
-                               "origin_code_id": code_id })
-        return vector
+#                 vector.append({"text": feature_score.feature.text,
+#                                "feature_index": feature_score.feature_index,
+#                                "count": feature_score.count,
+#                                "source": "user",
+#                                "origin_message_id": message_id,
+#                                "origin_code_id": code_id })
+#         return vector
 
-    @property
-    def tokens(self):
-        return map(lambda x: x.tweet_word.original_text, self.tweetword_connections.all())
+#     @property
+#     def tokens(self):
+#         return map(lambda x: x.tweet_word.original_text, self.tweetword_connections.all())
 
-    @property
-    def lemmatized_tokens(self):
-        # using lemmatized words
-        tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
+#     @property
+#     def lemmatized_tokens(self):
+#         # using lemmatized words
+#         tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
 
-        #stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
-        #tokens = filter(lambda x: x not in stop_words, tokens)
-        #tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
-        return tokens
+#         #stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
+#         #tokens = filter(lambda x: x not in stop_words, tokens)
+#         #tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
+#         return tokens
 
-    @property
-    def filtered_tokens(self):
-        # using lemmatized words
-        from msgvis.apps.base.utils import get_stoplist
-        tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
+#     @property
+#     def filtered_tokens(self):
+#         # using lemmatized words
+#         from msgvis.apps.base.utils import get_stoplist
+#         tokens = map(lambda x: x.tweet_word.text, self.tweetword_connections.all())
 
-        stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
-        tokens = filter(lambda x: x not in stop_words, tokens)
-        tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
-        return tokens
+#         stop_words = set(get_stoplist()+['ive', 'wasnt', 'didnt', 'dont'])
+#         tokens = filter(lambda x: x not in stop_words, tokens)
+#         tokens = filter(lambda x: (len(x) > 2) and not (x.startswith('http') and len(x) > 4), tokens)
+#         return tokens

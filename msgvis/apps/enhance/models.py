@@ -12,7 +12,8 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 
 from fields import PositiveBigIntegerField
-from msgvis.apps.corpus.models import Message, Dataset, Code
+from msgvis.apps.corpus.models import Dataset, Code
+from msgvis.apps.stories.models import Story_Content
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 
@@ -490,10 +491,10 @@ class Feature(models.Model):
     text = base_models.Utf8CharField(max_length=150)
     document_frequency = models.IntegerField()
 
-    messages = models.ManyToManyField(Message, through='MessageFeature', related_name='features')
+    stories = models.ManyToManyField(Story_Content, through='StoryFeature', related_name='features')
     source = models.ForeignKey(User, related_name="features", default=None, null=True)
     """The user that add this feature; None means that is a system feature"""
-    origin = models.ForeignKey(Message, related_name="user_features", default=None, null=True)
+    origin = models.ForeignKey(Story_Content, related_name="user_features", default=None, null=True)
     """The message that this feature is added to the list from"""
 
     created_at = models.DateTimeField(auto_now_add=True, default=None)
@@ -522,16 +523,16 @@ class Feature(models.Model):
         return code
 
 
-class MessageFeature(models.Model):
-    class Meta:
-        index_together = (
-            ('message', 'feature'),
-        )
+class StoryFeature(models.Model):
+    # class Meta:
+    #     index_together = (
+    #         ('Story_Content', 'feature'),
+    #     )
 
     dictionary = models.ForeignKey(Dictionary, db_index=False)
 
     feature = models.ForeignKey(Feature, related_name="message_scores")
-    message = models.ForeignKey(Message, related_name='feature_scores', db_index=False)
+    stories = models.ForeignKey(Story_Content, related_name='feature_scores', db_index=False)
 
     feature_index = models.IntegerField()
     count = models.FloatField()
@@ -553,7 +554,7 @@ class TweetWord(models.Model):
     original_text = base_models.Utf8CharField(max_length=100, db_index=True, blank=True, default="")
     pos = models.CharField(max_length=4, null=True, blank=True, default="")
     text = base_models.Utf8CharField(max_length=100, db_index=True, blank=True, default="")
-    messages = models.ManyToManyField(Message, related_name='tweet_words', through="TweetWordMessageConnection")
+    stories = models.ManyToManyField(Story_Content, related_name='tweet_words', through="TweetWordStoryConnection")
 
     def __repr__(self):
         return self.text
@@ -571,13 +572,13 @@ class TweetWord(models.Model):
         queryset = queryset.filter(utils.levels_or("tweet_words__id", map(lambda x: x.id, self.related_features)))
         return queryset
 
-class TweetWordMessageConnection(models.Model):
-    message = models.ForeignKey(Message, related_name="tweetword_connections")
+class TweetWordStoryConnection(models.Model):
+    stories = models.ForeignKey(Story_Content, related_name="tweetword_connections")
     tweet_word = models.ForeignKey(TweetWord, related_name="tweetword_connections")
     order = models.IntegerField()
 
-    class Meta:
-        ordering = ["message", "order", ]
-        unique_together = ('message', 'tweet_word', 'order', )
+    # class Meta:
+    #     ordering = ["Story_Content", "order", ]
+    #     unique_together = ('Story_Content', 'tweet_word', 'order', )
 
 

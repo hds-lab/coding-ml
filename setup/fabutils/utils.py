@@ -149,20 +149,20 @@ def pip_install(requirements):
         print red("Cannot find pip!")
         return False
 
-    use_sudo = False
-    if pip_path.get_owner() == 'root':
-        # If pip is owned by root, we are gonna need sudo
-        use_sudo = True
+    # use_sudo = False
+    # if pip_path.get_owner() == 'root':
+    #     # If pip is owned by root, we are gonna need sudo
+    #     use_sudo = True
 
     print "Installing python requirements..."
 
     with lcd(conf.PROJECT_ROOT):
 
         for req in requirements:
-            if use_sudo:
-                result = local('sudo pip install -q %s' % req)
-            else:
-                result = local('pip install -q %s' % req)
+            # if use_sudo:
+            #     result = local('sudo pip install -q %s' % req)
+            # else:
+            result = local('pip install -q %s' % req)
 
             if not result.succeeded:
                 print red("Failed to install %s" % req)

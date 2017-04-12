@@ -18,6 +18,7 @@ import msgvis.apps.corpus.models as corpus_models
 import msgvis.apps.enhance.models as enhance_models
 import msgvis.apps.coding.models as coding_models
 import msgvis.apps.experiment.models as experiment_models
+import msgvis.apps.stories.models as stories_models
 from django.contrib.auth.models import User
 
 
@@ -27,45 +28,36 @@ class PersonSerializer(serializers.ModelSerializer):
         model = corpus_models.Person
         fields = ('id', 'dataset', 'original_id', 'username', 'full_name', 'profile_image_processed_url', )
 
-
-class MessageSerializer(serializers.ModelSerializer):
+class StorySerializer(serializers.ModelSerializer):
     """
-    JSON representation of :class:`.Message`
+    JSON representation of :class:`Story`
     objects for the API.
 
-    Messages are provided in a simple format that is useful for displaying
+    Stories are provided in a simple format that is useful for displaying
     examples:
 
     ::
 
         {
-          "id": 52,
-          "dataset": 2,
-          "text": "Some sort of thing or other",
-          "sender": {
-            "id": 2,
-            "dataset": 1
-            "original_id": 2568434,
-            "username": "my_name",
-            "full_name": "My Name"
-          },
-          "time": "2010-02-25T00:23:53Z"
+          "story_id": 100,
+          "chapter": 1,
+          "chapter_title": "Title",
+          "content": "some story content"
         }
 
     Additional fields may be added later.
     """
 
-    sender = PersonSerializer()
-    embedded_html = serializers.CharField()
-    media_url = serializers.CharField()
-    tokens = serializers.ListField()
-    lemmatized_tokens = serializers.ListField()
-    filtered_tokens = serializers.ListField()
+    # TODO: what is this? do we need this?
+
+    # sender = PersonSerializer()
+    # tokens = serializers.ListField()
+    # lemmatized_tokens = serializers.ListField()
+    # filtered_tokens = serializers.ListField()
 
     class Meta:
-        model = corpus_models.Message
-        fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html',
-                  'media_url', 'tokens', 'lemmatized_tokens', 'filtered_tokens', )
+        model = stories_models.Story_Content
+        fields = ('story_id', 'chapter', 'chapter_title', 'content')
 
 
 class CodeSerializer(serializers.ModelSerializer):
@@ -91,7 +83,7 @@ class UserWithIdSerializer(serializers.ModelSerializer):
 
 
 class FeatureVectorSerializer(serializers.Serializer):
-    message = MessageSerializer()
+    story = StorySerializer()
     feature_vector = serializers.ListField(child=serializers.DictField())
 
 class FeatureCodeDistributionSerializer(serializers.Serializer):
@@ -121,9 +113,9 @@ class FeatureSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'dictionary', 'index', 'text', 'document_frequency', 'source', )
 
 
-class PaginatedMessageSerializer(pagination.PaginationSerializer):
+class PaginatedStorySerializer(pagination.PaginationSerializer):
     class Meta:
-        object_serializer_class = MessageSerializer
+        object_serializer_class = StorySerializer
 
 
 class DatasetSerializer(serializers.ModelSerializer):
@@ -134,7 +126,8 @@ class DatasetSerializer(serializers.ModelSerializer):
 
 
 class DictionarySerializer(serializers.ModelSerializer):
-    dataset = DatasetSerializer()
+    # TODO: what goes on here?
+    # dataset = DatasetSerializer()
     class Meta:
         model = enhance_models.Dictionary
         fields = ('id', 'name', 'time', 'feature_count', 'dataset', )
@@ -152,7 +145,7 @@ class CodeAssignmentSerializer(serializers.ModelSerializer):
     partner_code = CodeSerializer(required=False)
     disagreement_indicator = IndicatorSerializer(required=False)
 
-    message = MessageSerializer(required=False)
+    story = StorySerializer(required=False)
     feature_vector = serializers.ListField(child=serializers.DictField(), required=False)
 
     class Meta:
@@ -177,14 +170,14 @@ class CodeDefinitionSerializer(serializers.Serializer):
     code_text = serializers.CharField(required=False)
     source = UserSerializer(required=False)
     text = serializers.CharField(allow_blank=True)
-    examples = MessageSerializer(many=True, required=False)
+    examples = StorySerializer(many=True, required=False)
 
 
 class CodeDefinitionSetSerializer(serializers.Serializer):
     source = serializers.CharField(required=False)
     definitions = CodeDefinitionSerializer(many=True, required=False)
 
-class CodeMessageSerializer(serializers.Serializer):
+class CodeStorySerializer(serializers.Serializer):
     code_id = serializers.IntegerField(required=False)
     code_text = serializers.CharField(required=False)
     source = UserSerializer()
