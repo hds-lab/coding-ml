@@ -7,8 +7,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from MySQLdb import OperationalError
 
-from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
+from msgvis.apps.stories import models as stories_models
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.coding import utils as coding_utils
 from msgvis.apps.base.utils import check_or_create_dir
@@ -242,7 +242,7 @@ class MessageSet(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     """The condition created time"""
 
-    messages = models.ManyToManyField(corpus_models.Message, related_name="message_sets")
+    messages = models.ManyToManyField(stories_models.Message, related_name="message_sets")
 
 
     @property
@@ -302,7 +302,7 @@ class StageAssignment(models.Model):
     )
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default='R')
 
-    selected_messages = models.ManyToManyField(corpus_models.Message, related_name="source_stages",
+    selected_messages = models.ManyToManyField(stories_models.Message, related_name="source_stages",
                                                through="MessageSelection")
     new_features = models.ManyToManyField(enhance_models.Feature, related_name="source_stages")
 
@@ -459,7 +459,7 @@ class MessageSelection(models.Model):
     A model for saving message order in a stage
     """
     stage_assignment = models.ForeignKey(StageAssignment, related_name="selection", default=None)
-    message = models.ForeignKey(corpus_models.Message, related_name="selection", default=None)
+    message = models.ForeignKey(stories_models.Message, related_name="selection", default=None)
     order = models.IntegerField()
 
     @property

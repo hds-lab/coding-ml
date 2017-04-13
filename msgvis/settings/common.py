@@ -63,7 +63,8 @@ DEBUG_DB = bool(get_env_setting('DEBUG_DB', False))
 ########## DATABASE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite'))
+    'default': dj_database_url.config(default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite')),
+    'fanfiction': dj_database_url.config(env='FF_DATABASE_URL', default='sqlite:///%s' % (PROJECT_ROOT / 'development.sqlite'))
 }
 
 # enable utf8mb4 on mysql
@@ -74,6 +75,14 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
         'init_command': 'SET storage_engine=INNODB',
     }
 
+if DATABASES['fanfiction']['ENGINE'] == 'django.db.backends.mysql':
+    # enable utf8mb4 on mysql
+    DATABASES['fanfiction']['OPTIONS'] = {
+        'charset': 'utf8mb4',
+        'init_command': 'SET storage_engine=INNODB',
+    }
+
+DATABASE_ROUTERS = ['msgvis.apps.stories.routers.StoriesRouter']
 ########## END DATABASE CONFIGURATION
 
 
@@ -114,6 +123,10 @@ USE_TZ = True
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-LOGIN_REDIRECT_URL
 LOGIN_REDIRECT_URL = "/"
+
+ALLOWED_HOSTS = ['localhost']
+
+DEBUG = True
 ########## END GENERAL CONFIGURATION
 
 
@@ -247,6 +260,7 @@ LOCAL_APPS = (
     'msgvis.apps.enhance',
     'msgvis.apps.experiment',
     'msgvis.apps.coding',
+    'msgvis.apps.stories'
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

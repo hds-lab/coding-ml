@@ -12,7 +12,8 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 
 from fields import PositiveBigIntegerField
-from msgvis.apps.corpus.models import Message, Dataset, Code
+from msgvis.apps.corpus.models import Dataset, Code
+from msgvis.apps.stories.models import Message
 from msgvis.apps.base import models as base_models
 from msgvis.apps.corpus import utils
 

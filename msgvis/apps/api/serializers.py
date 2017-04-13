@@ -17,6 +17,7 @@ from rest_framework import serializers, pagination
 import msgvis.apps.corpus.models as corpus_models
 import msgvis.apps.enhance.models as enhance_models
 import msgvis.apps.coding.models as coding_models
+import msgvis.apps.stories.models as stories_models
 import msgvis.apps.experiment.models as experiment_models
 from django.contrib.auth.models import User
 
@@ -55,17 +56,16 @@ class MessageSerializer(serializers.ModelSerializer):
     Additional fields may be added later.
     """
 
-    sender = PersonSerializer()
-    embedded_html = serializers.CharField()
-    media_url = serializers.CharField()
-    tokens = serializers.ListField()
-    lemmatized_tokens = serializers.ListField()
-    filtered_tokens = serializers.ListField()
+    # sender = PersonSerializer()
+    # embedded_html = serializers.CharField()
+    # media_url = serializers.CharField()
+    # tokens = serializers.ListField()
+    # lemmatized_tokens = serializers.ListField()
+    # filtered_tokens = serializers.ListField()
 
     class Meta:
-        model = corpus_models.Message
-        fields = ('id', 'dataset', 'text', 'sender', 'time', 'original_id', 'embedded_html',
-                  'media_url', 'tokens', 'lemmatized_tokens', 'filtered_tokens', )
+        model = stories_models.Message
+        fields = ('story_id', 'chapter', 'chapter_title', 'content')
 
 
 class CodeSerializer(serializers.ModelSerializer):

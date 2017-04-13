@@ -35,6 +35,7 @@ from msgvis.apps.api import serializers
 from msgvis.apps.base.utils import AttributeDict, entropy, get_best_time_bucket, group_messages_by_time
 from msgvis.apps.coding import models as coding_models
 from msgvis.apps.corpus import models as corpus_models
+from msgvis.apps.stories import models as stories_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.experiment import models as experiment_models
 
@@ -82,7 +83,7 @@ class MessageView(APIView):
 
         message_id = int(message_id)
         try:
-            message = corpus_models.Message.objects.get(id=message_id)
+            message = stories_models.Message.objects.get(story_id=message_id)
             output = serializers.MessageSerializer(message)
             return Response(output.data, status=status.HTTP_200_OK)
         except:
@@ -187,7 +188,7 @@ class SVMResultView(APIView):
             try:
                 dictionary = enhance_models.Dictionary.objects.get(id=dictionary_id)
                 results = dictionary.do_training()
-                all_messages = corpus_models.Message.objects.all()
+                all_messages = stories_models.Message.objects.all()
                 messages = []
 
                 for message in all_messages:
@@ -237,7 +238,7 @@ class FeatureVectorView(APIView):
 
         try:
 
-            message = corpus_models.Message.objects.get(id=message_id)
+            message = stories_models.Message.objects.get(id=message_id)
             final_vector = []
             for feature_source in feature_sources:
                 if feature_source == "system":
@@ -437,6 +438,9 @@ class FeatureCodeDistributionView(APIView):
                                          messages__code_assignments__valid=True)\
                     .values('index', 'text', 'messages__code_assignments__code__id', 'messages__code_assignments__code__text')\
                     .annotate(count=Count('messages')).order_by('id', 'count').all()
+                
+                print 'COUNTS'
+                print counts
                 for count in counts:
                     count = AttributeDict(count)
                     distribution_map[count.index]["distribution"][count.messages__code_assignments__code__text] = count.count
@@ -578,7 +582,7 @@ class CodeAssignmentView(APIView):
         input = serializers.CodeAssignmentSerializer(data=request.data)
         if input.is_valid():
             data = input.validated_data
-            message = corpus_models.Message.objects.get(id=message_id)
+            message = stories_models.Message.objects.get(id=message_id)
             code = data['code']
 
             if self.request.user is not None:
@@ -670,7 +674,7 @@ class CodeMessageView(APIView):
             assignments = assignments.order_by('-source_stage_index', 'message_id')
 
             for assignment in assignments:
-                message = corpus_models.Message.objects.get(id=assignment.message_id)
+                message = stories_models.Message.objects.get(id=assignment.message_id)
                 assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
 
             code_messages = {
@@ -725,7 +729,7 @@ class AllCodedMessageView(APIView):
             assignments = assignments.order_by('-source_stage_index', 'message_id')
 
             for assignment in assignments:
-                message = corpus_models.Message.objects.get(id=assignment.message_id)
+                message = stories_models.Message.objects.get(id=assignment.message_id)
                 assignment.feature_vector = message.get_feature_vector(dictionary=dictionary, source=user)
             output = serializers.CodeAssignmentSerializer(assignments, many=True)
 
@@ -799,7 +803,7 @@ class DisagreementIndicatorView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         message_id = int(message_id)
-        message = corpus_models.Message.objects.get(id=message_id)
+        message = stories_models.Message.objects.get(id=message_id)
         try:
             indicator = coding_models.DisagreementIndicator.objects.filter(message=message,
                                                                         user_assignment__source=user,
@@ -834,7 +838,7 @@ class DisagreementIndicatorView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         message_id = int(message_id)
-        message = corpus_models.Message.objects.get(id=message_id)
+        message = stories_models.Message.objects.get(id=message_id)
 
         input = serializers.DisagreementIndicatorSerializer(data=request.data)
         if input.is_valid():
@@ -908,7 +912,7 @@ class PairwiseConfusionMatrixView(APIView):
             if stage:
                 messages = stage.selected_messages.all()
             else:
-                messages = corpus_models.Message.objects.all()
+                messages = stories_models.Message.objects.all()
 
             messages = messages.filter(code_assignments__is_user_labeled=True,
                                        code_assignments__valid=True,
@@ -1011,7 +1015,7 @@ class ProgressView(APIView):
     """
     Get the progress of the current user
 
-    **Request:** ``GET /progress``
+    **Request:** ``GET api/progress``
     """
 
     def get(self, request, format=None):
@@ -1034,7 +1038,6 @@ class ProgressView(APIView):
                 target_stage_index = int(request.query_params.get('stage_index', progress.current_stage_index))
                 target_status = str(request.query_params.get('target_status', progress.current_status))
                 progress.set_stage(target_stage_index, target_status)
-
 
             output = serializers.ProgressSerializer(progress)
 

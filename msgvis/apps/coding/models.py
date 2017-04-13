@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from msgvis.apps.corpus import models as corpus_models
 from msgvis.apps.enhance import models as enhance_models
 from msgvis.apps.base import models as base_models
+from msgvis.apps.stories import models as stories_models
 
 
 
@@ -12,7 +13,7 @@ class CodeAssignment(models.Model):
     A model for recording code assignment
     """
     source = models.ForeignKey(User, related_name="code_assignments")
-    message = models.ForeignKey(corpus_models.Message, related_name="code_assignments")
+    message = models.ForeignKey(stories_models.Message, related_name="code_assignments")
     code = models.ForeignKey(enhance_models.Code, related_name="code_assignments")
 
     is_saved = models.BooleanField(default=False)
@@ -114,7 +115,7 @@ class DisagreementIndicator(models.Model):
     """
     A model for indicating the type of disagreement
     """
-    message = models.ForeignKey(corpus_models.Message, related_name="disagreement_indicators")
+    message = models.ForeignKey(stories_models.Message, related_name="disagreement_indicators")
     user_assignment = models.ForeignKey(CodeAssignment, related_name="user_disagreement_indicators")
     partner_assignment = models.ForeignKey(CodeAssignment, related_name="partner_disagreement_indicators")
     TYPE_CHOICES = (
