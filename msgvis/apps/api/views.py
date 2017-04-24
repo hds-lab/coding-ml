@@ -55,7 +55,7 @@ class DatasetView(APIView):
     """
     Get details of a dataset
 
-    **Request:** ``GET /api/dataset/1``
+    **Request:** ``GET /api/dataset?id=1``
     """
 
 
